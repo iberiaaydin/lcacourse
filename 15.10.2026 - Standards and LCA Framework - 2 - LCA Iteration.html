@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iterative nature of LCA – animation</title>
+<style>
+  :root {
+    --bg: #14171c;
+    --ink: #f1eee6;
+    --dim: #8d94a0;
+    --blue: #58c4dd;
+    --line: #2a303a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; gap: 14px;
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #stage {
+    display: block; width: 100%;
+    max-width: min(1400px, calc((100vh - 250px) * 1410 / 780));
+    height: auto;
+  }
+  #cap {
+    margin: 0; max-width: 78ch; min-height: 2.8em; text-align: center;
+    color: var(--dim); font-size: 15px; line-height: 1.5; opacity: 0;
+  }
+  .bar {
+    display: flex; align-items: center; gap: 10px; width: 100%; max-width: 860px; flex-wrap: wrap;
+  }
+  #status { font-size: 15px; min-height: 1.4em; text-align: center; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 980px; }
+  .chip { min-width: 0; padding: 4px 10px; font-size: 12.5px; color: var(--dim); }
+  .chip.done { color: var(--ink); }
+  .chip[aria-current="true"] { border-color: var(--blue); color: var(--blue); }
+  label.auto { font-size: 13px; color: var(--dim); display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  #play { min-width: 150px; }
+  button {
+    font: inherit; font-size: 14px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 14px; cursor: pointer;
+    min-width: 74px;
+  }
+  button:hover { border-color: var(--blue); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  input[type=range] { flex: 1; accent-color: var(--blue); }
+  #time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--dim); min-width: 84px; text-align: right; }
+</style>
+</head>
+<body>
+<h1 class="sr-only">Iterative nature of LCA: three iterations, each a loop of goal and scope, LCI, LCIA and evaluation, raising overall data quality.</h1>
+
+<svg id="stage" viewBox="0 0 1410 780" role="img"
+     aria-label="Staircase diagram: with each iteration of the LCA loop, overall data quality rises as time and effort increase."></svg>
+
+<p id="cap">Figure 4 – Iterative nature of LCA (schematic). Goal and scope, inventory (LCI), impact assessment (LCIA) and evaluation repeat in loops until the required accuracy, completeness and precision are reached.</p>
+
+<div id="status" aria-live="polite"></div>
+<div class="bar">
+  <button id="back" type="button" title="Play this section in reverse (Left arrow)">Back</button>
+  <button id="play" type="button">Play section 1</button>
+  <button id="skip" type="button" title="Jump to the end of this section (Right arrow while playing)">Skip</button>
+  <label class="auto"><input id="auto" type="checkbox"> Auto-continue</label>
+</div>
+<div id="chips" class="chips" role="group" aria-label="Sections"></div>
+<div class="bar">
+  <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Timeline">
+  <span id="time">0:00 / 0:00</span>
+</div>
+
+<script>
+/* =====================================================================
+   Tiny manim-like engine
+   ---------------------------------------------------------------------
+   add(start, duration, fn, rate)   ~  self.play(Animation, run_time=...)
+   strokeAnim(path)                 ~  Create()
+   textAnim(text)                   ~  Write()
+   box grow                         ~  GrowFromEdge()
+   Every animation is a pure function of progress, so the whole scene is
+   a function of time: render(t). That makes pause / scrub / replay free.
+   ===================================================================== */
+
+const NS = 'http://www.w3.org/2000/svg';
+const W = 1410, H = 780;
+const INK = '#f1eee6', BLUE = '#58c4dd', GREEN = '#83c167', GOLD = '#f4d35e', BG = '#14171c';
+
+const svg = document.getElementById('stage');
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = {
+  linear: t => t,
+  smooth: t => t * t * t * (t * (6 * t - 15) + 10)
+};
+
+function el(tag, attrs = {}, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e);
+  return e;
+}
+
+/* ---------- timeline ---------- */
+const anims = [];
+function add(start, dur, fn, rate = ease.smooth) {
+  anims.push({ start, dur, fn, rate, last: undefined });
+  return start + dur;
+}
+function render(t) {
+  for (const a of anims) {
+    const p = a.rate(clamp((t - a.start) / a.dur));
+    if (a.last === p) continue;
+    a.last = p;
+    a.fn(p);
+  }
+}
+
+/* ---------- building blocks ---------- */
+const defs = el('defs');
+el('rect', { x: 0, y: 0, width: W, height: H, fill: BG });
+const gBoxes = el('g'), gCurve = el('g'), gAxes = el('g'),
+      gStairs = el('g'), gCycles = el('g'), gText = el('g');
+
+function path(d, attrs, parent) {
+  return el('path', Object.assign({ d, fill: 'none' }, attrs), parent);
+}
+
+/* Create(): draw the stroke on */
+function strokeAnim(e) {
+  const L = e.getTotalLength();
+  e.style.strokeDasharray = `${L} ${L}`;
+  return p => {
+    e.style.strokeDashoffset = L * (1 - p);
+    e.style.opacity = p > 0 ? 1 : 0;
+  };
+}
+
+/* Create() for a dashed line: reveal it through a growing mask */
+let uid = 0;
+function dashedDraw(d, { color, width, dash, parent }) {
+  const id = 'mask' + (uid++);
+  const mask = el('mask', { id, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: W, height: H }, defs);
+  const mp = path(d, { stroke: '#fff', 'stroke-width': width + 10 }, mask);
+  path(d, { stroke: color, 'stroke-width': width, 'stroke-dasharray': dash, mask: `url(#${id})` }, parent);
+  return strokeAnim(mp);
+}
+
+function fade(e) { e.style.opacity = 0; return p => { e.style.opacity = p; }; }
+
+function chevron(x, y, ang, size, w, color, parent) {
+  const g = el('g', { transform: `translate(${x} ${y}) rotate(${ang})` }, parent);
+  el('path', {
+    d: `M ${-size} ${-size * 0.95} L 0 0 L ${-size} ${size * 0.95}`,
+    fill: 'none', stroke: color, 'stroke-width': w,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+  }, g);
+  return fade(g);
+}
+
+function tip(x, y, ang, color, parent) {
+  const g = el('g', { transform: `translate(${x} ${y}) rotate(${ang})` }, parent);
+  el('polygon', { points: '0,0 -22,-9 -22,9', fill: color }, g);
+  return fade(g);
+}
+
+/* Write(): per-character reveal. Use ^{..} for superscripts. */
+function text(str, x, y, { size = 22, weight = 400, anchor = 'start', fill = INK, parent = gText } = {}) {
+  const t = el('text', {
+    x, y, 'font-size': size, 'font-weight': weight, 'text-anchor': anchor, fill,
+    'dominant-baseline': 'central', 'xml:space': 'preserve'
+  }, parent);
+  t.style.whiteSpace = 'pre';
+  t.style.fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  const chars = [];
+  let sup = false, first = false, after = false;
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if (c === '^' && str[i + 1] === '{') { sup = true; first = true; i++; continue; }
+    if (sup && c === '}') { sup = false; after = true; continue; }
+    const ts = el('tspan', { 'fill-opacity': 0 }, t);
+    ts.textContent = c;
+    if (sup) {
+      ts.setAttribute('font-size', size * 0.62);
+      if (first) { ts.setAttribute('dy', -size * 0.32); first = false; }
+    } else if (after) {
+      ts.setAttribute('dy', size * 0.32); after = false;
+    }
+    chars.push(ts);
+  }
+  const n = chars.length, k = 4;
+  return p => chars.forEach((c, i) =>
+    c.setAttribute('fill-opacity', clamp(p * (n + k) - i, 0, k) / k));
+}
+
+/* ---------- axes and labels ---------- */
+const axisStyle = { stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'butt' };
+const yAxis = path('M40 705 L40 46', axisStyle, gAxes);
+const xAxis = path('M40 708 L1368 708', axisStyle, gAxes);
+add(0.2, 1.1, strokeAnim(yAxis));
+add(0.2, 1.5, strokeAnim(xAxis));
+add(1.2, 0.3, tip(40, 26, -90, INK, gAxes));
+add(1.6, 0.3, tip(1384, 708, 0, INK, gAxes));
+
+add(1.0, 0.9, text('Overall data quality', 56, 63, { size: 25 }));
+add(1.3, 1.1, text('(accuracy, precision, completeness)', 56, 93, { size: 25 }));
+add(1.6, 0.9, text('Time and effort', 1175, 740, { size: 25 }));
+
+/* ---------- loop of goal & scope -> LCI -> LCIA -> evaluation ---------- */
+function cycle(dx, dy, start) {
+  const cx = dx + 33, cy = dy - 53;
+  const r = Math.hypot(33, 53);
+  const a0 = Math.atan2(53, -33) * 180 / Math.PI;   // dot sits on the circle
+  const a1 = 377;
+  const pt = a => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
+  const [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+  const frac = a => (a - a0) / (a1 - a0);
+  const drawDur = 2.0, t0 = start + 0.35;
+
+  const arc = path(`M ${x0} ${y0} A ${r} ${r} 0 1 1 ${x1} ${y1}`,
+    { stroke: GREEN, 'stroke-width': 4, 'stroke-linecap': 'round' }, gCycles);
+  const dot = el('circle', { cx: dx, cy: dy, r: 0, fill: GREEN }, gCycles);
+
+  add(start, 0.35, p => dot.setAttribute('r', 8 * p));
+  add(t0, drawDur, strokeAnim(arc), ease.linear);
+
+  [202, 291, 377].forEach(a => {
+    const [x, y] = pt(a);
+    const rot = Math.atan2(Math.cos(a * Math.PI / 180), -Math.sin(a * Math.PI / 180)) * 180 / Math.PI;
+    add(t0 + drawDur * frac(a) - 0.05, 0.25, chevron(x, y, rot, 11, 3.5, GREEN, gCycles));
+  });
+
+  const L = { size: 25 };
+  add(start, 0.6, text('Goal', dx - 82, dy + 18, L));
+  add(start + 0.15, 0.7, text('and Scope', dx - 82, dy + 48, L));
+  add(t0 + drawDur * 0.28, 0.5, text('LCI', dx - 82, dy - 100, L));
+  add(t0 + drawDur * 0.62, 0.5, text('LCIA', dx + 72, dy - 126, L));
+  add(t0 + drawDur * 0.92, 0.7, text('Evaluation', dx + 46, dy + 2, L));
+  return t0 + drawDur + 0.2;
+}
+
+/* ---------- the three iterations ---------- */
+const STAIR = { stroke: INK, 'stroke-width': 9, 'stroke-linecap': 'square', 'stroke-linejoin': 'miter' };
+
+/* section boundaries (seconds), filled in while the scene is built */
+const starts = [0];
+
+const cfg = [
+  {
+    box: { x: 40, w: 245, top: 457, bot: 705, a: 0.2 },
+    title: ['1^{st} Iteration', 55, 512], bulletX: 55,
+    lines: [['full product system', 70, 541, 1], ['specific data as', 70, 571, 1],
+            ['available', 70, 598, 0], ['easily available', 70, 627, 1], ['secondary data', 70, 655, 0]],
+    tread: 'M40 705 L285 705', treadX: [40, 285], treadChev: [215, 705],
+    riser: 'M285 705 L285 457', riserY: [705, 457], riserChev: [285, 535],
+    cyc: [410, 638]
+  },
+  {
+    box: { x: 280, w: 390, top: 233, bot: 457, a: 0.34 },
+    title: ['2^{nd} iteration', 296, 259], bulletX: 297,
+    lines: [['revision of scope definition?', 311, 289, 1], ['better data for key processes', 311, 317, 1],
+            ['(background and foreground)', 311, 346, 0], ['more specific data for', 311, 374, 1],
+            ['foreground processes', 311, 403, 0]],
+    tread: 'M285 457 L670 457', treadX: [285, 670], treadChev: [600, 457],
+    riser: 'M670 457 L670 238', riserY: [457, 238], riserChev: [670, 318],
+    cyc: [796, 417]
+  },
+  {
+    box: { x: 667, w: 436, top: 107, bot: 238, a: 0.52 },
+    title: ['3^{rd} iteration', 698, 132], bulletX: 703,
+    lines: [['better data for key processes and', 720, 161, 1], ['flows (background and foreground)', 720, 190, 0]],
+    tread: 'M670 238 L1103 238', treadX: [670, 1103], treadChev: [975, 238],
+    riser: 'M1103 238 L1103 107', riserY: [238, 107], riserChev: [1103, 168],
+    cyc: [1206, 258]
+  }
+];
+
+function iteration(c, t0) {
+  const B = c.box;
+
+  /* box grows up out of the tread */
+  const rect = el('rect', { x: B.x, y: B.bot, width: B.w, height: 0, fill: BLUE, 'fill-opacity': B.a }, gBoxes);
+  add(t0, 0.9, p => {
+    const h = (B.bot - B.top) * p;
+    rect.setAttribute('y', B.bot - h);
+    rect.setAttribute('height', h);
+  });
+
+  /* tread of the staircase */
+  const treadDur = 1.1;
+  add(t0, treadDur, strokeAnim(path(c.tread, STAIR, gStairs)), ease.linear);
+  const tf = (c.treadChev[0] - c.treadX[0]) / (c.treadX[1] - c.treadX[0]);
+  add(t0 + treadDur * tf, 0.25, chevron(c.treadChev[0], c.treadChev[1], 0, 24, 8, INK, gStairs));
+
+  /* title + bullets */
+  add(t0 + 0.5, 0.8, text(c.title[0], c.title[1], c.title[2], { size: 28, weight: 700 }));
+  let tEnd = t0 + 1.3;
+  c.lines.forEach(([s, x, y, bullet], i) => {
+    const st = t0 + 1.2 + i * 0.3;
+    if (bullet) {
+      const b = el('circle', { cx: c.bulletX, cy: y, r: 3.6, fill: INK }, gText);
+      add(st, 0.3, fade(b));
+    }
+    tEnd = add(st, 0.7, text(s, x, y, { size: 22 }));
+  });
+
+  /* loop + riser, side by side */
+  const tc = tEnd + 0.1;
+  starts.push(t0, tc);
+  const cycEnd = cycle(c.cyc[0], c.cyc[1], tc);
+
+  const riserDur = 1.0, rs = tc + 0.8;
+  add(rs, riserDur, strokeAnim(path(c.riser, STAIR, gStairs)), ease.linear);
+  const rf = (c.riserY[0] - c.riserChev[1]) / (c.riserY[0] - c.riserY[1]);
+  add(rs + riserDur * rf, 0.25, chevron(c.riserChev[0], c.riserChev[1], -90, 24, 8, INK, gStairs));
+
+  return Math.max(cycEnd, rs + riserDur) + 0.25;
+}
+
+let t = 2.8;
+cfg.forEach(c => { t = iteration(c, t); });
+
+/* ---------- the dashed continuation, then the quality trend ---------- */
+starts.push(t);
+const lastArrow = dashedDraw('M1103 107 L1330 107',
+  { color: INK, width: 9, dash: '26 16', parent: gStairs });
+add(t, 0.9, lastArrow, ease.linear);
+add(t + 0.7, 0.25, chevron(1340, 107, 0, 24, 8, INK, gStairs));
+t += 1.3;
+
+function smoothPath(pts) {
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C ${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+const curve = smoothPath([[40, 705], [160, 578], [280, 457], [470, 340], [670, 235],
+                          [880, 160], [1103, 107], [1335, 78]]);
+add(t, 3.4, dashedDraw(curve, { color: GOLD, width: 4, dash: '16 11', parent: gCurve }));
+add(t + 3.2, 0.3, chevron(1337, 78, -7, 20, 5, GOLD, gCurve));
+t += 3.6;
+
+const cap = document.getElementById('cap');
+add(t, 1.0, p => { cap.style.opacity = p; });
+t += 1.0;
+
+const DUR = t + 1.5;
+
+/* ---------- player: one section at a time ---------- */
+const labels = [
+  'Axes and labels',
+  'Iteration 1: starting data',
+  'Iteration 1: the loop, then a step up',
+  'Iteration 2: better data',
+  'Iteration 2: the loop, then a step up',
+  'Iteration 3: key processes',
+  'Iteration 3: the loop, then a step up',
+  'Keep iterating: the quality trend'
+];
+const ends = starts.slice(1).concat(DUR);
+const LAST = starts.length - 1;
+const $ = id => document.getElementById(id);
+const playBtn = $('play'), backBtn = $('back'), skipBtn = $('skip');
+const scrub = $('scrub'), timeEl = $('time'), statusEl = $('status'), autoBox = $('auto');
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const EPS = 1e-6;
+
+let now = 0, cur = 0, dir = 1, playing = false, lastTs = null;
+
+const chips = labels.map((l, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip'; b.textContent = `${i + 1}. ${l}`;
+  b.addEventListener('click', () => goTo(i));
+  $('chips').appendChild(b);
+  return b;
+});
+
+const sectionAt = t => { let k = 0; starts.forEach((s, i) => { if (t >= s - EPS) k = i; }); return k; };
+const atEnd = () => now >= ends[cur] - EPS;
+
+function draw() {
+  render(now);
+  scrub.value = (now / DUR) * 1000;
+  timeEl.textContent = `${fmt(now)} / ${fmt(DUR)}`;
+
+  const done = !playing && atEnd();
+  statusEl.textContent = `Section ${cur + 1} of ${LAST + 1}: ${labels[cur]}` +
+    (playing ? (dir < 0 ? ' (reversing)' : '') : done ? ' (done)' : '');
+  chips.forEach((c, i) => {
+    c.classList.toggle('done', i < cur || (i === cur && done));
+    c.setAttribute('aria-current', i === cur ? 'true' : 'false');
+  });
+
+  if (playing) playBtn.textContent = 'Pause';
+  else if (done && cur === LAST) playBtn.textContent = 'Restart';
+  else if (done) playBtn.textContent = `Play section ${cur + 2}`;
+  else if (now > starts[cur] + EPS) playBtn.textContent = 'Resume';
+  else playBtn.textContent = `Play section ${cur + 1}`;
+}
+
+function goTo(i) { cur = i; now = starts[i]; dir = 1; playing = false; draw(); }
+
+function play() {                       // forward: play the next section
+  if (atEnd()) {
+    if (cur === LAST) { cur = 0; now = 0; }
+    else cur++;
+  }
+  dir = 1; playing = true; draw();
+}
+function playBackward() {               // reverse: play this section backwards,
+  if (now <= starts[cur] + EPS) {       // or the previous one if already at its start
+    if (cur === 0) return;
+    cur--;
+  }
+  dir = -1; playing = true; draw();
+}
+const pause = () => { playing = false; draw(); };
+const toggle = () => (playing ? pause() : play());
+const skip = () => { now = ends[cur]; dir = 1; playing = false; draw(); };
+const skipBack = () => { now = starts[cur]; playing = false; draw(); };
+const right = () => (playing && dir > 0 ? skip() : play());
+const left = () => (playing && dir < 0 ? skipBack() : playBackward());
+
+function frame(ts) {
+  if (lastTs == null) lastTs = ts;
+  const dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  if (playing) {
+    now += dir * dt;
+    if (dir > 0) {
+      if (now >= ends[cur] - EPS) {
+        now = ends[cur];
+        if (autoBox.checked && cur < LAST) cur++;
+        else playing = false;
+      }
+    } else if (now <= starts[cur] + EPS) {
+      now = starts[cur]; playing = false;
+    }
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+playBtn.addEventListener('click', toggle);
+backBtn.addEventListener('click', left);
+skipBtn.addEventListener('click', skip);
+scrub.addEventListener('input', () => {
+  playing = false;
+  now = (scrub.value / 1000) * DUR;
+  cur = sectionAt(now);
+  draw();
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'ArrowRight' || e.code === 'PageDown') { e.preventDefault(); right(); }
+  else if (e.code === 'ArrowLeft' || e.code === 'PageUp') { e.preventDefault(); left(); }
+  else if (e.code === 'Space' && !e.target.closest('button, input')) { e.preventDefault(); toggle(); }
+});
+
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  cur = LAST; now = DUR;
+}
+draw();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

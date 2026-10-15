@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICEV vs BEV vs FCEV: lifecycle emissions by distance</title>
+<style>
+:root{
+  --bg:#f6f5f1; --surface:#ffffff; --surface-2:#f0efe9;
+  --text:#1c1c1a; --text-2:#555450; --text-3:#8a8882;
+  --border:rgba(0,0,0,.12); --border-strong:rgba(0,0,0,.28);
+  --accent:#2a78d6; --accent-bg:#e4effb; --accent-text:#14498a;
+  --grid:#e1e0d9; --tick:#898781; --radius:8px;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141413; --surface:#1d1d1b; --surface-2:#262624;
+    --text:#f0efec; --text-2:#c3c2b7; --text-3:#8f8d86;
+    --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.3);
+    --accent:#3987e5; --accent-bg:#17304d; --accent-text:#a9cdf7;
+    --grid:#2c2c2a; --tick:#898781;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;padding:24px 16px 48px;}
+main{max-width:860px;margin:0 auto;}
+h1{font-size:24px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+.lede{margin:0 0 20px;color:var(--text-2);font-size:15px;max-width:62ch}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.ctl-row{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.ctl-row label{font-size:14px;color:var(--text-2);white-space:nowrap}
+input[type=range]{flex:1;accent-color:var(--accent);height:24px;cursor:pointer}
+#dist-out{font-size:15px;font-weight:600;min-width:92px;text-align:right;font-variant-numeric:tabular-nums}
+.src-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px}
+.src-row .lbl{font-size:14px;color:var(--text-2);margin-right:4px}
+button.src-btn{font:inherit;font-size:13px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border-strong);background:transparent;color:var(--text);cursor:pointer}
+button.src-btn:hover{background:var(--surface-2)}
+button.src-btn.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent-text)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+#ef-note{font-size:12px;color:var(--text-3)}
+.chk{font-size:13px;color:var(--text-2);display:flex;align-items:center;gap:6px;cursor:pointer}
+#cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;min-width:0}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.card-h svg{flex:none}
+.card-h .n{font-size:16px;font-weight:600;line-height:1.2}
+.card-h .s{font-size:12px;color:var(--text-3)}
+.tot{display:flex;align-items:baseline;gap:6px;margin:6px 0 2px}
+.tot .big{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.tot .u{font-size:12px;color:var(--text-2)}
+.pk{font-size:12px;color:var(--text-3);margin-bottom:8px}
+.bar{display:flex;gap:2px;height:14px;margin-bottom:8px}
+.bar div{border-radius:3px;min-width:2px}
+.row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);padding:2px 0}
+.row .v{margin-left:auto;color:var(--text);font-variant-numeric:tabular-nums}
+.sw{width:10px;height:10px;border-radius:2px;flex:none;display:inline-block}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:0 0 8px;font-size:12px;color:var(--text-2)}
+.legend span{display:flex;align-items:center;gap:4px}
+.chart-wrap{position:relative;width:100%;height:300px}
+#be{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+#be div{background:var(--surface-2);border-radius:var(--radius);padding:10px 12px;font-size:13px;color:var(--text-2)}
+details{font-size:13px;color:var(--text-2)}
+summary{cursor:pointer;font-weight:600;color:var(--text)}
+details ul{margin:8px 0 0;padding-left:18px}
+details li{margin:2px 0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Petrol, battery or hydrogen: how emissions add up</h1>
+  <p class="lede">Lifecycle CO₂e for an ICEV, a BEV and an FCEV as you drive further. Change the electricity source to see how it shifts charging, hydrogen production and hydrogen storage.</p>
+
+  <section class="panel" aria-label="Controls">
+    <div class="ctl-row">
+      <label for="dist">Distance driven</label>
+      <input type="range" id="dist" min="0" max="300000" step="1000" value="150000">
+      <span id="dist-out">150,000 km</span>
+    </div>
+    <div class="src-row" role="group" aria-label="Electricity source">
+      <span class="lbl">Electricity source</span>
+      <button class="src-btn" data-src="ren">Renewable mix</button>
+      <button class="src-btn" data-src="grid">Grid mix</button>
+      <button class="src-btn" data-src="fossil">Fossil only</button>
+      <button class="src-btn" data-src="coal">Coal only</button>
+    </div>
+    <div class="note-row">
+      <span id="ef-note"></span>
+      <label class="chk"><input type="checkbox" id="mfg" checked> Include vehicle manufacturing</label>
+    </div>
+  </section>
+
+  <div id="cards"></div>
+
+  <section class="panel" aria-label="Cumulative emissions chart">
+    <div class="legend">
+      <span><i class="sw" style="background:#eb6834"></i>ICEV</span>
+      <span><i class="sw" style="background:#2a78d6"></i>BEV</span>
+      <span><i class="sw" style="background:#1baf7a"></i>FCEV</span>
+      <span style="color:var(--text-3)">Cumulative lifecycle CO₂e vs distance</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chart" role="img" aria-label="Line chart of cumulative CO2 equivalent emissions in tonnes versus distance for ICEV, BEV and FCEV, with a marker at the selected distance.">Cumulative emissions grow linearly with distance; slopes depend on the selected electricity source.</canvas>
+    </div>
+  </section>
+
+  <div id="be"></div>
+
+  <section class="panel">
+    <details>
+      <summary>Assumptions</summary>
+      <ul>
+        <li>ICEV: petrol at 6.5 L/100 km. Tailpipe 150 g/km, fuel production (well-to-tank) 40 g/km.</li>
+        <li>BEV: 0.19 kWh/km from the wall, including charging and grid losses.</li>
+        <li>FCEV: 0.95 kg H₂/100 km. Hydrogen from electrolysis at 53 kWh/kg; storage is compression at 4 kWh/kg plus 0.6 kg CO₂e/kg for delivery.</li>
+        <li>Electricity intensity (g CO₂e/kWh): renewable mix 25, world grid mix 445, coal and gas 750, coal only 1000.</li>
+        <li>Manufacturing: ICEV 6.0 t, BEV 9.5 t, FCEV 8.5 t CO₂e per vehicle.</li>
+        <li>Values are typical literature figures for illustration, not measurements of specific models.</li>
+      </ul>
+    </details>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const EF = {
+  ren:{v:25,l:'Renewable mix: wind, solar, hydro'},
+  grid:{v:445,l:'World average grid mix'},
+  fossil:{v:750,l:'Coal and gas only'},
+  coal:{v:1000,l:'Coal only'}
+};
+const MFG_GREY = '#898781';
+const H2_KG = 0.0095, ELZ = 53, COMP = 4, DELIV = 0.6, BEV_KWH = 0.19;
+
+const ICONS = {
+  icev:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 20h14"/><path d="M5 11h10"/><path d="M15 8h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg>',
+  bev:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3v7h6l-8 11v-7H5z"/></svg>',
+  fcev:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3C12 3 6 10 6 14a6 6 0 0 0 12 0c0-4-6-11-6-11z"/></svg>'
+};
+
+const V = {
+  icev:{name:'ICEV',sub:'Petrol, 6.5 L/100 km',color:'#eb6834',tag:'ICE',M:6000,
+    seg:ef=>[{l:'Fuel production',c:'#f2a27f',k:0.040},{l:'Tailpipe',c:'#eb6834',k:0.150}]},
+  bev:{name:'BEV',sub:'0.19 kWh/km from the wall',color:'#2a78d6',tag:'BEV',M:9500,
+    seg:ef=>[{l:'Electricity production',c:'#2a78d6',k:BEV_KWH*ef/1000}]},
+  fcev:{name:'FCEV',sub:'0.95 kg H₂/100 km',color:'#1baf7a',tag:'H₂',M:8500,
+    seg:ef=>[{l:'Hydrogen production',c:'#1baf7a',k:H2_KG*ELZ*ef/1000},{l:'Hydrogen storage',c:'#7fd6b6',k:H2_KG*(COMP*ef/1000+DELIV)}]}
+};
+const keys = ['icev','bev','fcev'];
+const COL = {icev:'#eb6834',bev:'#2a78d6',fcev:'#1baf7a'};
+let src = 'grid';
+
+function carSvg(v){
+  const puffs = v===V.icev ? '<circle cx="9" cy="40" r="4" fill="#b4b2a9"/><circle cx="4" cy="34" r="3" fill="#d3d1c7"/>' : '';
+  return '<svg viewBox="0 0 140 56" width="100%" style="max-width:160px;display:block;margin:0 auto;" aria-hidden="true">'+puffs+
+  '<g transform="translate(16 2)"><path d="M6 38 L6 30 Q6 26 12 25 L28 23 L38 11 Q40 9 44 9 L78 9 Q82 9 85 12 L96 24 L106 26 Q112 27 112 32 L112 38 Z" fill="'+v.color+'"/>'+
+  '<path d="M33 23 L41 13 L56 13 L56 23 Z M61 23 L61 13 L77 13 Q79 13 81 15 L89 23 Z" fill="var(--surface)" opacity="0.9"/>'+
+  '<text x="66" y="34" text-anchor="middle" font-size="11" font-weight="600" fill="#fff" font-family="system-ui,sans-serif">'+v.tag+'</text>'+
+  '<circle cx="30" cy="40" r="8" fill="#444441"/><circle cx="30" cy="40" r="3" fill="var(--surface)"/>'+
+  '<circle cx="90" cy="40" r="8" fill="#444441"/><circle cx="90" cy="40" r="3" fill="var(--surface)"/></g></svg>';
+}
+
+const cardsEl = document.getElementById('cards');
+keys.forEach(k=>{
+  const v=V[k];
+  const d=document.createElement('div'); d.className='card';
+  d.innerHTML='<div class="card-h"><span style="color:'+v.color+';display:flex">'+ICONS[k]+'</span><div><div class="n">'+v.name+'</div><div class="s">'+v.sub+'</div></div></div>'+
+  carSvg(v)+
+  '<div class="tot"><span class="big" id="tot-'+k+'"></span><span class="u">CO₂e total</span></div>'+
+  '<div class="pk" id="pk-'+k+'"></div>'+
+  '<div class="bar" id="bar-'+k+'"></div>'+
+  '<div id="rows-'+k+'"></div>';
+  cardsEl.appendChild(d);
+});
+
+function fmt(kg){ return kg>=1000 ? (kg/1000).toFixed(1)+' t' : Math.round(kg)+' kg'; }
+function model(k){
+  const ef=EF[src].v, mf=document.getElementById('mfg').checked;
+  const segs=V[k].seg(ef);
+  return {M: mf?V[k].M:0, segs, e: segs.reduce((a,s)=>a+s.k,0)};
+}
+function breakEven(a,b,an,bn){
+  if(a.e>=b.e && a.M>=b.M) return an+' never beats '+bn+' (higher per-km emissions)';
+  if(a.M<=b.M && a.e<=b.e) return an+' is lower than '+bn+' from the start';
+  const km=(a.M-b.M)/(b.e-a.e);
+  return an+' beats '+bn+' after '+(Math.round(km/1000)*1000).toLocaleString()+' km';
+}
+
+const mq = matchMedia('(prefers-color-scheme: dark)');
+function theme(){
+  const dark = mq.matches;
+  return {grid:dark?'#2c2c2a':'#e1e0d9', tick:'#898781', surf:dark?'#1d1d1b':'#ffffff'};
+}
+let T = theme();
+
+const marker = {id:'marker',afterDatasetsDraw(ch){
+  const d=+document.getElementById('dist').value, x=ch.scales.x.getPixelForValue(d), a=ch.chartArea, c=ch.ctx;
+  c.save(); c.strokeStyle=T.tick; c.setLineDash([4,4]); c.lineWidth=1;
+  c.beginPath(); c.moveTo(x,a.top); c.lineTo(x,a.bottom); c.stroke(); c.setLineDash([]);
+  keys.forEach(k=>{
+    const m=model(k), y=ch.scales.y.getPixelForValue((m.M+m.e*d)/1000);
+    c.beginPath(); c.arc(x,y,5,0,Math.PI*2); c.fillStyle=COL[k]; c.fill(); c.lineWidth=2; c.strokeStyle=T.surf; c.stroke();
+  });
+  c.restore();
+}};
+
+const chart = new Chart(document.getElementById('chart'),{
+  type:'scatter',
+  data:{datasets:keys.map(k=>({label:V[k].name,data:[],borderColor:COL[k],backgroundColor:COL[k],showLine:true,pointRadius:0,borderWidth:2,borderDash:k==='bev'?[]:(k==='fcev'?[6,3]:[2,2]),tension:0}))},
+  options:{responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{display:false},tooltip:{enabled:false}},
+    scales:{
+      x:{type:'linear',min:0,max:300000,grid:{color:T.grid},ticks:{color:T.tick,callback:v=>(v/1000)+'k'},title:{display:true,text:'Distance (km)',color:T.tick}},
+      y:{min:0,grid:{color:T.grid},ticks:{color:T.tick,callback:v=>v+' t'},title:{display:true,text:'Cumulative CO₂e (tonnes)',color:T.tick}}
+    }},
+  plugins:[marker]
+});
+
+function update(){
+  const d=+document.getElementById('dist').value;
+  document.getElementById('dist-out').textContent=d.toLocaleString()+' km';
+  document.getElementById('ef-note').textContent=EF[src].l+' · '+EF[src].v+' g CO₂e/kWh';
+  document.querySelectorAll('.src-btn').forEach(b=>{
+    const on=b.dataset.src===src; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on);
+  });
+
+  const ms={}; keys.forEach(k=>ms[k]=model(k));
+  const parts={};
+  keys.forEach(k=>{
+    const m=ms[k], list=[];
+    if(m.M>0) list.push({l:'Manufacturing',c:MFG_GREY,val:m.M});
+    m.segs.forEach(s=>list.push({l:s.l,c:s.c,val:s.k*d}));
+    parts[k]=list;
+  });
+  const tots={}; keys.forEach(k=>tots[k]=parts[k].reduce((a,s)=>a+s.val,0));
+  const mx=Math.max(1e-9,...keys.map(k=>tots[k]));
+
+  keys.forEach(k=>{
+    document.getElementById('tot-'+k).textContent=fmt(tots[k]);
+    document.getElementById('pk-'+k).textContent='Operation: '+Math.round(ms[k].e*1000)+' g CO₂e/km';
+    document.getElementById('bar-'+k).innerHTML=parts[k].filter(s=>s.val>0).map(s=>'<div style="width:'+(s.val/mx*100)+'%;background:'+s.c+'"></div>').join('');
+    document.getElementById('rows-'+k).innerHTML=parts[k].map(s=>'<div class="row"><i class="sw" style="background:'+s.c+'"></i>'+s.l+'<span class="v">'+fmt(s.val)+'</span></div>').join('');
+  });
+
+  keys.forEach((k,i)=>{
+    const m=ms[k];
+    chart.data.datasets[i].data=[{x:0,y:m.M/1000},{x:300000,y:(m.M+m.e*300000)/1000}];
+  });
+  chart.update('none');
+
+  document.getElementById('be').innerHTML=[
+    breakEven(ms.bev,ms.icev,'BEV','ICEV'),
+    breakEven(ms.fcev,ms.icev,'FCEV','ICEV'),
+    breakEven(ms.fcev,ms.bev,'FCEV','BEV')
+  ].map(t=>'<div>'+t+'</div>').join('');
+}
+
+document.getElementById('dist').addEventListener('input',update);
+document.getElementById('mfg').addEventListener('change',update);
+document.querySelectorAll('.src-btn').forEach(b=>b.addEventListener('click',()=>{src=b.dataset.src;update();}));
+mq.addEventListener('change',()=>{
+  T=theme();
+  const s=chart.options.scales;
+  [s.x,s.y].forEach(a=>{a.grid.color=T.grid;a.ticks.color=T.tick;a.title.color=T.tick;});
+  update();
+});
+update();
+</script>
+</body>
+</html>

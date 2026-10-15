@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Product life cycle</title>
+<style>
+:root{
+  --bg:#eef3f5; --surface:#ffffff; --ink:#14262e; --muted:#5a6f79; --line:#cfdbe0; --guide:#9db2bb;
+  --accent:#e8702a; --switch-on:#156082; --shadow:0 8px 28px rgba(10,40,55,.18);
+  --c-nature:#7a8f9a; --c-raw:#2f6fb3; --c-prod:#43a047; --c-asm:#8e5bb5; --c-final:#14a8a0; --c-center:#0e7a74; --ring-a:.5;
+  --sans:"Avenir Next","Segoe UI","Helvetica Neue",system-ui,-apple-system,Arial,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1a20; --surface:#16262e; --ink:#e6eef1; --muted:#93a8b2; --line:#2a3e48; --guide:#4a6370;
+    --accent:#ff8a4a; --switch-on:#2a8cb8; --shadow:0 8px 28px rgba(0,0,0,.5);
+    --c-raw:#3b82d0; --c-prod:#4caf50; --c-asm:#a06bd0; --c-final:#1fc2b8; --c-center:#0e8f87; --ring-a:.4;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1a20; --surface:#16262e; --ink:#e6eef1; --muted:#93a8b2; --line:#2a3e48; --guide:#4a6370;
+  --accent:#ff8a4a; --switch-on:#2a8cb8; --shadow:0 8px 28px rgba(0,0,0,.5);
+  --c-raw:#3b82d0; --c-prod:#4caf50; --c-asm:#a06bd0; --c-final:#1fc2b8; --c-center:#0e8f87; --ring-a:.4;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+.app{max-width:1500px;margin:0 auto;padding:16px clamp(12px,2.5vw,32px) 24px}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.5rem,3vw,2.1rem);letter-spacing:-.01em;margin:0;line-height:1.15}
+.lede{margin:2px 0 12px;color:var(--muted);font-size:.95rem}
+
+/* toolbar */
+.bar{position:relative;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.left,.right{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pick{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.92rem}
+select{
+  font:inherit;font-weight:600;font-size:1rem;color:var(--ink);
+  appearance:none;-webkit-appearance:none;
+  padding:9px 40px 9px 14px;min-width:230px;max-width:100%;
+  border:1.5px solid var(--line);border-radius:10px;background-color:var(--surface);cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;
+  background-size:6px 6px,6px 6px;background-repeat:no-repeat;
+}
+select:hover{border-color:var(--ink)}
+select:focus-visible,.btn:focus-visible,.chip:focus-visible,.node:focus-visible,.zbtn:focus-visible,.x:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:600;font-size:.92rem;padding:9px 16px;border-radius:10px;border:1.5px solid var(--accent);background:var(--accent);color:#1b1006;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink);filter:none}
+.btn.ghost[aria-pressed="true"],.btn.ghost[aria-expanded="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn svg{flex:none}
+
+/* settings popover */
+.pop{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:min(340px,calc(100vw - 24px));max-height:min(78vh,720px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px 18px}
+.pop:focus{outline:none}
+.pop-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.pop h2{font-family:var(--serif);font-size:1.25rem;margin:0}
+.pop h3{font-size:.9rem;margin:18px 0 8px;font-weight:700}
+.x{font:inherit;font-size:1.3rem;line-height:1;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink);cursor:pointer}
+.x:hover{border-color:var(--line)}
+.switches{display:flex;flex-direction:column;gap:12px}
+.switch{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:.95rem;font-weight:500;user-select:none}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.track{width:40px;height:22px;border-radius:99px;background:var(--guide);position:relative;transition:background .2s;flex:none}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch input:checked + .track{background:var(--switch-on)}
+.switch input:checked + .track::after{transform:translateX(18px)}
+.switch input:focus-visible + .track{outline:3px solid var(--accent);outline-offset:2px}
+.hint{color:var(--muted);font-size:.88rem;margin:6px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.pop textarea{width:100%;min-height:110px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:10px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.pop pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px;line-height:1.5;margin:8px 0 0}
+.pop details summary{cursor:pointer;font-size:.88rem;font-weight:600;color:var(--muted)}
+#status{margin:6px 0 0;font-size:.88rem;min-height:1.3em}
+#status.err{color:#d6453a;font-weight:600}
+#status.ok{color:var(--muted)}
+
+/* stage */
+.stage{position:relative;height:calc(100vh - 175px);height:calc(100dvh - 175px);min-height:480px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.stage svg{display:block;width:100%;height:100%;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.stage svg.panning{cursor:grabbing}
+.float-hint{position:absolute;left:14px;top:12px;font-size:.85rem;color:var(--muted);pointer-events:none;transition:opacity .4s}
+.float-hint.gone{opacity:0}
+.zoom{position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;z-index:4}
+.zbtn{font:inherit;font-weight:700;font-size:1.15rem;line-height:1;min-width:38px;height:38px;padding:0 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:0 2px 8px rgba(10,40,55,.12)}
+.zbtn:hover{border-color:var(--ink)}
+.zbtn.fit{font-size:.8rem;font-weight:600}
+.legend{position:absolute;left:62px;bottom:12px;display:flex;flex-wrap:wrap;gap:4px 14px;max-width:calc(100% - 420px);padding:7px 12px;font-size:.82rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:10px;z-index:3}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+/* floating details */
+.info{position:absolute;right:14px;top:14px;width:330px;max-height:calc(100% - 28px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);z-index:6}
+.info-head{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-bottom:1px solid var(--line);cursor:grab;touch-action:none;user-select:none;font-size:.82rem;font-weight:700;color:var(--muted)}
+.info-head .grip{letter-spacing:2px;opacity:.7}
+.info-head .x{margin-left:auto;cursor:pointer}
+.info-body{overflow:auto;padding:14px 18px 18px}
+.info-body h2{font-family:var(--serif);font-size:1.35rem;line-height:1.2;margin:0 0 6px}
+.info-body p{margin:8px 0}
+.info-body .kicker{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.info-body .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.info-body .big{font-size:2.2rem;line-height:1;margin-bottom:8px}
+.info-body h3{font-size:.9rem;margin:14px 0 6px;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.85rem;padding:4px 10px;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+
+/* ---------- SVG ---------- */
+svg text{font-family:var(--sans)}
+.ring{stroke-width:2.5;fill-opacity:var(--ring-a);fill-rule:evenodd;transition:fill-opacity .45s}
+.ring-raw{fill:var(--c-raw);stroke:var(--c-raw)} .ring-production{fill:var(--c-prod);stroke:var(--c-prod)} .ring-assembly{fill:var(--c-asm);stroke:var(--c-asm)} .ring-product{fill:var(--c-final);stroke:var(--c-final)}
+svg.off .ring{fill-opacity:0;stroke:var(--guide);stroke-width:2;stroke-dasharray:3 8;stroke-linecap:round}
+.stage-name{font-weight:700;font-size:18px;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round;pointer-events:none}
+svg.no-names .stage-name{display:none}
+.nature-tag{font-weight:600;font-size:15px;fill:var(--muted);text-anchor:middle;font-style:italic;pointer-events:none}
+.arrow{stroke:var(--accent);stroke-width:2.2;fill:none;transition:opacity .3s;pointer-events:none}
+#ah path{fill:var(--accent)}
+.node{cursor:pointer;transition:opacity .3s}
+.node .b{fill:#fff;stroke:rgba(0,0,0,.4);stroke-width:2;transition:stroke .15s,stroke-width .15s}
+.node.nature .b{fill:var(--surface);stroke:var(--c-raw);stroke-width:2.5}
+.node:hover .b,.node:focus-visible .b{stroke:var(--accent);stroke-width:4.5}
+.node.sel .b,.node.now .b{stroke:var(--accent);stroke-width:5}
+.node:focus{outline:none}
+.node .em{text-anchor:middle;pointer-events:none}
+.node.dim,.arrow.dim{opacity:.14}
+.node.future,.arrow.future{opacity:.07}
+.lbl{font-weight:600;font-size:13.5px;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke-linejoin:round;stroke-width:4px}
+.lbl-in{fill:var(--ink);stroke:var(--surface)}
+.lbl-out{fill:var(--ink);stroke:var(--surface)}
+.lbl .sh{font-weight:800;font-size:14.5px}
+svg.no-labels .lbl{display:none}
+.center .b{fill:var(--c-center);stroke:#06302d;stroke-width:3}
+.center:hover .b,.center.sel .b,.center.now .b{stroke:var(--accent);stroke-width:5}
+.center .nm{fill:#fff;font-weight:700;font-size:16px;text-anchor:middle;pointer-events:none}
+
+@media (max-width:700px){
+  .stage{height:calc(100vh - 215px);height:calc(100dvh - 215px);min-height:420px}
+  .info{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:48%}
+  .info-head{cursor:default}
+  .legend,.float-hint{display:none}
+  .zoom{top:12px;bottom:auto}
+  select{min-width:0;width:100%}
+  .pick{width:100%}
+  .pick select{flex:1}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Life cycle of a product</h1>
+  <p class="lede">From nature, through extraction, production and assembly, to the product at the center.</p>
+
+  <div class="bar">
+    <div class="left">
+      <label class="pick" for="product">Product
+        <select id="product"></select>
+      </label>
+    </div>
+    <div class="right">
+      <button class="btn" id="tour" type="button">Play life cycle</button>
+      <button class="btn ghost" id="t-info" type="button" aria-pressed="true" aria-controls="info">Details</button>
+      <button class="btn ghost" id="t-settings" type="button" aria-expanded="false" aria-controls="settings" aria-haspopup="dialog">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5.5" cy="4" r="1.7" fill="var(--surface)"/><circle cx="10.5" cy="8" r="1.7" fill="var(--surface)"/><circle cx="6.5" cy="12" r="1.7" fill="var(--surface)"/></svg>
+        Settings
+      </button>
+    </div>
+
+    <div class="pop" id="settings" role="dialog" aria-label="Settings" tabindex="-1" hidden>
+      <div class="pop-head"><h2>Settings</h2><button class="x" id="settings-close" type="button" aria-label="Close settings">&times;</button></div>
+      <h3>Display</h3>
+      <div class="switches">
+        <label class="switch"><input type="checkbox" id="s-rings" checked><span class="track"></span>Colored rings</label>
+        <label class="switch"><input type="checkbox" id="s-names" checked><span class="track"></span>Stage names</label>
+        <label class="switch"><input type="checkbox" id="s-labels" checked><span class="track"></span>Bubble labels</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage">
+    <svg id="svg" viewBox="0 0 1160 1160" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Donut diagram of the product life cycle"></svg>
+    <div class="float-hint" id="float-hint">Scroll to zoom, drag to pan</div>
+
+    <div class="zoom" role="group" aria-label="Zoom controls">
+      <button class="zbtn" id="z-in" type="button" aria-label="Zoom in">+</button>
+      <button class="zbtn" id="z-out" type="button" aria-label="Zoom out">&minus;</button>
+      <button class="zbtn fit" id="z-fit" type="button" aria-label="Fit diagram to view">Fit</button>
+    </div>
+    <div class="legend" id="legend"></div>
+
+    <section class="info" id="info" aria-label="Details">
+      <div class="info-head" id="info-head"><span class="grip" aria-hidden="true">&#8942;&#8942;</span><span>Details</span><button class="x" id="info-close" type="button" aria-label="Hide details">&times;</button></div>
+      <div class="info-body" id="panel" aria-live="polite"></div>
+    </section>
+  </div>
+</div>
+
+<script type="text/xml" id="xml-default"><!--
+  Life cycle data. One <product> per entry in the dropdown.
+
+  <node stage="...">  stage is one of: nature | raw | production | assembly
+  <link from="a" to="b"/>  draws a straight arrow from node a to node b.
+       Links must go forward in the life cycle (nature, raw, production, assembly, product).
+       A link may skip stages, for example wind goes straight from nature to a wind farm.
+       Use to="product" to connect to the final product in the centre.
+  Optional on a node:
+       angle="0-360"  fixes its position (degrees clockwise from the top)
+       share="..."    a short text shown on the bubble, for example "~34%"
+  Placement: assembly bubbles are spread around the ring in the order written here.
+  Everything upstream is then placed in line with the bubbles it feeds.
+  Keep to roughly: nature 20, raw 18, production 16, assembly 12 bubbles or fewer.
+-->
+<lifecycle>
+
+  <!-- ===================== SMARTPHONE ===================== -->
+  <product id="smartphone" name="Smartphone" icon="📱"
+           summary="A smartphone contains more than 50 different elements. Most of its environmental footprint is created before you ever switch it on: in mining, chip manufacturing and assembly.">
+
+    <!-- Nature -->
+    <node id="n_bauxite" stage="nature" label="Bauxite deposits" icon="⛰️" detail="Reddish rock found near the surface, mostly in tropical regions. It is the only commercial source of aluminium."/>
+    <node id="n_brine"   stage="nature" label="Lithium brine" icon="💧" detail="Salty groundwater under salt flats in Chile and Argentina. Lithium is also mined from hard rock, mainly in Australia."/>
+    <node id="n_cuore"   stage="nature" label="Copper ore" icon="🪨" detail="Copper-bearing rock in large deposits, for example in Chile and Peru."/>
+    <node id="n_conickel" stage="nature" label="Cobalt &amp; nickel ore" icon="🪨" detail="Cobalt is mostly a by-product of copper and nickel mining. The DR Congo supplies most of the world's cobalt."/>
+    <node id="n_rare"    stage="nature" label="Rare-earth deposits" icon="🌋" detail="Deposits rich in neodymium, praseodymium and dysprosium. Mining and processing are concentrated in China."/>
+    <node id="n_sand"    stage="nature" label="Quartz sand" icon="🏖️" detail="Very pure quartz sand is the starting point for both silicon chips and glass."/>
+    <node id="n_oil"     stage="nature" label="Crude oil &amp; gas" icon="🛢️" detail="Fossil resources that provide the carbon building blocks for plastics and resins."/>
+    <node id="n_tin"     stage="nature" label="Tin ore" icon="🌴" detail="Often found in river sediments in Southeast Asia and China. Tin is the main ingredient of solder."/>
+    <node id="n_gold"    stage="nature" label="Gold &amp; silver ore" icon="🪙" detail="Precious metals found in veins and as by-products of copper mining."/>
+    <node id="n_tung"    stage="nature" label="Coltan &amp; wolframite" icon="🪨" detail="Ores of tantalum and tungsten. Tantalum goes into tiny capacitors and tungsten into the vibration motor."/>
+    <node id="n_graphite" stage="nature" label="Graphite deposits" icon="✏️" detail="Natural graphite is mined in China, Mozambique and Madagascar. Synthetic graphite is made from petroleum coke."/>
+
+    <!-- Raw material extraction -->
+    <node id="r_bauxite"  stage="raw" label="Bauxite mining" icon="⛏️" detail="Open-pit mining removes vegetation and topsoil. The bauxite is washed and shipped for refining."/>
+    <node id="r_lithium"  stage="raw" label="Lithium extraction" icon="🧂" detail="Brine is pumped into evaporation ponds for 12 to 18 months, which uses a lot of water in dry regions."/>
+    <node id="r_copper"   stage="raw" label="Copper mining" icon="⛏️" detail="Large open-pit and underground mines produce copper concentrate for wiring and circuits."/>
+    <node id="r_cobalt"   stage="raw" label="Cobalt &amp; nickel mining" icon="⛏️" detail="Mined industrially and also by small-scale artisanal miners, which raises serious safety and child-labour concerns."/>
+    <node id="r_rare"     stage="raw" label="Rare-earth mining" icon="⛏️" detail="Separating the individual rare-earth elements takes many chemical steps and produces radioactive and acidic waste."/>
+    <node id="r_silica"   stage="raw" label="Quartz quarrying" icon="🚜" detail="High-purity quartz is quarried, crushed and washed to remove iron and other impurities."/>
+    <node id="r_crude"    stage="raw" label="Oil &amp; gas extraction" icon="🏭" detail="Drilling and pumping, followed by refining into naphtha, which is the feedstock for plastics."/>
+    <node id="r_tin"      stage="raw" label="Tin mining" icon="⛏️" detail="Tin is dredged or washed out of sediments and concentrated before smelting."/>
+    <node id="r_gold"     stage="raw" label="Gold &amp; silver mining" icon="⛏️" detail="Only tiny amounts end up in a phone, but mining a gram of gold moves a lot of rock."/>
+    <node id="r_tung"     stage="raw" label="Tantalum &amp; tungsten mining" icon="⛏️" detail="These are often called conflict minerals because mining has funded armed groups in some regions."/>
+    <node id="r_graphite" stage="raw" label="Graphite mining" icon="⛏️" detail="Flake graphite is mined and purified before it can be used in a battery."/>
+
+    <!-- Production -->
+    <node id="p_alu"      stage="production" label="Aluminium" icon="🔩" detail="Bauxite becomes alumina, then aluminium by electrolysis. This is one of the most electricity-intensive industrial processes."/>
+    <node id="p_cathode"  stage="production" label="Cathode material" icon="🔋" detail="Lithium and cobalt compounds are synthesised into the powder that stores lithium ions in the battery."/>
+    <node id="p_anode"    stage="production" label="Anode graphite" icon="⚫" detail="Graphite is shaped and coated into the negative electrode material."/>
+    <node id="p_electro"  stage="production" label="Electrolyte &amp; separator" icon="🧪" detail="A lithium salt solution and a thin plastic membrane that keeps the electrodes apart."/>
+    <node id="p_cufoil"   stage="production" label="Copper foil &amp; wire" icon="🧵" detail="Copper is rolled into micrometre-thin foil for batteries and drawn into fine wire for coils."/>
+    <node id="p_pcb"      stage="production" label="Circuit boards" icon="🟩" detail="Copper layers are etched onto resin-impregnated glass-fibre boards."/>
+    <node id="p_solder"   stage="production" label="Solder &amp; contacts" icon="✨" detail="Tin-based solder joins components, and thin gold plating protects contacts from corrosion."/>
+    <node id="p_capac"    stage="production" label="Capacitors" icon="🔌" detail="Tantalum powder is pressed and sintered into tiny capacitors that smooth the power supply."/>
+    <node id="p_magnets"  stage="production" label="Magnets" icon="🧲" detail="Rare-earth alloys are sintered into strong permanent magnets for speakers, camera focus and the vibration motor."/>
+    <node id="p_chip"     stage="production" label="Silicon chips" icon="💾" detail="Silicon is purified to about 99.9999999 percent, grown into wafers and patterned in hundreds of steps inside a cleanroom fab."/>
+    <node id="p_glass"    stage="production" label="Display glass" icon="🔲" detail="Quartz sand is melted and chemically strengthened into thin, scratch-resistant glass."/>
+    <node id="p_oled"     stage="production" label="OLED panel" icon="🖼️" detail="Organic light-emitting layers are deposited on a glass backplane."/>
+    <node id="p_lens"     stage="production" label="Lenses &amp; sensor" icon="🔍" detail="Moulded glass and plastic lenses are paired with a silicon image sensor."/>
+    <node id="p_plastic"  stage="production" label="Plastics &amp; adhesives" icon="🧴" detail="Polymers produced from refined oil and gas are moulded into casings, seals and glues."/>
+
+    <!-- Assembly -->
+    <node id="a_batt"    stage="assembly" label="Battery pack" icon="🔋" detail="Electrodes are stacked or wound, filled with electrolyte, sealed and fitted with a protection circuit."/>
+    <node id="a_antenna" stage="assembly" label="Antennas &amp; connectors" icon="📡" detail="Metal traces and connectors that link the phone to cellular networks, Wi-Fi and the charger."/>
+    <node id="a_body"    stage="assembly" label="Housing &amp; frame" icon="📦" detail="The frame and back cover are machined, finished and fitted around the other modules."/>
+    <node id="a_audio"   stage="assembly" label="Speaker &amp; haptics" icon="🔊" detail="Magnets, coils and membranes are assembled into the speaker, microphone and vibration motor."/>
+    <node id="a_main"    stage="assembly" label="Logic board" icon="🧠" detail="Chips and components are soldered onto the circuit board by pick-and-place robots, then tested."/>
+    <node id="a_sensors" stage="assembly" label="Sensors &amp; biometrics" icon="👆" detail="Motion sensors, fingerprint or face recognition and other small sensors are added."/>
+    <node id="a_cam"     stage="assembly" label="Camera module" icon="📷" detail="Lenses, image sensor and focus actuator are aligned and sealed in a tiny housing."/>
+    <node id="a_disp"    stage="assembly" label="Display module" icon="🖥️" detail="Glass, touch sensor and OLED panel are laminated into one module."/>
+
+    <!-- Nature to raw -->
+    <link from="n_bauxite"  to="r_bauxite"/>
+    <link from="n_brine"    to="r_lithium"/>
+    <link from="n_cuore"    to="r_copper"/>
+    <link from="n_conickel" to="r_cobalt"/>
+    <link from="n_rare"     to="r_rare"/>
+    <link from="n_sand"     to="r_silica"/>
+    <link from="n_oil"      to="r_crude"/>
+    <link from="n_tin"      to="r_tin"/>
+    <link from="n_gold"     to="r_gold"/>
+    <link from="n_tung"     to="r_tung"/>
+    <link from="n_graphite" to="r_graphite"/>
+    <!-- Raw to production -->
+    <link from="r_bauxite"  to="p_alu"/>
+    <link from="r_lithium"  to="p_cathode"/>
+    <link from="r_cobalt"   to="p_cathode"/>
+    <link from="r_lithium"  to="p_electro"/>
+    <link from="r_crude"    to="p_electro"/>
+    <link from="r_graphite" to="p_anode"/>
+    <link from="r_copper"   to="p_cufoil"/>
+    <link from="r_copper"   to="p_pcb"/>
+    <link from="r_crude"    to="p_pcb"/>
+    <link from="r_tin"      to="p_solder"/>
+    <link from="r_gold"     to="p_solder"/>
+    <link from="r_gold"     to="p_chip"/>
+    <link from="r_tung"     to="p_capac"/>
+    <link from="r_tung"     to="p_magnets"/>
+    <link from="r_rare"     to="p_magnets"/>
+    <link from="r_silica"   to="p_chip"/>
+    <link from="r_copper"   to="p_chip"/>
+    <link from="r_silica"   to="p_glass"/>
+    <link from="r_silica"   to="p_oled"/>
+    <link from="r_crude"    to="p_oled"/>
+    <link from="r_silica"   to="p_lens"/>
+    <link from="r_crude"    to="p_lens"/>
+    <link from="r_crude"    to="p_plastic"/>
+    <!-- Production to assembly -->
+    <link from="p_cathode"  to="a_batt"/>
+    <link from="p_anode"    to="a_batt"/>
+    <link from="p_electro"  to="a_batt"/>
+    <link from="p_cufoil"   to="a_batt"/>
+    <link from="p_cufoil"   to="a_antenna"/>
+    <link from="p_solder"   to="a_antenna"/>
+    <link from="p_plastic"  to="a_antenna"/>
+    <link from="p_alu"      to="a_body"/>
+    <link from="p_plastic"  to="a_body"/>
+    <link from="p_magnets"  to="a_audio"/>
+    <link from="p_cufoil"   to="a_audio"/>
+    <link from="p_chip"     to="a_main"/>
+    <link from="p_pcb"      to="a_main"/>
+    <link from="p_solder"   to="a_main"/>
+    <link from="p_capac"    to="a_main"/>
+    <link from="p_chip"     to="a_sensors"/>
+    <link from="p_lens"     to="a_sensors"/>
+    <link from="p_lens"     to="a_cam"/>
+    <link from="p_magnets"  to="a_cam"/>
+    <link from="p_oled"     to="a_disp"/>
+    <link from="p_glass"    to="a_disp"/>
+    <!-- Assembly to product -->
+    <link from="a_batt"    to="product"/>
+    <link from="a_antenna" to="product"/>
+    <link from="a_body"    to="product"/>
+    <link from="a_audio"   to="product"/>
+    <link from="a_main"    to="product"/>
+    <link from="a_sensors" to="product"/>
+    <link from="a_cam"     to="product"/>
+    <link from="a_disp"    to="product"/>
+  </product>
+
+  <!-- ===================== LAPTOP ===================== -->
+  <product id="laptop" name="Laptop" icon="💻"
+           summary="A laptop uses more metal and has a larger screen and battery than a phone, so its raw material footprint is bigger, but it usually lasts longer.">
+
+    <node id="n_bauxite"  stage="nature" label="Bauxite deposits" icon="⛰️" detail="The only commercial source of aluminium, which is used for many laptop chassis."/>
+    <node id="n_dolomite" stage="nature" label="Dolomite rock" icon="🪨" detail="Carbonate rock that is a source of magnesium for lightweight alloys."/>
+    <node id="n_brine"    stage="nature" label="Lithium brine" icon="💧" detail="Lithium-rich groundwater under salt flats."/>
+    <node id="n_cuore"    stage="nature" label="Copper ore" icon="🪨" detail="Ore bodies that supply copper for wiring, heat pipes and circuit boards."/>
+    <node id="n_conickel" stage="nature" label="Cobalt &amp; nickel ore" icon="🪨" detail="Cobalt and nickel are used in the battery cathode."/>
+    <node id="n_rare"     stage="nature" label="Rare-earth deposits" icon="🌋" detail="Source of neodymium for magnets in speakers and fans."/>
+    <node id="n_sand"     stage="nature" label="Quartz sand" icon="🏖️" detail="Raw material for chips and display glass."/>
+    <node id="n_oil"      stage="nature" label="Crude oil &amp; gas" icon="🛢️" detail="Feedstock for plastics and resins."/>
+    <node id="n_tin"      stage="nature" label="Tin ore" icon="🌴" detail="Tin is the main ingredient of solder."/>
+    <node id="n_gold"     stage="nature" label="Gold &amp; silver ore" icon="🪙" detail="Precious metals used for corrosion-free contacts."/>
+    <node id="n_tung"     stage="nature" label="Coltan ore" icon="🪨" detail="The ore that provides tantalum for capacitors."/>
+    <node id="n_graphite" stage="nature" label="Graphite deposits" icon="✏️" detail="Natural graphite is a raw material for battery anodes."/>
+
+    <node id="r_bauxite"  stage="raw" label="Bauxite mining" icon="⛏️" detail="Open-pit mining, followed by washing and transport to refineries."/>
+    <node id="r_magnesium" stage="raw" label="Dolomite quarrying" icon="🚜" detail="Quarried, crushed and heated to release magnesium."/>
+    <node id="r_lithium"  stage="raw" label="Lithium extraction" icon="🧂" detail="Evaporation ponds or hard-rock mining."/>
+    <node id="r_cobalt"   stage="raw" label="Cobalt &amp; nickel mining" icon="⛏️" detail="Mined industrially and by small-scale miners."/>
+    <node id="r_copper"   stage="raw" label="Copper mining" icon="⛏️" detail="Large open-pit and underground mines producing copper concentrate."/>
+    <node id="r_rare"     stage="raw" label="Rare-earth mining" icon="⛏️" detail="Mining followed by complex chemical separation."/>
+    <node id="r_silica"   stage="raw" label="Quartz quarrying" icon="🚜" detail="Quarried and purified to remove impurities."/>
+    <node id="r_crude"    stage="raw" label="Oil &amp; gas extraction" icon="🏭" detail="Drilling and refining to produce plastic feedstock."/>
+    <node id="r_tin"      stage="raw" label="Tin mining" icon="⛏️" detail="Tin concentrate is separated from sediments by dredging or washing."/>
+    <node id="r_gold"     stage="raw" label="Gold &amp; silver mining" icon="⛏️" detail="Small quantities per device, large amounts of waste rock."/>
+    <node id="r_tantalum" stage="raw" label="Tantalum mining" icon="⛏️" detail="Often sourced from regions where mining conditions are hard to monitor."/>
+    <node id="r_graphite" stage="raw" label="Graphite mining" icon="⛏️" detail="Flake graphite is mined and purified."/>
+
+    <node id="p_alu"      stage="production" label="Aluminium" icon="🔩" detail="Alumina is turned into aluminium by electrolysis, then rolled and machined."/>
+    <node id="p_mg"       stage="production" label="Magnesium alloy" icon="🪶" detail="Light, stiff alloy cast into thin chassis parts."/>
+    <node id="p_cathode"  stage="production" label="Cathode material" icon="🔋" detail="Lithium, cobalt and nickel compounds are synthesised into battery powders."/>
+    <node id="p_anode"    stage="production" label="Anode graphite" icon="⚫" detail="Graphite coated onto copper foil forms the negative electrode."/>
+    <node id="p_electro"  stage="production" label="Electrolyte &amp; separator" icon="🧪" detail="Lithium salt solution and a thin plastic membrane."/>
+    <node id="p_cufoil"   stage="production" label="Copper foil &amp; wire" icon="🧵" detail="Rolled and drawn copper for batteries, coils and cables."/>
+    <node id="p_pcb"      stage="production" label="Circuit boards" icon="🟩" detail="Copper traces on a resin and glass-fibre board."/>
+    <node id="p_solder"   stage="production" label="Solder &amp; contacts" icon="✨" detail="Tin-based solder and gold-plated contacts."/>
+    <node id="p_capac"    stage="production" label="Capacitors" icon="🔌" detail="Tantalum and ceramic capacitors stabilise the power supply."/>
+    <node id="p_magnets"  stage="production" label="Magnets" icon="🧲" detail="Sintered rare-earth magnets for speakers and fans."/>
+    <node id="p_cpu"      stage="production" label="Processor (CPU &amp; GPU)" icon="💾" detail="Silicon wafers processed in a cleanroom through hundreds of steps."/>
+    <node id="p_mem"      stage="production" label="Memory &amp; SSD chips" icon="🗂️" detail="Dense memory chips stacked in many layers."/>
+    <node id="p_glass"    stage="production" label="Display glass" icon="🔲" detail="Strengthened glass for the screen and trackpad."/>
+    <node id="p_panel"    stage="production" label="LCD or OLED panel" icon="🖼️" detail="Thin-film transistors, light-emitting layers or a backlight, and polarising films."/>
+    <node id="p_plastic"  stage="production" label="Plastics" icon="🧴" detail="Moulded into keys, bezels and internal parts."/>
+    <node id="p_heatpipe" stage="production" label="Heat pipes &amp; fans" icon="🌀" detail="Copper tubes and plastic fan blades that move heat away from the processor."/>
+
+    <node id="a_batt"     stage="assembly" label="Battery pack" icon="🔋" detail="Cells wired together with a controller and fitted in a casing."/>
+    <node id="a_chassis"  stage="assembly" label="Chassis" icon="📦" detail="Aluminium, magnesium and plastic parts form the structure that holds everything."/>
+    <node id="a_input"    stage="assembly" label="Keyboard &amp; trackpad" icon="⌨️" detail="Key switches, membranes and a glass trackpad are assembled and attached."/>
+    <node id="a_speakers" stage="assembly" label="Speakers &amp; mics" icon="🔊" detail="Magnets, coils and membranes in small enclosures."/>
+    <node id="a_cooling"  stage="assembly" label="Cooling module" icon="❄️" detail="Heat pipes, fans and a heat sink fitted over the processor."/>
+    <node id="a_board"    stage="assembly" label="Mainboard" icon="🧠" detail="Processor, memory and components mounted onto the circuit board."/>
+    <node id="a_ports"    stage="assembly" label="Ports &amp; wireless" icon="🔗" detail="USB and charging ports, Wi-Fi and Bluetooth modules."/>
+    <node id="a_screen"   stage="assembly" label="Screen assembly" icon="🖥️" detail="Display, cables and lid joined into a single unit."/>
+    <node id="a_power"    stage="assembly" label="Charger &amp; adapter" icon="🔌" detail="A small power converter with its own circuit board, coils and plastic case."/>
+
+    <link from="n_bauxite"  to="r_bauxite"/>
+    <link from="n_dolomite" to="r_magnesium"/>
+    <link from="n_brine"    to="r_lithium"/>
+    <link from="n_conickel" to="r_cobalt"/>
+    <link from="n_cuore"    to="r_copper"/>
+    <link from="n_rare"     to="r_rare"/>
+    <link from="n_sand"     to="r_silica"/>
+    <link from="n_oil"      to="r_crude"/>
+    <link from="n_tin"      to="r_tin"/>
+    <link from="n_gold"     to="r_gold"/>
+    <link from="n_tung"     to="r_tantalum"/>
+    <link from="n_graphite" to="r_graphite"/>
+
+    <link from="r_bauxite"   to="p_alu"/>
+    <link from="r_magnesium" to="p_mg"/>
+    <link from="r_lithium"   to="p_cathode"/>
+    <link from="r_cobalt"    to="p_cathode"/>
+    <link from="r_graphite"  to="p_anode"/>
+    <link from="r_lithium"   to="p_electro"/>
+    <link from="r_crude"     to="p_electro"/>
+    <link from="r_copper"    to="p_cufoil"/>
+    <link from="r_copper"    to="p_pcb"/>
+    <link from="r_crude"     to="p_pcb"/>
+    <link from="r_tin"       to="p_solder"/>
+    <link from="r_gold"      to="p_solder"/>
+    <link from="r_tantalum"  to="p_capac"/>
+    <link from="r_rare"      to="p_magnets"/>
+    <link from="r_silica"    to="p_cpu"/>
+    <link from="r_copper"    to="p_cpu"/>
+    <link from="r_gold"      to="p_cpu"/>
+    <link from="r_silica"    to="p_mem"/>
+    <link from="r_copper"    to="p_mem"/>
+    <link from="r_silica"    to="p_glass"/>
+    <link from="r_silica"    to="p_panel"/>
+    <link from="r_crude"     to="p_panel"/>
+    <link from="r_rare"      to="p_panel"/>
+    <link from="r_crude"     to="p_plastic"/>
+    <link from="r_copper"    to="p_heatpipe"/>
+    <link from="r_crude"     to="p_heatpipe"/>
+
+    <link from="p_cathode"  to="a_batt"/>
+    <link from="p_anode"    to="a_batt"/>
+    <link from="p_electro"  to="a_batt"/>
+    <link from="p_cufoil"   to="a_batt"/>
+    <link from="p_alu"      to="a_chassis"/>
+    <link from="p_mg"       to="a_chassis"/>
+    <link from="p_plastic"  to="a_chassis"/>
+    <link from="p_plastic"  to="a_input"/>
+    <link from="p_pcb"      to="a_input"/>
+    <link from="p_glass"    to="a_input"/>
+    <link from="p_magnets"  to="a_speakers"/>
+    <link from="p_cufoil"   to="a_speakers"/>
+    <link from="p_plastic"  to="a_speakers"/>
+    <link from="p_heatpipe" to="a_cooling"/>
+    <link from="p_alu"      to="a_cooling"/>
+    <link from="p_cpu"      to="a_board"/>
+    <link from="p_mem"      to="a_board"/>
+    <link from="p_pcb"      to="a_board"/>
+    <link from="p_solder"   to="a_board"/>
+    <link from="p_capac"    to="a_board"/>
+    <link from="p_pcb"      to="a_ports"/>
+    <link from="p_cufoil"   to="a_ports"/>
+    <link from="p_solder"   to="a_ports"/>
+    <link from="p_plastic"  to="a_ports"/>
+    <link from="p_panel"    to="a_screen"/>
+    <link from="p_glass"    to="a_screen"/>
+    <link from="p_plastic"  to="a_screen"/>
+    <link from="p_pcb"      to="a_power"/>
+    <link from="p_cufoil"   to="a_power"/>
+    <link from="p_plastic"  to="a_power"/>
+    <link from="p_capac"    to="a_power"/>
+
+    <link from="a_batt"     to="product"/>
+    <link from="a_chassis"  to="product"/>
+    <link from="a_input"    to="product"/>
+    <link from="a_speakers" to="product"/>
+    <link from="a_cooling"  to="product"/>
+    <link from="a_board"    to="product"/>
+    <link from="a_ports"    to="product"/>
+    <link from="a_screen"   to="product"/>
+    <link from="a_power"    to="product"/>
+  </product>
+
+  <!-- ===================== ELECTRICITY AS A SERVICE ===================== -->
+  <product id="eaas" name="Electricity as a service" icon="⚡"
+           summary="The customer buys electricity, not equipment. Each spoke is a pathway of a realistic electricity mix. Wind, sunlight and water flow straight into their plants, while fuels such as coal, gas and uranium are extracted and processed first. Shares are rough global averages, and a real provider's mix depends on the country and the contract.">
+
+    <!-- Nature -->
+    <node id="n_wind"      stage="nature" label="Wind" icon="🌬️" detail="A flow resource. It is not extracted or used up, so it goes straight into the wind farm."/>
+    <node id="n_sun"       stage="nature" label="Sunlight" icon="☀️" detail="A flow resource that goes straight into the solar plant. The materials for the panels still need mining."/>
+    <node id="n_river"     stage="nature" label="Rivers &amp; reservoirs" icon="🏞️" detail="Water flowing downhill drives the turbines. Dams change river ecosystems and flood land."/>
+    <node id="n_heat"      stage="nature" label="Geothermal heat" icon="🌋" detail="Hot rock and water below ground. Best in volcanic regions such as Iceland, Indonesia and Kenya."/>
+    <node id="n_uranium"   stage="nature" label="Uranium ore" icon="☢️" detail="Mined mainly in Kazakhstan, Canada, Namibia and Australia."/>
+    <node id="n_coal"      stage="nature" label="Coal seams" icon="🪨" detail="Fossil carbon from ancient plants, mined in large open-cast and underground mines."/>
+    <node id="n_gas"       stage="nature" label="Natural gas fields" icon="🔥" detail="Gas trapped in porous rock, often found together with crude oil."/>
+    <node id="n_oil"       stage="nature" label="Crude oil" icon="🛢️" detail="Used for resins in turbine blades and for fuel oil in some power plants."/>
+    <node id="n_biomass"   stage="nature" label="Forests &amp; crop residues" icon="🌲" detail="Wood, straw and other plant waste that can be burned or fermented for energy."/>
+    <node id="n_iron"      stage="nature" label="Iron ore" icon="🪨" detail="Mined in very large open pits, mainly in Australia and Brazil."/>
+    <node id="n_limestone" stage="nature" label="Limestone &amp; clay" icon="🧱" detail="The ingredients of cement, needed for dams, foundations and reactor buildings."/>
+    <node id="n_bauxite"   stage="nature" label="Bauxite deposits" icon="⛰️" detail="The source of aluminium for frames and power lines."/>
+    <node id="n_cuore"     stage="nature" label="Copper ore" icon="🪨" detail="Copper is the main metal in generators, cables and transformers."/>
+    <node id="n_silverore" stage="nature" label="Silver ore" icon="🪙" detail="Silver is mostly a by-product of lead, zinc and copper mining."/>
+    <node id="n_sand"      stage="nature" label="Quartz sand" icon="🏖️" detail="Silicon for solar cells and chips, and glass for panels and blades."/>
+    <node id="n_nickel"    stage="nature" label="Nickel ore" icon="🪨" detail="Nickel is used in heat-resistant turbine alloys and in some battery types."/>
+    <node id="n_rare"      stage="nature" label="Rare-earth deposits" icon="🌋" detail="Neodymium and dysprosium for the magnets in wind turbine generators."/>
+    <node id="n_brine"     stage="nature" label="Lithium brine" icon="💧" detail="Lithium for grid and home batteries."/>
+
+    <!-- Raw material extraction -->
+    <node id="r_uranium"   stage="raw" label="Uranium mining &amp; milling" icon="⛏️" detail="Ore is crushed and chemically processed into uranium concentrate, known as yellowcake."/>
+    <node id="r_coal"      stage="raw" label="Coal mining" icon="⛏️" detail="One of the largest sources of mining waste and of carbon dioxide emissions."/>
+    <node id="r_gas"       stage="raw" label="Gas extraction" icon="🏭" detail="Drilling wells, gathering the gas and removing water and impurities."/>
+    <node id="r_crude"     stage="raw" label="Oil extraction" icon="🏭" detail="Pumped from wells and sent to refineries."/>
+    <node id="r_biomass"   stage="raw" label="Forestry &amp; harvesting" icon="🚜" detail="Residues from forestry and farming are collected. Sourcing matters a lot for whether biomass is sustainable."/>
+    <node id="r_geo"       stage="raw" label="Geothermal drilling" icon="🏗️" detail="Deep wells are drilled to reach hot water or steam."/>
+    <node id="r_iron"      stage="raw" label="Iron ore mining" icon="⛏️" detail="Open-pit mining of ore that becomes steel."/>
+    <node id="r_limestone" stage="raw" label="Limestone quarrying" icon="🚜" detail="Quarried and crushed for cement."/>
+    <node id="r_bauxite"   stage="raw" label="Bauxite mining" icon="⛏️" detail="Open-pit mining of aluminium ore."/>
+    <node id="r_copper"    stage="raw" label="Copper mining" icon="⛏️" detail="Large mines producing copper concentrate."/>
+    <node id="r_silver"    stage="raw" label="Silver refining" icon="⛏️" detail="Recovered during smelting of other metals."/>
+    <node id="r_silica"    stage="raw" label="Quartz quarrying" icon="🚜" detail="High-purity quartz is quarried and cleaned."/>
+    <node id="r_nickel"    stage="raw" label="Nickel mining" icon="⛏️" detail="Nickel is mined from sulfide and laterite ores."/>
+    <node id="r_rare"      stage="raw" label="Rare-earth mining" icon="⛏️" detail="Mining and chemical separation of rare-earth elements."/>
+    <node id="r_lithium"   stage="raw" label="Lithium extraction" icon="🧂" detail="Evaporation ponds or hard-rock mining."/>
+
+    <!-- Production -->
+    <node id="p_fuelrods"  stage="production" label="Nuclear fuel" icon="☢️" detail="Uranium is enriched and pressed into ceramic pellets, then sealed inside metal fuel rods."/>
+    <node id="p_coalp"     stage="production" label="Washed coal" icon="⚫" detail="Coal is crushed and washed, then moved by train or ship to power plants."/>
+    <node id="p_gasp"      stage="production" label="Processed gas &amp; LNG" icon="🔥" detail="Gas is cleaned and sent through pipelines, or liquefied as LNG for shipping."/>
+    <node id="p_refined"   stage="production" label="Fuel oil &amp; diesel" icon="⛽" detail="Refineries split crude oil into fuels."/>
+    <node id="p_pellets"   stage="production" label="Wood pellets &amp; biogas" icon="🪵" detail="Residues are dried and pressed into pellets, or fermented into biogas."/>
+    <node id="p_wells"     stage="production" label="Wells &amp; steam pipes" icon="🔧" detail="Steel casing and pipes that bring geothermal steam to the surface."/>
+    <node id="p_turbines"  stage="production" label="Turbines &amp; generators" icon="🌀" detail="Precision steel and nickel alloy turbines connected to copper-wound generators."/>
+    <node id="p_steel"     stage="production" label="Steel" icon="🔩" detail="Iron ore is smelted and alloyed into steel for towers, pipes and frames."/>
+    <node id="p_cement"    stage="production" label="Cement &amp; concrete" icon="🧱" detail="Limestone is heated in kilns, which is a major source of industrial carbon dioxide."/>
+    <node id="p_alu"       stage="production" label="Aluminium" icon="🔩" detail="Electrolysis of alumina. Used in panel frames and overhead lines."/>
+    <node id="p_cu"        stage="production" label="Copper cables &amp; coils" icon="🧵" detail="Copper is drawn into wire and wound into coils for generators and transformers."/>
+    <node id="p_blades"    stage="production" label="Blades (glass fibre)" icon="🍃" detail="Glass fibre and resin moulded into rotor blades up to over 100 metres long."/>
+    <node id="p_magnets"   stage="production" label="Generator magnets" icon="🧲" detail="Rare-earth magnets allow compact, efficient wind generators."/>
+    <node id="p_pv"        stage="production" label="Solar cells &amp; modules" icon="🔆" detail="Quartz becomes polysilicon, then wafers, then cells with silver contacts, laminated under glass."/>
+    <node id="p_battcell"  stage="production" label="Battery cells" icon="🔋" detail="Lithium-ion cells for storing power for the evening."/>
+    <node id="p_inv"       stage="production" label="Inverters &amp; electronics" icon="🟩" detail="Power electronics that convert direct current to the alternating current of the grid."/>
+
+    <!-- Assembly: the power plants, storage and grid -->
+    <node id="a_onwind"   stage="assembly" share="~7%" label="Onshore wind farms" icon="🌬️" detail="Towers, blades and generators are erected on site. Roughly 7 percent of global electricity, a rough average."/>
+    <node id="a_offwind"  stage="assembly" share="~1%" label="Offshore wind farms" icon="🌊" detail="Larger turbines on foundations in the sea, with cables to shore. Roughly 1 percent of global electricity."/>
+    <node id="a_solar"    stage="assembly" share="~7%" label="Solar parks &amp; rooftops" icon="☀️" detail="Panels, mounting structures and inverters installed on land or roofs. Roughly 7 percent of global electricity, and the fastest growing source."/>
+    <node id="a_storage"  stage="assembly" label="Battery storage" icon="🔋" detail="Containerised battery systems that move solar and wind power to when it is needed."/>
+    <node id="a_grid"     stage="assembly" label="Grid &amp; smart meters" icon="🔌" detail="Power lines, substations and meters that deliver electricity and measure what each customer uses."/>
+    <node id="a_hydro"    stage="assembly" share="~14%" label="Hydropower dams" icon="💧" detail="A dam, penstocks, turbines and generators. Roughly 14 percent of global electricity."/>
+    <node id="a_geo"      stage="assembly" share="&lt;1%" label="Geothermal plants" icon="♨️" detail="Steam from the ground drives a turbine. A small share globally, but large in countries like Iceland and Kenya."/>
+    <node id="a_nuclear"  stage="assembly" share="~9%" label="Nuclear plants" icon="⚛️" detail="Reactor, containment building, turbines and cooling systems. Roughly 9 percent of global electricity, with very low direct carbon emissions but long-lived waste."/>
+    <node id="a_coal"     stage="assembly" share="~34%" label="Coal plants" icon="🏭" detail="Boilers, steam turbines and generators. Still the largest single source, roughly a third of global electricity, and the most carbon-intensive."/>
+    <node id="a_gas"      stage="assembly" share="~22%" label="Gas plants" icon="🔥" detail="Gas turbines, often with a steam stage, which can start up quickly. Roughly 22 percent of global electricity."/>
+    <node id="a_oil"      stage="assembly" share="~2%" label="Oil &amp; diesel units" icon="⛽" detail="Diesel generators and oil-fired plants, mostly for islands, backup and peak demand."/>
+    <node id="a_bio"      stage="assembly" share="~2%" label="Biomass plants" icon="🌲" detail="Boilers or biogas engines burning plant material. Roughly 2 percent of global electricity."/>
+
+    <!-- Nature to raw -->
+    <link from="n_uranium"   to="r_uranium"/>
+    <link from="n_coal"      to="r_coal"/>
+    <link from="n_gas"       to="r_gas"/>
+    <link from="n_oil"       to="r_crude"/>
+    <link from="n_biomass"   to="r_biomass"/>
+    <link from="n_heat"      to="r_geo"/>
+    <link from="n_iron"      to="r_iron"/>
+    <link from="n_limestone" to="r_limestone"/>
+    <link from="n_bauxite"   to="r_bauxite"/>
+    <link from="n_cuore"     to="r_copper"/>
+    <link from="n_silverore" to="r_silver"/>
+    <link from="n_sand"      to="r_silica"/>
+    <link from="n_nickel"    to="r_nickel"/>
+    <link from="n_rare"      to="r_rare"/>
+    <link from="n_brine"     to="r_lithium"/>
+    <!-- Free flows go straight into the plants -->
+    <link from="n_wind"      to="a_onwind"/>
+    <link from="n_wind"      to="a_offwind"/>
+    <link from="n_sun"       to="a_solar"/>
+    <link from="n_river"     to="a_hydro"/>
+
+    <!-- Raw to production -->
+    <link from="r_uranium"   to="p_fuelrods"/>
+    <link from="r_coal"      to="p_coalp"/>
+    <link from="r_gas"       to="p_gasp"/>
+    <link from="r_crude"     to="p_refined"/>
+    <link from="r_crude"     to="p_blades"/>
+    <link from="r_biomass"   to="p_pellets"/>
+    <link from="r_geo"       to="p_wells"/>
+    <link from="r_iron"      to="p_wells"/>
+    <link from="r_iron"      to="p_steel"/>
+    <link from="r_iron"      to="p_turbines"/>
+    <link from="r_nickel"    to="p_turbines"/>
+    <link from="r_copper"    to="p_turbines"/>
+    <link from="r_limestone" to="p_cement"/>
+    <link from="r_bauxite"   to="p_alu"/>
+    <link from="r_copper"    to="p_cu"/>
+    <link from="r_silica"    to="p_blades"/>
+    <link from="r_rare"      to="p_magnets"/>
+    <link from="r_silica"    to="p_pv"/>
+    <link from="r_silver"    to="p_pv"/>
+    <link from="r_lithium"   to="p_battcell"/>
+    <link from="r_nickel"    to="p_battcell"/>
+    <link from="r_silica"    to="p_inv"/>
+    <link from="r_copper"    to="p_inv"/>
+
+    <!-- Production to assembly -->
+    <link from="p_steel"     to="a_onwind"/>
+    <link from="p_blades"    to="a_onwind"/>
+    <link from="p_magnets"   to="a_onwind"/>
+    <link from="p_cu"        to="a_onwind"/>
+    <link from="p_cement"    to="a_onwind"/>
+    <link from="p_steel"     to="a_offwind"/>
+    <link from="p_blades"    to="a_offwind"/>
+    <link from="p_magnets"   to="a_offwind"/>
+    <link from="p_cu"        to="a_offwind"/>
+    <link from="p_cement"    to="a_offwind"/>
+    <link from="p_pv"        to="a_solar"/>
+    <link from="p_alu"       to="a_solar"/>
+    <link from="p_steel"     to="a_solar"/>
+    <link from="p_inv"       to="a_solar"/>
+    <link from="p_battcell"  to="a_storage"/>
+    <link from="p_inv"       to="a_storage"/>
+    <link from="p_cu"        to="a_grid"/>
+    <link from="p_alu"       to="a_grid"/>
+    <link from="p_steel"     to="a_grid"/>
+    <link from="p_inv"       to="a_grid"/>
+    <link from="p_cement"    to="a_hydro"/>
+    <link from="p_steel"     to="a_hydro"/>
+    <link from="p_turbines"  to="a_hydro"/>
+    <link from="p_wells"     to="a_geo"/>
+    <link from="p_turbines"  to="a_geo"/>
+    <link from="p_fuelrods"  to="a_nuclear"/>
+    <link from="p_cement"    to="a_nuclear"/>
+    <link from="p_steel"     to="a_nuclear"/>
+    <link from="p_turbines"  to="a_nuclear"/>
+    <link from="p_coalp"     to="a_coal"/>
+    <link from="p_turbines"  to="a_coal"/>
+    <link from="p_gasp"      to="a_gas"/>
+    <link from="p_turbines"  to="a_gas"/>
+    <link from="p_refined"   to="a_oil"/>
+    <link from="p_turbines"  to="a_oil"/>
+    <link from="p_pellets"   to="a_bio"/>
+    <link from="p_turbines"  to="a_bio"/>
+
+    <!-- Assembly to product -->
+    <link from="a_onwind"  to="product"/>
+    <link from="a_offwind" to="product"/>
+    <link from="a_solar"   to="product"/>
+    <link from="a_storage" to="product"/>
+    <link from="a_grid"    to="product"/>
+    <link from="a_hydro"   to="product"/>
+    <link from="a_geo"     to="product"/>
+    <link from="a_nuclear" to="product"/>
+    <link from="a_coal"    to="product"/>
+    <link from="a_gas"     to="product"/>
+    <link from="a_oil"     to="product"/>
+    <link from="a_bio"     to="product"/>
+  </product>
+
+</lifecycle></script>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- constants ---------- */
+var C = 580, BASE = 1160;
+var RAD  = {nature:490, raw:388, production:305, assembly:225};
+var RING = {raw:430, production:345, assembly:265, product:185};
+var NR = 27, PR = 84;
+var LO = 21;
+var SPAN = 360 - 2*LO;
+var SPACING = 100;
+var SI = {nature:0, raw:1, production:2, assembly:3, product:4};
+var STAGES = [
+  {id:'nature',     name:'Nature',                  color:'var(--c-nature)', desc:'Everything starts in nature: ores, sand, brine, crude oil. These are natural resources, not yet materials.'},
+  {id:'raw',        name:'Raw material extraction', color:'var(--c-raw)',    desc:'Mining, quarrying and drilling take resources out of the ground and concentrate them into raw materials. This stage often has the largest local environmental and social impact.'},
+  {id:'production', name:'Production',              color:'var(--c-prod)',   desc:'Raw materials are refined and processed into components: metals are smelted, chips are fabricated, plastics are moulded and battery cells are made.'},
+  {id:'assembly',   name:'Assembly',                color:'var(--c-asm)',    desc:'Components are joined into modules, and the modules into the finished product.'},
+  {id:'product',    name:'Final product',           color:'var(--c-final)',  desc:'The finished product reaches the user. At the end of its life it can be repaired, reused or recycled, which sends materials back into the cycle.'}
+];
+
+/* ---------- state & elements ---------- */
+var svg = document.getElementById('svg');
+var stageEl = document.getElementById('stage');
+var panel = document.getElementById('panel');       // body of the floating details box
+var info = document.getElementById('info');
+var state = {products:[], idx:0, sel:null, graph:null, pos:null, tourTimer:null, touring:false};
+
+/* ---------- helpers ---------- */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function wrap(s,max){
+  var words=String(s).split(/\s+/), lines=[], cur='';
+  words.forEach(function(w){ if(cur && (cur+' '+w).length>max){lines.push(cur);cur=w;} else {cur=cur?cur+' '+w:w;} });
+  if(cur) lines.push(cur);
+  return lines.slice(0,3);
+}
+function rad(d){return d*Math.PI/180;}
+function norm(d){d=d%360; return d<0?d+360:d;}
+function clampT(t){t=norm(t); return Math.max(LO,Math.min(360-LO,t));}
+function circMean(arr){
+  var x=0,y=0; arr.forEach(function(a){x+=Math.sin(rad(a));y+=Math.cos(rad(a));});
+  if(Math.hypot(x,y)<1e-6) return arr[0];
+  return norm(Math.atan2(x,y)*180/Math.PI);
+}
+function xy(r,t){return {x:C+r*Math.sin(rad(t)), y:C-r*Math.cos(rad(t))};}
+
+/* ---------- XML parsing ---------- */
+function parseXML(text){
+  var doc = new DOMParser().parseFromString(text,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length) throw new Error('This is not valid XML. Check for unclosed tags or a stray & (write &amp;).');
+  var warns=[], products=[];
+  var pEls = Array.prototype.slice.call(doc.getElementsByTagName('product'));
+  pEls.forEach(function(pe,pi){
+    var kids = Array.prototype.slice.call(pe.children);
+    var nodes=[], ids={product:true}, links=[];
+    kids.filter(function(k){return k.tagName==='node';}).forEach(function(ne){
+      var id=ne.getAttribute('id'), st=ne.getAttribute('stage');
+      if(!id){warns.push('A node without an id was skipped.');return;}
+      if(ids[id]){warns.push('Duplicate id "'+id+'" was skipped.');return;}
+      if(!(st in SI) || st==='product'){warns.push('Node "'+id+'" has an unknown stage "'+st+'" and was skipped.');return;}
+      var ang=parseFloat(ne.getAttribute('angle'));
+      ids[id]=true;
+      nodes.push({id:id,stage:st,label:ne.getAttribute('label')||id,icon:ne.getAttribute('icon')||'●',detail:ne.getAttribute('detail')||'',share:ne.getAttribute('share')||'',angle:isNaN(ang)?null:ang});
+    });
+    var stageOf={product:'product'}; nodes.forEach(function(n){stageOf[n.id]=n.stage;});
+    kids.filter(function(k){return k.tagName==='link';}).forEach(function(le){
+      var f=le.getAttribute('from'), t=le.getAttribute('to');
+      if(!ids[f]||!ids[t]||f==='product'){warns.push('Link '+f+' to '+t+' points to an unknown node and was skipped.');return;}
+      if(SI[stageOf[f]]>=SI[stageOf[t]]){warns.push('Link '+f+' to '+t+' does not go forward in the life cycle and was skipped.');return;}
+      links.push({from:f,to:t});
+    });
+    products.push({id:pe.getAttribute('id')||('p'+pi),name:pe.getAttribute('name')||('Product '+(pi+1)),icon:pe.getAttribute('icon')||'📦',summary:pe.getAttribute('summary')||'',nodes:nodes,links:links});
+  });
+  if(!products.length) throw new Error('No <product> elements were found.');
+  return {products:products,warns:warns};
+}
+
+/* ---------- layout ---------- */
+function relax(nodes,R){
+  if(!nodes.length) return;
+  var gap = 2*Math.asin(Math.min(1,SPACING/(2*R)))*180/Math.PI;
+  gap = Math.min(gap, SPAN/nodes.length*0.98);
+  for(var it=0; it<400; it++){
+    nodes.sort(function(a,b){return a.theta-b.theta;});
+    var moved=false;
+    for(var i=0;i<nodes.length-1;i++){
+      var d=nodes[i+1].theta-nodes[i].theta;
+      if(d<gap-0.01){var p=(gap-d)/2; nodes[i].theta-=p; nodes[i+1].theta+=p; moved=true;}
+    }
+    nodes.forEach(function(n){n.theta=clampT(n.theta);});
+    if(!moved) break;
+  }
+}
+function layout(p){
+  var ins={}, outs={};
+  p.nodes.forEach(function(n){ins[n.id]=[];outs[n.id]=[];});
+  ins.product=[]; outs.product=[];
+  p.links.forEach(function(l){outs[l.from].push(l.to); ins[l.to].push(l.from);});
+  var byId={}; p.nodes.forEach(function(n){byId[n.id]=n;});
+  function ofStage(s){return p.nodes.filter(function(n){return n.stage===s;});}
+
+  // Assemblies are spread around the ring in file order.
+  // Everything upstream is placed in line with the bubbles it feeds, so each pathway forms a spoke.
+  var asm=ofStage('assembly');
+  asm.forEach(function(n,i){n.theta = n.angle!==null ? clampT(n.angle) : LO+(i+0.5)*(SPAN/asm.length);});
+  relax(asm,RAD.assembly);
+
+  function fromOuts(stage){
+    var arr=ofStage(stage);
+    arr.forEach(function(n,i){
+      if(n.angle!==null){n.theta=clampT(n.angle);return;}
+      var th=outs[n.id].map(function(id){return byId[id]&&byId[id].theta;}).filter(function(t){return typeof t==='number';});
+      n.theta = th.length ? clampT(circMean(th)) : LO+(i+0.5)*(SPAN/arr.length);
+    });
+    relax(arr,RAD[stage]);
+  }
+  fromOuts('production');
+  fromOuts('raw');
+  fromOuts('nature');
+
+  var pos={product:{x:C,y:C,r:PR}};
+  p.nodes.forEach(function(n){var q=xy(RAD[n.stage],n.theta); pos[n.id]={x:q.x,y:q.y,r:NR};});
+  state.graph={ins:ins,outs:outs};
+  state.pos=pos;
+}
+
+/* ---------- rendering ---------- */
+function arrowEnds(a,b){
+  var dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1, ux=dx/d, uy=dy/d;
+  return {x1:a.x+ux*(a.r+3), y1:a.y+uy*(a.r+3), x2:b.x-ux*(b.r+3), y2:b.y-uy*(b.r+3)};
+}
+function stageName(id){for(var i=0;i<STAGES.length;i++) if(STAGES[i].id===id) return STAGES[i].name; return id;}
+function stageColor(id){for(var i=0;i<STAGES.length;i++) if(STAGES[i].id===id) return STAGES[i].color; return 'var(--muted)';}
+
+function annulus(ro,ri){
+  function circ(r){return 'M'+(C+r)+','+C+' A'+r+','+r+' 0 1 0 '+(C-r)+','+C+' A'+r+','+r+' 0 1 0 '+(C+r)+','+C+' Z';}
+  return circ(ro)+(ri>0?' '+circ(ri):'');
+}
+function render(){
+  var p=state.products[state.idx];
+  layout(p);
+  var stageOf={product:'product'}; p.nodes.forEach(function(n){stageOf[n.id]=n.stage;});
+  var h='';
+  h+='<defs><marker id="ah" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+  var inner={raw:RING.production,production:RING.assembly,assembly:RING.product,product:0};
+  ['raw','production','assembly','product'].forEach(function(k){h+='<path class="ring ring-'+k+'" d="'+annulus(RING[k],inner[k])+'"/>';});
+  h+='<text class="stage-name" x="'+C+'" y="'+(C-388+6)+'">Raw material extraction</text>';
+  h+='<text class="stage-name" x="'+C+'" y="'+(C-305+6)+'">Production</text>';
+  h+='<text class="stage-name" x="'+C+'" y="'+(C-225+6)+'">Assembly</text>';
+  h+='<text class="stage-name" x="'+C+'" y="'+(C+PR+54)+'" style="font-size:22px">Final product</text>';
+  h+='<text class="nature-tag" x="'+C+'" y="'+(C-RAD.nature+6)+'">Nature</text>';
+
+  p.links.forEach(function(l){
+    var e=arrowEnds(state.pos[l.from],state.pos[l.to]);
+    h+='<line class="arrow" data-from="'+esc(l.from)+'" data-to="'+esc(l.to)+'" data-ts="'+stageOf[l.to]+'" x1="'+e.x1.toFixed(1)+'" y1="'+e.y1.toFixed(1)+'" x2="'+e.x2.toFixed(1)+'" y2="'+e.y2.toFixed(1)+'" marker-end="url(#ah)"/>';
+  });
+
+  p.nodes.forEach(function(n){
+    var q=state.pos[n.id], lines=wrap(n.label,14);
+    var cls = n.stage==='nature' ? 'lbl lbl-out' : 'lbl lbl-in';
+    var t='<text class="'+cls+'" x="'+q.x.toFixed(1)+'" y="'+(q.y+NR+17).toFixed(1)+'">';
+    lines.forEach(function(L,i){t+='<tspan x="'+q.x.toFixed(1)+'" dy="'+(i?16:0)+'">'+esc(L)+'</tspan>';});
+    if(n.share){t+='<tspan class="sh" x="'+q.x.toFixed(1)+'" dy="16">'+esc(n.share)+'</tspan>';}
+    t+='</text>';
+    h+='<g class="node '+n.stage+'" data-id="'+esc(n.id)+'" data-stage="'+n.stage+'" tabindex="0" role="button" aria-label="'+esc(n.label+', '+stageName(n.stage))+'">'
+      +'<circle class="b" cx="'+q.x.toFixed(1)+'" cy="'+q.y.toFixed(1)+'" r="'+NR+'"/>'
+      +'<text class="em" x="'+q.x.toFixed(1)+'" y="'+(q.y+9).toFixed(1)+'" font-size="26">'+esc(n.icon)+'</text>'
+      +t+'</g>';
+  });
+
+  var nm=wrap(p.name,13);
+  var cn='<text class="nm" x="'+C+'" y="'+(C+36)+'">';
+  nm.forEach(function(L,i){cn+='<tspan x="'+C+'" dy="'+(i?18:0)+'">'+esc(L)+'</tspan>';});
+  cn+='</text>';
+  h+='<g class="node center" data-id="product" data-stage="product" tabindex="0" role="button" aria-label="'+esc(p.name+', final product')+'">'
+    +'<circle class="b" cx="'+C+'" cy="'+C+'" r="'+PR+'"/>'
+    +'<text class="em" x="'+C+'" y="'+(C+2)+'" font-size="46">'+esc(p.icon)+'</text>'+cn+'</g>';
+
+  svg.innerHTML=h;
+  applyToggles();
+  state.sel=null;
+  resetView();
+  showDefault();
+}
+
+function renderProducts(){
+  var sel=document.getElementById('product'); sel.innerHTML='';
+  state.products.forEach(function(p,i){
+    var o=document.createElement('option'); o.value=String(i); o.textContent=p.icon+'  '+p.name; sel.appendChild(o);
+  });
+  sel.value=String(state.idx);
+}
+function renderLegend(){
+  document.getElementById('legend').innerHTML = STAGES.map(function(s){return '<span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>';}).join('');
+}
+
+/* ---------- details panel content ---------- */
+function showDefault(){
+  var p=state.products[state.idx];
+  panel.innerHTML='<div class="big" aria-hidden="true">'+esc(p.icon)+'</div><h2>'+esc(p.name)+'</h2>'
+    +(p.summary?'<p>'+esc(p.summary)+'</p>':'')
+    +'<p class="hint">Hover a bubble to follow where it comes from and where it goes. Click it for details, or press <b>Play life cycle</b> for a guided walk.</p>';
+}
+function chipList(ids){
+  var p=state.products[state.idx], map={};
+  p.nodes.forEach(function(n){map[n.id]=n;});
+  return '<div class="chips">'+ids.map(function(id){
+    var n = id==='product' ? {icon:p.icon,label:p.name} : map[id];
+    return '<button class="chip" type="button" data-goto="'+esc(id)+'">'+esc(n.icon)+' '+esc(n.label)+'</button>';
+  }).join('')+'</div>';
+}
+function showNode(id){
+  var p=state.products[state.idx], g=state.graph;
+  if(id==='product'){
+    var ins=g.ins.product;
+    panel.innerHTML='<span class="kicker"><span class="dot" style="background:var(--c-final)"></span>Final product</span>'
+      +'<h2>'+esc(p.icon)+' '+esc(p.name)+'</h2><p>'+esc(p.summary)+'</p>'
+      +(ins.length?'<h3>Made from</h3>'+chipList(ins):'');
+    return;
+  }
+  var n=null; p.nodes.forEach(function(x){if(x.id===id) n=x;});
+  if(!n) return;
+  var from=g.ins[id], to=g.outs[id];
+  panel.innerHTML='<span class="kicker"><span class="dot" style="background:'+stageColor(n.stage)+'"></span>'+esc(stageName(n.stage))+'</span>'
+    +'<h2>'+esc(n.icon)+' '+esc(n.label)+'</h2>'
+    +(n.share?'<p><b>Share of the electricity mix: '+esc(n.share)+'</b> (rough global average)</p>':'')
+    +(n.detail?'<p>'+esc(n.detail)+'</p>':'')
+    +(from.length?'<h3>Comes from</h3>'+chipList(from):'')
+    +(to.length?'<h3>Goes into</h3>'+chipList(to):'');
+}
+function showStage(i){
+  var s=STAGES[i], p=state.products[state.idx];
+  var inStage = i===4 ? [] : p.nodes.filter(function(n){return n.stage===s.id;});
+  panel.innerHTML='<span class="kicker"><span class="dot" style="background:'+s.color+'"></span>Step '+(i+1)+' of 5</span>'
+    +'<h2>'+esc(s.name)+'</h2><p>'+esc(s.desc)+'</p>'
+    +(inStage.length?'<h3>In this step</h3><div class="chips">'+inStage.map(function(n){return '<span class="chip" style="cursor:default">'+esc(n.icon)+' '+esc(n.label)+'</span>';}).join('')+'</div>':'')
+    +(i===4?'<p><b>'+esc(p.icon)+' '+esc(p.name)+'</b></p>':'');
+}
+
+/* ---------- details box: toggle and drag ---------- */
+var infoBtn=document.getElementById('t-info');
+function setInfo(open){
+  info.hidden=!open;
+  infoBtn.setAttribute('aria-pressed',open?'true':'false');
+}
+infoBtn.addEventListener('click',function(){setInfo(info.hidden);});
+document.getElementById('info-close').addEventListener('click',function(){setInfo(false);});
+(function(){
+  var head=document.getElementById('info-head'), drag=null;
+  head.addEventListener('pointerdown',function(e){
+    if(e.target.closest('button')) return;
+    if(window.matchMedia('(max-width:700px)').matches) return;
+    var r=info.getBoundingClientRect(), s=stageEl.getBoundingClientRect();
+    drag={dx:e.clientX-r.left, dy:e.clientY-r.top, w:r.width, s:s};
+    head.setPointerCapture(e.pointerId);
+    head.style.cursor='grabbing';
+  });
+  head.addEventListener('pointermove',function(e){
+    if(!drag) return;
+    var s=stageEl.getBoundingClientRect();
+    var x=e.clientX-s.left-drag.dx, y=e.clientY-s.top-drag.dy;
+    x=Math.max(0,Math.min(s.width-drag.w,x));
+    y=Math.max(0,Math.min(s.height-44,y));
+    info.style.left=x+'px'; info.style.top=y+'px'; info.style.right='auto';
+  });
+  function end(){drag=null; head.style.cursor='';}
+  head.addEventListener('pointerup',end);
+  head.addEventListener('pointercancel',end);
+})();
+
+/* ---------- focus / selection ---------- */
+function related(id){
+  var g=state.graph, set={}; set[id]=true;
+  (function up(x){g.ins[x].forEach(function(y){if(!set[y]){set[y]=true;up(y);}});})(id);
+  (function down(x){g.outs[x].forEach(function(y){if(!set[y]){set[y]=true;down(y);}});})(id);
+  return set;
+}
+function applyFocus(id){
+  var nodes=svg.querySelectorAll('.node'), arrows=svg.querySelectorAll('.arrow');
+  if(!id){
+    nodes.forEach(function(n){n.classList.remove('dim');});
+    arrows.forEach(function(a){a.classList.remove('dim');});
+  } else {
+    var set=related(id);
+    nodes.forEach(function(n){n.classList.toggle('dim',!set[n.dataset.id]);});
+    arrows.forEach(function(a){a.classList.toggle('dim',!(set[a.dataset.from]&&set[a.dataset.to]));});
+  }
+  nodes.forEach(function(n){n.classList.toggle('sel',n.dataset.id===state.sel);});
+}
+function select(id){
+  stopTour();
+  state.sel = (state.sel===id) ? null : id;
+  applyFocus(state.sel);
+  if(state.sel){ showNode(state.sel); setInfo(true); } else showDefault();
+}
+svg.addEventListener('mouseover',function(e){
+  if(state.touring||panning) return;
+  var g=e.target.closest('.node');
+  applyFocus(g?g.dataset.id:state.sel);
+});
+svg.addEventListener('mouseleave',function(){ if(!state.touring) applyFocus(state.sel); });
+svg.addEventListener('focusin',function(e){ if(state.touring) return; var g=e.target.closest('.node'); if(g) applyFocus(g.dataset.id); });
+svg.addEventListener('focusout',function(){ if(!state.touring) applyFocus(state.sel); });
+svg.addEventListener('click',function(e){
+  if(dragged) return;                       // the click ended a pan or pinch
+  var g=e.target.closest('.node');
+  if(g) select(g.dataset.id);
+  else if(state.sel){select(state.sel);}
+});
+svg.addEventListener('keydown',function(e){
+  if(e.key==='Enter'||e.key===' '){var g=e.target.closest('.node'); if(g){e.preventDefault();select(g.dataset.id);}}
+});
+panel.addEventListener('click',function(e){
+  var b=e.target.closest('[data-goto]');
+  if(b){ state.sel=null; select(b.dataset.goto); }
+});
+
+/* ---------- zoom and pan ---------- */
+var vb={x:0,y:0,w:BASE,h:BASE}, ptrs={}, pan=null, pinch=null, panning=false, dragged=false;
+var ZMIN=0.6, ZMAX=8;
+function setVB(){svg.setAttribute('viewBox',vb.x.toFixed(2)+' '+vb.y.toFixed(2)+' '+vb.w.toFixed(2)+' '+vb.h.toFixed(2));}
+function clampVB(){
+  var cx=vb.x+vb.w/2, cy=vb.y+vb.h/2;
+  cx=Math.max(0,Math.min(BASE,cx)); cy=Math.max(0,Math.min(BASE,cy));
+  vb.x=cx-vb.w/2; vb.y=cy-vb.h/2;
+}
+function toSvg(cx,cy){
+  var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function perPx(){return toSvg(1,0).x-toSvg(0,0).x;}
+function resetView(){vb={x:0,y:0,w:BASE,h:BASE}; setVB();}
+function zoomAt(cx,cy,f){
+  var z=BASE/vb.w, nz=Math.max(ZMIN,Math.min(ZMAX,z*f));
+  f=nz/z; if(Math.abs(f-1)<1e-4) return;
+  var a=toSvg(cx,cy);
+  vb.w/=f; vb.h/=f; setVB();
+  var b=toSvg(cx,cy);
+  vb.x+=a.x-b.x; vb.y+=a.y-b.y;
+  clampVB(); setVB();
+}
+function hideHint(){document.getElementById('float-hint').classList.add('gone');}
+
+svg.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var dy=e.deltaMode===1?e.deltaY*33:e.deltaY;
+  zoomAt(e.clientX,e.clientY,Math.exp(-dy*(e.ctrlKey?0.01:0.0016)));
+  hideHint();
+},{passive:false});
+
+svg.addEventListener('pointerdown',function(e){
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  var ids=Object.keys(ptrs);
+  if(ids.length===1){
+    pan={x:e.clientX,y:e.clientY,vx:vb.x,vy:vb.y,s:perPx(),moved:false};
+    dragged=false;
+  } else if(ids.length===2){
+    var a=ptrs[ids[0]], b=ptrs[ids[1]];
+    pan=null; pinch={d:Math.hypot(a.x-b.x,a.y-b.y)}; dragged=true;
+  }
+});
+window.addEventListener('pointermove',function(e){
+  if(!ptrs[e.pointerId]) return;
+  ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+  var ids=Object.keys(ptrs);
+  if(ids.length>=2 && pinch){
+    var a=ptrs[ids[0]], b=ptrs[ids[1]], d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(pinch.d>0) zoomAt((a.x+b.x)/2,(a.y+b.y)/2,d/pinch.d);
+    pinch.d=d; dragged=true; hideHint();
+  } else if(pan){
+    var dx=e.clientX-pan.x, dy=e.clientY-pan.y;
+    if(!pan.moved && Math.hypot(dx,dy)<5) return;
+    pan.moved=true; dragged=true; panning=true; hideHint();
+    svg.classList.add('panning');
+    vb.x=pan.vx-dx*pan.s; vb.y=pan.vy-dy*pan.s;
+    clampVB(); setVB();
+  }
+});
+function endPtr(e){
+  if(!ptrs[e.pointerId]) return;
+  delete ptrs[e.pointerId];
+  var ids=Object.keys(ptrs);
+  if(ids.length<2) pinch=null;
+  if(ids.length===0){
+    pan=null; panning=false; svg.classList.remove('panning');
+    setTimeout(function(){dragged=false;},0);
+  } else if(ids.length===1){
+    var p=ptrs[ids[0]];
+    pan={x:p.x,y:p.y,vx:vb.x,vy:vb.y,s:perPx(),moved:true};
+  }
+}
+window.addEventListener('pointerup',endPtr);
+window.addEventListener('pointercancel',endPtr);
+
+function stageCenter(){var r=svg.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2};}
+document.getElementById('z-in').addEventListener('click',function(){var c=stageCenter(); zoomAt(c.x,c.y,1.35); hideHint();});
+document.getElementById('z-out').addEventListener('click',function(){var c=stageCenter(); zoomAt(c.x,c.y,1/1.35); hideHint();});
+document.getElementById('z-fit').addEventListener('click',function(){resetView();});
+
+/* ---------- settings popover ---------- */
+var pop=document.getElementById('settings'), sbtn=document.getElementById('t-settings');
+function setPop(open){
+  pop.hidden=!open;
+  sbtn.setAttribute('aria-expanded',open?'true':'false');
+  if(open) pop.focus();
+}
+sbtn.addEventListener('click',function(e){e.stopPropagation(); setPop(pop.hidden);});
+document.getElementById('settings-close').addEventListener('click',function(){setPop(false); sbtn.focus();});
+document.addEventListener('click',function(e){
+  if(!pop.hidden && !pop.contains(e.target) && !sbtn.contains(e.target)) setPop(false);
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape' && !pop.hidden){setPop(false); sbtn.focus();}
+});
+
+function applyToggles(){
+  svg.classList.toggle('off',!document.getElementById('s-rings').checked);
+  svg.classList.toggle('no-names',!document.getElementById('s-names').checked);
+  svg.classList.toggle('no-labels',!document.getElementById('s-labels').checked);
+}
+['s-rings','s-names','s-labels'].forEach(function(id){document.getElementById(id).addEventListener('change',applyToggles);});
+
+/* ---------- guided tour ---------- */
+var tourBtn=document.getElementById('tour');
+function setTourStage(i){
+  svg.querySelectorAll('.node').forEach(function(g){
+    var s=SI[g.dataset.stage];
+    g.classList.remove('dim','sel');
+    g.classList.toggle('future',s>i);
+    g.classList.toggle('now',s===i);
+  });
+  svg.querySelectorAll('.arrow').forEach(function(a){a.classList.remove('dim');a.classList.toggle('future',SI[a.dataset.ts]>i);});
+  showStage(i);
+}
+function stopTour(){
+  if(state.tourTimer){clearTimeout(state.tourTimer);state.tourTimer=null;}
+  if(!state.touring) return;
+  state.touring=false;
+  tourBtn.textContent='Play life cycle';
+  svg.querySelectorAll('.node,.arrow').forEach(function(x){x.classList.remove('future','now');});
+  applyFocus(state.sel);
+  if(state.sel) showNode(state.sel); else showDefault();
+}
+function startTour(){
+  state.sel=null; applyFocus(null);
+  state.touring=true; tourBtn.textContent='Stop';
+  setInfo(true);
+  var i=0;
+  (function step(){
+    setTourStage(i);
+    var wait = i===4 ? 3200 : 2600;
+    i++;
+    state.tourTimer=setTimeout(function(){ if(i>4) stopTour(); else step(); },wait);
+  })();
+}
+tourBtn.addEventListener('click',function(){ state.touring ? stopTour() : startTour(); });
+
+/* ---------- product dropdown ---------- */
+document.getElementById('product').addEventListener('change',function(e){
+  stopTour(); state.idx=parseInt(e.target.value,10); render();
+});
+
+/* ---------- data loading ---------- */
+function loadXml(text){
+  try{
+    var res=parseXML(text);
+    if(res.warns.length && window.console) console.warn('Life cycle data notes:\n'+res.warns.join('\n'));
+    stopTour();
+    state.products=res.products; state.idx=0;
+    renderProducts(); render();
+    return true;
+  }catch(err){
+    if(window.console) console.warn(err.message);
+    return false;
+  }
+}
+var builtIn=document.getElementById('xml-default').textContent;
+renderLegend();
+// If a products.xml sits next to this page on the server, it is used.
+// Otherwise (or if it cannot be read) the built-in data below is shown.
+try{
+  fetch('products.xml',{cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('not found'); return r.text(); })
+    .then(function(t){ if(!loadXml(t)) loadXml(builtIn); })
+    .catch(function(){ loadXml(builtIn); });
+}catch(e){ loadXml(builtIn); }
+})();
+</script>
+</body>
+</html>
