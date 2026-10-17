@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
 <head>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
@@ -77,8 +77,20 @@ details ul{margin:8px 0 0;padding-left:18px}
 details li{margin:2px 0}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 </style>
+<link rel="stylesheet" href="../course.css">
 </head>
 <body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
 <main>
   <h1>Petrol, battery or hydrogen: how emissions add up</h1>
   <p class="lede">Lifecycle CO₂e for an ICEV, a BEV and an FCEV as you drive further. Change the electricity source to see how it shifts charging, hydrogen production and hydrogen storage.</p>
@@ -278,5 +290,6 @@ mq.addEventListener('change',()=>{
 });
 update();
 </script>
+</div>
 </body>
 </html>

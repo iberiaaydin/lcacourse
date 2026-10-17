@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson course-iteration">
 <head>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
@@ -58,8 +58,20 @@
   input[type=range] { flex: 1; accent-color: var(--blue); }
   #time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--dim); min-width: 84px; text-align: right; }
 </style>
+<link rel="stylesheet" href="../course.css">
 </head>
 <body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
 <h1 class="sr-only">Iterative nature of LCA: three iterations, each a loop of goal and scope, LCI, LCIA and evaluation, raising overall data quality.</h1>
 
 <svg id="stage" viewBox="0 0 1410 780" role="img"
@@ -94,7 +106,7 @@
 
 const NS = 'http://www.w3.org/2000/svg';
 const W = 1410, H = 780;
-const INK = '#f1eee6', BLUE = '#58c4dd', GREEN = '#83c167', GOLD = '#f4d35e', BG = '#14171c';
+const INK = '#f1eee6', BLUE = '#58c4dd', GREEN = '#83c167', GOLD = '#f4d35e', BG = '#0d1a20';
 
 const svg = document.getElementById('stage');
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -475,5 +487,6 @@ if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 draw();
 requestAnimationFrame(frame);
 </script>
+</div>
 </body>
 </html>

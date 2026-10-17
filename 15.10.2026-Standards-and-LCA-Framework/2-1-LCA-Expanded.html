@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
 <head>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
@@ -164,8 +164,20 @@ svg.no-labels .lbl{display:none}
 }
 @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
 </style>
+<link rel="stylesheet" href="../course.css">
 </head>
 <body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
 <div class="app">
   <h1>Life cycle of a product</h1>
   <p class="lede">From nature, through extraction, production and assembly, to the product at the center.</p>
@@ -1161,5 +1173,6 @@ try{
 }catch(e){ loadXml(builtIn); }
 })();
 </script>
+</div>
 </body>
 </html>

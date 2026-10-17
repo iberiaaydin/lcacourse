@@ -1,0 +1,137 @@
+    :root {
+      color-scheme: dark;
+      --background: #0d1a20;
+      --sidebar: #12232b;
+      --surface: #172a33;
+      --text: #e6edf0;
+      --muted: #adc0c9;
+      --accent: #9dd9c3;
+      --border: #304650;
+      --badge: #203d3b;
+      --alert-text: #ffd59a;
+      --alert-background: #3b3021;
+    }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --background: #f6f7f3;
+      --sidebar: #e9eee4;
+      --surface: #ffffff;
+      --text: #253329;
+      --muted: #5c695d;
+      --accent: #486540;
+      --border: #cdd6c7;
+      --badge: #eaf0e4;
+      --alert-text: #744409;
+      --alert-background: #fff0d6;
+    }
+
+/* Shared course shell; loaded after each interactive tool's own styles. */
+html.course-lesson {
+  color-scheme: dark;
+  --bg: var(--background);
+  --surface: #172a33;
+  --surface-0: #0d1a20;
+  --surface-1: #172a33;
+  --surface-2: #20343e;
+  --ink: var(--text);
+  --text: #e6edf0;
+  --muted: #adc0c9;
+  --dim: #adc0c9;
+  --text-primary: #e6edf0;
+  --text-secondary: #adc0c9;
+  --text-muted: #adc0c9;
+  --text-2: #adc0c9;
+  --text-3: #adc0c9;
+  --border: #304650;
+  --border-strong: #607b88;
+  --line: #304650;
+  --grid: #304650;
+  --tick: #adc0c9;
+  --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --serif: var(--sans);
+  background: var(--background);
+}
+.course-lesson body {
+  display: block;
+  height: auto;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--sans);
+  line-height: 1.65;
+}
+.course-header {
+  background: var(--sidebar);
+  border-bottom: 1px solid var(--border);
+}
+.course-header-inner {
+  box-sizing: border-box;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 22px clamp(16px, 3vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.course-header .course-institute {
+  margin: 0 0 6px;
+  color: #9dd9c3;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.course-title {
+  color: var(--text);
+  font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+  font-weight: 600;
+  letter-spacing: -.035em;
+  line-height: 1.2;
+  text-decoration: none;
+}
+.course-header .course-description,
+.course-header .course-instructor {
+  margin: 4px 0 0;
+  font-size: .85rem;
+  color: var(--muted);
+}
+.course-back {
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface);
+  color: #9dd9c3;
+  font-size: .9rem;
+  text-decoration: none;
+}
+.course-back:hover { border-color: #9dd9c3; }
+.course-header a:focus-visible { outline: 2px solid #9dd9c3; outline-offset: 4px; }
+.course-content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 28px clamp(16px, 3vw, 40px) 48px;
+}
+.course-content > .app { padding: 0; }
+.course-content > main { max-width: 1000px; }
+.course-iteration .course-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.course-iteration #stage { max-width: 1400px; }
+.course-allocation .course-content { max-width: 1080px; }
+.course-lesson h1 { font-family: var(--sans); }
+html:not(.course-lesson) a { color: var(--accent); }
+@media (max-width: 600px) {
+  .course-header-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .course-allocation .row { flex-wrap: wrap; }
+  .course-allocation .row label { width: 100%; }
+  .course-allocation .row input { min-width: 0; }
+}
