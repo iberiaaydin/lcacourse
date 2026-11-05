@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Allocation – chlor-alkali example</title>
+<style>
+  :root {
+    --ink: #f1eee6;
+    --dim: #adc0c9;
+    --line: #304650;
+    --panel: #172a33;
+    --panel-2: #20343e;
+    --accent: #58c4dd;
+    --prodA: #7f9f2a;      /* chlorine */
+    --prodA-t: #b9d66a;
+    --prodB: #9a74d6;      /* sodium hydroxide */
+    --prodB-t: #c7aef0;
+    --single: #7aa7e6;     /* allocated to one product */
+    --split: #ff6f61;      /* allocated to both */
+    --ok: #83c167;
+  }
+  * { box-sizing: border-box; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .intro h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+  .intro p { margin: 0 0 18px; color: var(--dim); max-width: 95ch; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(330px, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  @media (min-width: 1001px) { .layout > .card:first-child { position: sticky; top: 12px; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .card h2 { margin: 0 0 10px; font-size: 1.05rem; font-weight: 600; }
+  .muted { color: var(--dim); font-size: 14px; }
+  #diagram { display: block; width: 100%; height: auto; }
+  #diagram .hit { cursor: pointer; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; font-size: 13px; color: var(--dim); }
+  .legend svg { vertical-align: middle; margin-right: 6px; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+  button {
+    font: inherit; font-size: 14px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  label.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; color: var(--dim); margin: 0 0 12px; }
+  label.check input { margin-top: 4px; accent-color: var(--accent); }
+
+  .group { margin: 12px 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+  .flow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(110px, 1fr) 92px; gap: 10px; align-items: center;
+          padding: 5px 8px; border-radius: 8px; border: 1px solid transparent; }
+  .flow.sel { border-color: var(--accent); background: var(--panel-2); }
+  .flow .name { font-size: 14px; line-height: 1.3; cursor: pointer; }
+  .flow .name small { display: block; color: var(--dim); font-size: 12px; }
+  .flow input[type=range] { width: 100%; accent-color: var(--accent); }
+  .flow output { font-size: 12.5px; font-variant-numeric: tabular-nums; text-align: right; line-height: 1.3; }
+  .flow output .a { color: var(--prodA-t); }
+  .flow output .b { color: var(--prodB-t); }
+  .slider-ends { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--dim); margin: 2px 8px 0; }
+
+  .results { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(330px, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
+  @media (max-width: 1000px) { .results { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 560px) {
+    .flow { grid-template-columns: minmax(0, 1fr) 84px; }
+    .flow input[type=range] { grid-column: 1 / -1; grid-row: 2; }
+  }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  th { color: var(--dim); font-weight: 600; font-size: 13px; }
+  td.a { color: var(--prodA-t); } td.b { color: var(--prodB-t); }
+  tr.cat td { color: var(--dim); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 10px; }
+  tr.sel td { background: var(--panel-2); }
+  .ok { color: var(--ok); font-weight: 600; }
+
+  .bars { display: grid; gap: 14px; margin: 6px 0 12px; }
+  .bar-row .lbl { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px; }
+  .bar-row .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .track { height: 26px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 0 4px 4px 0; transition: width 0.25s ease; }
+  .split-bar { display: flex; height: 26px; border-radius: 4px; overflow: hidden; gap: 2px; background: var(--panel); }
+  .split-bar div { transition: flex-basis 0.25s ease; }
+  .note { margin: 10px 0 0; font-size: 13px; color: var(--dim); }
+  .key { font-size: 14px; margin: 0 0 6px; }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<section class="intro">
+  <h1>Allocation: one chlor-alkali cell, two products</h1>
+  <p>The membrane cell makes chlorine (Product A) and sodium hydroxide (Product B) together. Use the sliders, or click a flow in the diagram, to decide which share of each flow goes to chlorine; the rest goes to sodium hydroxide. The line thickness inside the process shows the share. Whatever you choose, the allocated amounts always add up to the un-allocated inventory. <strong>Illustrative data – do not use for studies.</strong></p>
+</section>
+
+<div class="layout">
+  <div class="card">
+    <h2>Process and allocation lines</h2>
+    <svg id="diagram" viewBox="0 0 930 560" role="img"
+         aria-label="Chlor-alkali process box with input products, water, emissions and wastes. Lines inside the box run from each flow to Product A, chlorine, and Product B, sodium hydroxide; their thickness shows the allocated share."></svg>
+    <div class="legend">
+      <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="#7aa7e6" stroke-width="4"/></svg>allocated to one product</span>
+      <span><svg width="34" height="10"><line x1="0" y1="5" x2="34" y2="5" stroke="#ff6f61" stroke-width="4" stroke-dasharray="4 4"/></svg>split between both products</span>
+      <span>line thickness = allocated share</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Allocation key</h2>
+    <div class="presets" role="group" aria-label="Allocation presets">
+      <button type="button" data-key="mass">Mass</button>
+      <button type="button" data-key="molar">Molar</button>
+      <button type="button" data-key="economic">Economic</button>
+    </div>
+    <label class="check"><input type="checkbox" id="causal" checked>
+      <span>Physical causality first: flows that clearly belong to only one product (drying acid, evaporation steam …) go 100 % to that product; the key is used only for the shared flows.</span></label>
+    <p class="key" id="keyInfo"></p>
+    <div class="slider-ends"><span style="color:var(--prodB-t)">← all to NaOH</span><span style="color:var(--prodA-t)">all to Cl₂ →</span></div>
+    <div id="flows"></div>
+  </div>
+</div>
+
+<div class="results">
+  <div class="card">
+    <h2>Allocated inventory <span class="muted">per 1 000 kg Cl₂ and 1 128 kg NaOH (100 %)</span></h2>
+    <div class="table-wrap"><table id="inv"></table></div>
+  </div>
+  <div class="card">
+    <h2>Climate change result <span class="muted">(illustrative GWP)</span></h2>
+    <p class="muted" style="margin:0 0 8px">How the 1 310 kg CO₂-eq of the whole process is shared</p>
+    <div class="split-bar" id="splitBar"></div>
+    <div class="legend" id="splitLegend"></div>
+    <p class="muted" style="margin:16px 0 4px">Per tonne of product (kg CO₂-eq / t)</p>
+    <div class="bars" id="bars"></div>
+    <p class="note" id="check"></p>
+    <p class="note">H₂ (28 kg) is burned on site and is not treated as a product here.</p>
+  </div>
+</div>
+
+<script>
+/* ---------- data: per 1 000 kg Cl2 produced (illustrative) ---------- */
+const PROD = {
+  A: { name: 'Chlorine (Cl₂)', short: 'Cl₂', kg: 1000, mol: 1000 / 70.9, price: 250 },
+  B: { name: 'Sodium hydroxide (NaOH, 100 %)', short: 'NaOH', kg: 1128, mol: 1128 / 40.0, price: 400 }
+};
+const CATS = { input: 'Input products', resource: 'Resources', emission: 'Emissions', waste: 'Wastes' };
+const FLOWS = [
+  { id: 'el',     cat: 'input',    name: 'Electricity',          note: 'electrolysis',          amt: 2500, unit: 'kWh', gwp: 0.45, only: null },
+  { id: 'salt',   cat: 'input',    name: 'Salt (NaCl)',          note: 'brine',                 amt: 1650, unit: 'kg',  gwp: 0.02, only: null },
+  { id: 'gas',    cat: 'input',    name: 'Natural gas',          note: 'steam for NaOH evaporation', amt: 2200, unit: 'MJ', gwp: 0.01, only: 'B' },
+  { id: 'acid',   cat: 'input',    name: 'Sulfuric acid',        note: 'drying the chlorine',   amt: 15,   unit: 'kg',  gwp: 0.12, only: 'A' },
+  { id: 'water',  cat: 'resource', name: 'Water',                note: 'process water',         amt: 2000, unit: 'kg',  gwp: 0,    only: null },
+  { id: 'co2',    cat: 'emission', name: 'CO₂ to air',           note: 'steam boiler',          amt: 123,  unit: 'kg',  gwp: 1,    only: 'B' },
+  { id: 'cl2',    cat: 'emission', name: 'Cl₂ to air',           note: 'chlorine handling',     amt: 0.05, unit: 'kg',  gwp: 0,    only: 'A' },
+  { id: 'clo3',   cat: 'emission', name: 'Chlorate to water',    note: 'brine purge',           amt: 1.5,  unit: 'kg',  gwp: 0,    only: null },
+  { id: 'sludge', cat: 'waste',    name: 'Brine sludge',         note: 'salt purification',     amt: 30,   unit: 'kg',  gwp: 0.1,  only: null },
+  { id: 'spent',  cat: 'waste',    name: 'Spent sulfuric acid',  note: 'from Cl₂ drying',       amt: 14,   unit: 'kg',  gwp: 0.1,  only: 'A' },
+  { id: 'memb',   cat: 'waste',    name: 'Spent membranes',      note: 'cell maintenance',      amt: 0.2,  unit: 'kg',  gwp: 2,    only: null }
+];
+const KEYS = {
+  mass:     { label: 'Mass',     a: PROD.A.kg / (PROD.A.kg + PROD.B.kg),
+              why: '1 000 kg Cl₂ : 1 128 kg NaOH' },
+  molar:    { label: 'Molar',    a: PROD.A.mol / (PROD.A.mol + PROD.B.mol),
+              why: '1 mol Cl₂ : 2 mol NaOH (from 2NaCl + 2H₂O → Cl₂ + H₂ + 2NaOH)' },
+  economic: { label: 'Economic', a: (PROD.A.kg * PROD.A.price) / (PROD.A.kg * PROD.A.price + PROD.B.kg * PROD.B.price),
+              why: `${PROD.A.price} €/t Cl₂ : ${PROD.B.price} €/t NaOH (illustrative prices)` }
+};
+const GWP_TOTAL = FLOWS.reduce((s, f) => s + f.amt * f.gwp, 0);
+
+/* ---------- state ---------- */
+const share = {};            // share of each flow allocated to Product A (0..1)
+let activeKey = 'mass', selected = null;
+
+const $ = id => document.getElementById(id);
+const pct = x => `${Math.round(x * 100)} %`;
+function num(v) {
+  const a = Math.abs(v);
+  const d = a === 0 ? 0 : a >= 100 ? 0 : a >= 10 ? 1 : a >= 1 ? 2 : 3;
+  return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/,/g, ' ');
+}
+
+/* ---------- diagram ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const svg = $('diagram');
+function el(tag, attrs = {}, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e);
+  return e;
+}
+function label(str, x, y, opts = {}, parent = svg) {
+  const t = el('text', Object.assign({ x, y, 'font-size': 16, fill: '#f1eee6', 'dominant-baseline': 'central' }, opts), parent);
+  t.textContent = str;
+  return t;
+}
+const BOX = { x: 250, y: 120, w: 400, h: 320 };
+const PORT = { A: [650, 225], B: [650, 345] };
+
+el('defs').innerHTML = `
+  <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+    <path d="M0 0 L10 5 L0 10 Z" fill="context-stroke"/></marker>`;
+el('rect', { x: BOX.x, y: BOX.y, width: BOX.w, height: BOX.h, rx: 36, fill: '#1f3a46', stroke: '#9fb3bd', 'stroke-width': 2 });
+label('Process', BOX.x + 26, BOX.y + 36, { 'font-size': 30, 'font-weight': 700, fill: '#5d7a87' });
+label('chlor-alkali electrolysis', BOX.x + 28, BOX.y + 66, { 'font-size': 14, fill: '#8aa3ae' });
+
+/* entry point of each flow on the box edge, and its outside arrow */
+const ENTRY = {}, HIT = {};
+const inputsY = [185, 225, 265, 305];
+FLOWS.filter(f => f.cat === 'input').forEach((f, i) => { ENTRY[f.id] = [BOX.x, inputsY[i]]; });
+ENTRY.water = [BOX.x, 395];
+['co2', 'cl2', 'clo3'].forEach((id, i) => { ENTRY[id] = [330 + i * 120, BOX.y]; });
+['sludge', 'spent', 'memb'].forEach((id, i) => { ENTRY[id] = [330 + i * 120, BOX.y + BOX.h]; });
+
+const gOut = el('g'), gLines = el('g'), gHit = el('g');
+label('Input products', 140, 152, { 'text-anchor': 'end', fill: '#adc0c9', 'font-size': 13 }, gOut);
+label('Resources', 140, 370, { 'text-anchor': 'end', fill: '#adc0c9', 'font-size': 13 }, gOut);
+label('Emissions', 450, 14, { 'text-anchor': 'middle', fill: '#adc0c9', 'font-size': 13 }, gOut);
+label('Wastes', 450, 546, { 'text-anchor': 'middle', fill: '#adc0c9', 'font-size': 13 }, gOut);
+
+const outLabel = {};
+FLOWS.forEach(f => {
+  const [x, y] = ENTRY[f.id];
+  const g = el('g', { class: 'hit', tabindex: 0, role: 'button', 'aria-label': `Select ${f.name}` }, gHit);
+  let d, lx, ly, anchor;
+  if (f.cat === 'input' || f.cat === 'resource') {
+    d = `M150 ${y} L${x - 2} ${y}`; lx = 140; ly = y; anchor = 'end';
+  } else if (f.cat === 'emission') {
+    d = `M${x} ${y} L${x} 52`; lx = x; ly = 38; anchor = 'middle';
+  } else {
+    d = `M${x} ${y} L${x} 506`; lx = x; ly = 522; anchor = 'middle';
+  }
+  el('path', { d, stroke: f.cat === 'emission' || f.cat === 'resource' ? '#adc0c9' : '#f1eee6', 'stroke-width': 2.5,
+    'stroke-dasharray': f.cat === 'emission' || f.cat === 'resource' ? '6 5' : 'none', fill: 'none', 'marker-end': 'url(#tip)' }, g);
+  const short = { gas: 'natural gas', acid: 'sulfuric acid', co2: 'CO₂', cl2: 'Cl₂', clo3: 'chlorate',
+                  sludge: 'brine sludge', spent: 'spent acid', memb: 'membranes', el: 'electricity', salt: 'salt (NaCl)', water: 'water' }[f.id];
+  outLabel[f.id] = label(short, lx, ly, { 'text-anchor': anchor }, g);
+  el('rect', { x: Math.min(lx, x) - (anchor === 'end' ? 110 : 45), y: Math.min(ly, y) - 12, width: anchor === 'end' ? 230 : 90,
+    height: Math.abs(ly - y) + 24, fill: 'transparent' }, g);
+  g.addEventListener('click', () => select(f.id));
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(f.id); } });
+  HIT[f.id] = g;
+});
+
+/* product outputs */
+[['A', '#b9d66a'], ['B', '#c7aef0']].forEach(([k, c]) => {
+  const [x, y] = PORT[k];
+  el('path', { d: `M${x} ${y} L${x + 82} ${y}`, stroke: c, 'stroke-width': 5, 'marker-end': 'url(#tip)' });
+  label(`Product ${k}`, 750, y - 22, { 'font-size': 13, fill: '#adc0c9' });
+  label(PROD[k].short === 'Cl₂' ? 'Chlorine' : 'Sodium hydroxide', 750, y, { 'font-size': 18, 'font-weight': 700, fill: c });
+  label(`${num(PROD[k].kg)} kg`, 750, y + 22, { 'font-size': 14, fill: '#adc0c9' });
+});
+
+/* allocation lines: one per flow and product */
+const LINES = {};
+FLOWS.forEach(f => {
+  LINES[f.id] = {};
+  ['A', 'B'].forEach(k => {
+    const [x1, y1] = ENTRY[f.id], [x2, y2] = PORT[k];
+    const ln = el('line', { x1, y1, x2, y2, 'stroke-linecap': 'butt', class: 'hit' }, gLines);
+    el('title', {}, ln);
+    ln.addEventListener('click', () => select(f.id));
+    LINES[f.id][k] = ln;
+  });
+});
+svg.appendChild(gHit);
+
+function drawLines() {
+  FLOWS.forEach(f => {
+    const s = share[f.id];
+    const one = s < 0.005 || s > 0.995;
+    ['A', 'B'].forEach(k => {
+      const v = k === 'A' ? s : 1 - s;
+      const ln = LINES[f.id][k];
+      if (v < 0.005) { ln.style.display = 'none'; return; }
+      ln.style.display = '';
+      const w = 1 + 9 * v;
+      ln.setAttribute('stroke', one ? '#7aa7e6' : '#ff6f61');
+      ln.setAttribute('stroke-width', w.toFixed(2));
+      ln.setAttribute('stroke-dasharray', one ? 'none' : `${Math.max(3, w).toFixed(1)} ${Math.max(3, w * 0.9).toFixed(1)}`);
+      ln.style.opacity = selected && selected !== f.id ? 0.18 : 0.95;
+      ln.firstChild.textContent = `${f.name}: ${pct(v)} to ${PROD[k].short} (${num(f.amt * v)} ${f.unit})`;
+    });
+    outLabel[f.id].setAttribute('fill', selected === f.id ? '#58c4dd' : '#f1eee6');
+    outLabel[f.id].setAttribute('font-weight', selected === f.id ? 700 : 400);
+  });
+}
+
+/* ---------- controls ---------- */
+const rows = {}, sliders = {}, outs = {};
+let lastCat = null;
+FLOWS.forEach(f => {
+  if (f.cat !== lastCat) {
+    const h = document.createElement('div'); h.className = 'group'; h.textContent = CATS[f.cat];
+    $('flows').appendChild(h); lastCat = f.cat;
+  }
+  const row = document.createElement('div');
+  row.className = 'flow';
+  row.innerHTML = `
+    <label class="name" for="s_${f.id}">${f.name} <small>${num(f.amt)} ${f.unit} · ${f.note}</small></label>
+    <input type="range" id="s_${f.id}" min="0" max="100" step="1" aria-label="Share of ${f.name} allocated to chlorine">
+    <output for="s_${f.id}"></output>`;
+  $('flows').appendChild(row);
+  rows[f.id] = row;
+  sliders[f.id] = row.querySelector('input');
+  outs[f.id] = row.querySelector('output');
+  sliders[f.id].addEventListener('input', () => {
+    share[f.id] = sliders[f.id].value / 100;
+    activeKey = null; selected = f.id;
+    update();
+  });
+  sliders[f.id].addEventListener('focus', () => { selected = f.id; update(); });
+  row.querySelector('.name').addEventListener('click', () => select(f.id));
+});
+
+function select(id) {
+  selected = selected === id ? null : id;
+  if (selected) sliders[id].focus({ preventScroll: true });
+  update();
+}
+
+function applyKey(key) {
+  activeKey = key;
+  const a = KEYS[key].a, causal = $('causal').checked;
+  FLOWS.forEach(f => { share[f.id] = causal && f.only ? (f.only === 'A' ? 1 : 0) : a; });
+  update();
+}
+document.querySelectorAll('.presets button').forEach(b => b.addEventListener('click', () => applyKey(b.dataset.key)));
+$('causal').addEventListener('change', () => applyKey(activeKey || 'mass'));
+
+/* ---------- results ---------- */
+function update() {
+  FLOWS.forEach(f => {
+    const s = share[f.id];
+    sliders[f.id].value = Math.round(s * 100);
+    outs[f.id].innerHTML = `<span class="a">${pct(s)} Cl₂</span><br><span class="b">${pct(1 - s)} NaOH</span>`;
+    rows[f.id].classList.toggle('sel', selected === f.id);
+  });
+  document.querySelectorAll('.presets button').forEach(b => b.setAttribute('aria-pressed', b.dataset.key === activeKey));
+  $('keyInfo').innerHTML = activeKey
+    ? `<b>${KEYS[activeKey].label} key:</b> ${pct(KEYS[activeKey].a)} Cl₂ / ${pct(1 - KEYS[activeKey].a)} NaOH <span class="muted">(${KEYS[activeKey].why})</span>`
+    : `<b>Custom allocation</b> <span class="muted">– you have set the shares by hand.</span>`;
+  drawLines();
+
+  /* inventory table */
+  let html = '<thead><tr><th>Flow</th><th>Un-allocated</th><th>→ Cl₂</th><th>→ NaOH</th><th>Sum</th></tr></thead><tbody>';
+  let cat = null;
+  FLOWS.forEach(f => {
+    if (f.cat !== cat) { html += `<tr class="cat"><td colspan="5">${CATS[f.cat]}</td></tr>`; cat = f.cat; }
+    const a = f.amt * share[f.id], b = f.amt - a;
+    html += `<tr class="${selected === f.id ? 'sel' : ''}"><td>${f.name}</td><td>${num(f.amt)} ${f.unit}</td>
+      <td class="a">${num(a)}</td><td class="b">${num(b)}</td><td><span class="ok" title="allocated sum equals the un-allocated amount">✓</span></td></tr>`;
+  });
+  html += '</tbody>';
+  $('inv').innerHTML = html;
+
+  /* GWP */
+  const gA = FLOWS.reduce((s, f) => s + f.amt * f.gwp * share[f.id], 0);
+  const gB = GWP_TOTAL - gA;
+  const perA = gA / PROD.A.kg * 1000, perB = gB / PROD.B.kg * 1000;
+  $('splitBar').innerHTML =
+    `<div style="flex:0 0 calc(${(gA / GWP_TOTAL * 100).toFixed(2)}% - 1px);background:var(--prodA)" title="Cl₂: ${num(gA)} kg CO₂-eq"></div>` +
+    `<div style="flex:0 0 calc(${(gB / GWP_TOTAL * 100).toFixed(2)}% - 1px);background:var(--prodB)" title="NaOH: ${num(gB)} kg CO₂-eq"></div>`;
+  $('splitLegend').innerHTML =
+    `<span><svg width="12" height="12"><rect width="12" height="12" rx="2" fill="#7f9f2a"/></svg>Cl₂ <b style="color:var(--ink)">${num(gA)}</b> kg (${pct(gA / GWP_TOTAL)})</span>` +
+    `<span><svg width="12" height="12"><rect width="12" height="12" rx="2" fill="#9a74d6"/></svg>NaOH <b style="color:var(--ink)">${num(gB)}</b> kg (${pct(gB / GWP_TOTAL)})</span>`;
+  const MAX = 1400;
+  $('bars').innerHTML = [['Chlorine', perA, 'var(--prodA)', 'Cl₂'], ['Sodium hydroxide', perB, 'var(--prodB)', 'NaOH']].map(([n, v, c, s]) => `
+    <div class="bar-row" title="${n}: ${num(v)} kg CO₂-eq per tonne ${s}">
+      <div class="lbl"><span>${n}</span><span class="val">${num(v)} kg CO₂-eq / t</span></div>
+      <div class="track"><div class="fill" style="width:${Math.min(100, v / MAX * 100).toFixed(2)}%;background:${c}"></div></div>
+    </div>`).join('');
+  $('check').innerHTML = `Check: ${num(gA)} + ${num(gB)} = <b>${num(gA + gB)}</b> kg CO₂-eq = un-allocated total ${num(GWP_TOTAL)} <span class="ok">✓</span> – the sum of the allocated flows always equals the un-allocated inventory.`;
+}
+
+applyKey('mass');
+</script>
+</div>
+</body>
+</html>

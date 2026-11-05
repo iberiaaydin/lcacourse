@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson course-iteration">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subdivision – dairy example</title>
+<style>
+  :root {
+    --bg: #14171c;
+    --ink: #f1eee6;
+    --dim: #8d94a0;
+    --blue: #58c4dd;
+    --line: #2a303a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px; gap: 14px;
+  }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #stage {
+    display: block; width: 100%;
+    max-width: min(1400px, calc((100vh - 250px) * 1460 / 760));
+    height: auto;
+  }
+  #cap {
+    margin: 0; max-width: 78ch; min-height: 2.8em; text-align: center;
+    color: var(--dim); font-size: 15px; line-height: 1.5; opacity: 0;
+  }
+  .bar {
+    display: flex; align-items: center; gap: 10px; width: 100%; max-width: 860px; flex-wrap: wrap;
+  }
+  #status { font-size: 15px; min-height: 1.4em; text-align: center; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 980px; }
+  .chip { min-width: 0; padding: 4px 10px; font-size: 12.5px; color: var(--dim); }
+  .chip.done { color: var(--ink); }
+  .chip[aria-current="true"] { border-color: var(--blue); color: var(--blue); }
+  label.auto { font-size: 13px; color: var(--dim); display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  #play { min-width: 150px; }
+  button {
+    font: inherit; font-size: 14px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 14px; cursor: pointer;
+    min-width: 74px;
+  }
+  button:hover { border-color: var(--blue); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  input[type=range] { flex: 1; accent-color: var(--blue); }
+  #time { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--dim); min-width: 84px; text-align: right; }
+  .table-view { max-width: 860px; width: 100%; font-size: 14px; color: var(--dim); }
+  .table-view summary { cursor: pointer; }
+  .table-view table { border-collapse: collapse; margin-top: 8px; width: 100%; }
+  .table-view th, .table-view td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: right; }
+  .table-view th:first-child, .table-view td:first-child { text-align: left; }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<h1 class="sr-only">Solving multifunctionality by subdivision: a dairy plant producing pasteurized milk and cheese, opened up into its unit processes.</h1>
+
+<svg id="stage" viewBox="0 0 1460 760" role="img"
+     aria-label="A dairy plant black box with two products is subdivided into a milk line (P1 reception and standardisation, P2 pasteurisation, P3 filling and cold storage) and a cheese line (P4 cheese vat, P5 pressing and ripening). Each emission and waste is traced to its own process. A bar chart then compares the carbon footprint per kilogram from subdivision with mass allocation of the black box."></svg>
+
+<p id="cap">Figure – Solving the multifunctionality of a dairy plant by subdivision (schematic, after Figure 8). Each product is linked only to the mono-functional process chain that makes it. Here whey is treated as a waste; if it were sold as a product, P4 would itself be multifunctional and subdivision alone would not solve the problem. Illustrative numbers – do not use for studies.</p>
+
+<div id="status" aria-live="polite"></div>
+<div class="bar">
+  <button id="back" type="button" title="Play this section in reverse (Left arrow)">Back</button>
+  <button id="play" type="button">Play section 1</button>
+  <button id="skip" type="button" title="Jump to the end of this section (Right arrow while playing)">Skip</button>
+  <label class="auto"><input id="auto" type="checkbox"> Auto-continue</label>
+</div>
+<div id="chips" class="chips" role="group" aria-label="Sections"></div>
+<div class="bar">
+  <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Timeline">
+  <span id="time">0:00 / 0:00</span>
+</div>
+
+<details class="table-view">
+  <summary>Show the numbers as a table</summary>
+  <table>
+    <thead><tr><th>Process / result (illustrative, per batch)</th><th>Milk line</th><th>Cheese line</th></tr></thead>
+    <tbody>
+      <tr><td>Raw milk (1 kg CO₂-eq per kg)</td><td>1 000</td><td>1 000</td></tr>
+      <tr><td>P1 Reception &amp; standardisation</td><td>10</td><td>–</td></tr>
+      <tr><td>P2 Pasteurisation</td><td>30</td><td>–</td></tr>
+      <tr><td>P3 Filling &amp; cold storage</td><td>40</td><td>–</td></tr>
+      <tr><td>P4 Cheese vat</td><td>–</td><td>60</td></tr>
+      <tr><td>P5 Pressing &amp; ripening</td><td>–</td><td>80</td></tr>
+      <tr><td>Total (kg CO₂-eq)</td><td>1 080</td><td>1 140</td></tr>
+      <tr><td>Product output (kg)</td><td>1 000 milk</td><td>100 cheese</td></tr>
+      <tr><td>Subdivision (kg CO₂-eq per kg)</td><td>1.08</td><td>11.4</td></tr>
+      <tr><td>Black box + mass allocation (kg CO₂-eq per kg)</td><td>2.02</td><td>2.02</td></tr>
+    </tbody>
+  </table>
+</details>
+
+<script>
+/* =====================================================================
+   Tiny manim-like engine (same as 2-2 LCA Iteration)
+   add(start, duration, fn, rate)  ~  self.play(Animation, run_time=...)
+   The whole scene is a pure function of time: render(t).
+   ===================================================================== */
+
+const NS = 'http://www.w3.org/2000/svg';
+const W = 1460, H = 760;
+const INK = '#f1eee6', BG = '#0d1a20', MUTED = '#adc0c9', GREY = '#8a979e';
+const MILK = '#2f9dbd', MILK_T = '#7fd0ea';      // milk line: fill / text
+const CHEESE = '#b8862a', CHEESE_T = '#f0c46a';  // cheese line: fill / text
+const GOLD = '#f4d35e';
+
+const svg = document.getElementById('stage');
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = {
+  linear: t => t,
+  smooth: t => t * t * t * (t * (6 * t - 15) + 10)
+};
+
+function el(tag, attrs = {}, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  parent.appendChild(e);
+  return e;
+}
+
+/* ---------- timeline ---------- */
+const anims = [];
+function add(start, dur, fn, rate = ease.smooth) {
+  anims.push({ start, dur, fn, rate, last: undefined });
+  return start + dur;
+}
+function render(t) {
+  for (const a of anims) {
+    const p = a.rate(clamp((t - a.start) / a.dur));
+    if (a.last === p) continue;
+    a.last = p;
+    a.fn(p);
+  }
+}
+
+/* ---------- layers ---------- */
+const defs = el('defs');
+el('rect', { x: 0, y: 0, width: W, height: H, fill: BG });
+const gD = el('g');                                   // the whole diagram (shrinks at the end)
+const gBox = el('g', {}, gD), gShared = el('g', {}, gD),
+      gA = el('g', {}, gD), gB = el('g', {}, gD),
+      gOverlay = el('g', {}, gD), gTop = el('g', {}, gD), gCall = el('g', {}, gD);
+const gChart = el('g');
+
+function path(d, attrs, parent) {
+  return el('path', Object.assign({ d, fill: 'none' }, attrs), parent);
+}
+
+/* Create(): draw the stroke on */
+function strokeAnim(e) {
+  const L = e.getTotalLength();
+  e.style.strokeDasharray = `${L} ${L}`;
+  e.style.strokeDashoffset = L;
+  e.style.opacity = 0;
+  return p => {
+    e.style.strokeDashoffset = L * (1 - p);
+    e.style.opacity = p > 0 ? 1 : 0;
+  };
+}
+/* Create() for a dashed line: reveal it through a growing mask */
+let uid = 0;
+function dashedDraw(d, attrs, parent) {
+  const id = 'mask' + (uid++);
+  const mask = el('mask', { id, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: W, height: H }, defs);
+  const mp = path(d, { stroke: '#fff', 'stroke-width': 14 }, mask);
+  path(d, Object.assign({ mask: `url(#${id})` }, attrs), parent);
+  return strokeAnim(mp);
+}
+function fade(e, max = 1) { e.style.opacity = 0; return p => { e.style.opacity = p * max; }; }
+
+/* arrow along a polyline; tip at the last point */
+function arrow(pts, color, parent, { width = 3, dash = null } = {}) {
+  const d = 'M ' + pts.map(p => p.join(' ')).join(' L ');
+  const attrs = { stroke: color, 'stroke-width': width };
+  let draw;
+  if (dash) draw = dashedDraw(d, Object.assign({ 'stroke-dasharray': dash }, attrs), parent);
+  else draw = strokeAnim(path(d, attrs, parent));
+  const [a, b] = pts.slice(-2);
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+  const g = el('g', { transform: `translate(${b[0]} ${b[1]}) rotate(${ang})` }, parent);
+  el('polygon', { points: '2,0 -13,-7.5 -13,7.5', fill: color }, g);
+  g.style.opacity = 0;
+  return p => { draw(p); g.style.opacity = clamp((p - 0.75) / 0.25); };
+}
+
+/* Write(): per-character reveal. ^{..} superscript, _{..} subscript. */
+function text(str, x, y, { size = 20, weight = 400, anchor = 'start', fill = INK, parent = gTop } = {}) {
+  const t = el('text', {
+    x, y, 'font-size': size, 'font-weight': weight, 'text-anchor': anchor, fill,
+    'dominant-baseline': 'central', 'xml:space': 'preserve'
+  }, parent);
+  t.style.whiteSpace = 'pre';
+  t.style.fontFamily = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  const chars = [];
+  let mode = null, first = false, restore = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if ((c === '^' || c === '_') && str[i + 1] === '{') { mode = c; first = true; i++; continue; }
+    if (mode && c === '}') { restore = mode === '^' ? size * 0.32 : -size * 0.22; mode = null; continue; }
+    const ts = el('tspan', { 'fill-opacity': 0 }, t);
+    ts.textContent = c;
+    if (mode) {
+      ts.setAttribute('font-size', size * 0.62);
+      if (first) { ts.setAttribute('dy', mode === '^' ? -size * 0.32 : size * 0.22); first = false; }
+    } else if (restore) {
+      ts.setAttribute('dy', restore); restore = 0;
+    }
+    chars.push(ts);
+  }
+  const n = chars.length, k = 4;
+  return p => chars.forEach((c, i) =>
+    c.setAttribute('fill-opacity', clamp(p * (n + k) - i, 0, k) / k));
+}
+
+/* a process box that pops in, with its name written inside */
+function processBox(id, l1, l2, x, y, w, h, color, parent, t0) {
+  const cx = x + w / 2, cy = y + h / 2;
+  const g = el('g', {}, parent);
+  el('rect', { x, y, width: w, height: h, rx: 14, fill: color, 'fill-opacity': 0.35, stroke: color, 'stroke-width': 2.5 }, g);
+  add(t0, 0.6, p => {
+    const s = 0.6 + 0.4 * p;
+    g.setAttribute('transform', `translate(${cx} ${cy}) scale(${s}) translate(${-cx} ${-cy})`);
+    g.style.opacity = p;
+  });
+  add(t0 + 0.3, 0.5, text(id, cx, cy - 28, { size: 24, weight: 700, anchor: 'middle', parent: g }));
+  add(t0 + 0.45, 0.7, text(l1, cx, cy + 4, { size: 17, anchor: 'middle', fill: '#dfe7ea', parent: g }));
+  add(t0 + 0.6, 0.7, text(l2, cx, cy + 27, { size: 17, anchor: 'middle', fill: '#dfe7ea', parent: g }));
+  return { right: x + w, top: y };
+}
+
+/* callout box at the top left, fades out at `t1` */
+function callout(lines, t0, t1, h) {
+  const g = el('g', {}, gCall);
+  add(t0, 0.7, strokeAnim(path(`M24 22 h384 v${h} h-384 Z`, { stroke: GOLD, 'stroke-width': 1.5 }, g)));
+  lines.forEach(([s, opt], i) => add(t0 + 0.3 + i * 0.35, 0.9,
+    text(s, 42, 48 + i * 28, Object.assign({ size: 16, parent: g }, opt))));
+  if (t1 !== undefined) add(t1, 0.6, p => { g.style.opacity = 1 - p; });
+}
+
+/* =====================================================================
+   SCENE
+   ===================================================================== */
+const starts = [0];
+let t = 0;
+
+/* ---------- 1. the black box ---------- */
+const BOX = 'M420 215 H1040 A40 40 0 0 1 1080 255 V530 A40 40 0 0 1 1040 570 H420 A40 40 0 0 1 380 530 V255 A40 40 0 0 1 420 215 Z';
+const boxFill = el('path', { d: BOX, fill: '#ffffff', 'fill-opacity': 0.04 }, gBox);
+add(0.6, 0.8, fade(boxFill));
+add(0.2, 1.6, dashedDraw(BOX, { stroke: INK, 'stroke-width': 2.5, 'stroke-dasharray': '10 7' }, gBox), ease.linear);
+
+/* opaque cover: we cannot see inside the black box yet */
+const cover = el('g', {}, gOverlay);
+el('path', { d: BOX, fill: '#24363f' }, cover);
+add(1.0, 0.8, fade(cover));
+add(1.4, 0.8, text('Dairy plant', 730, 365, { size: 36, weight: 600, anchor: 'middle', parent: cover }));
+add(1.9, 1.0, text('black box: one inventory for everything', 730, 410, { size: 19, anchor: 'middle', fill: MUTED, parent: cover }));
+
+/* inputs */
+add(2.2, 0.6, text('Input products', 258, 245, { size: 17, anchor: 'end', fill: MUTED }));
+add(2.3, 1.0, arrow([[270, 285], [418, 285]], INK, gA));
+add(2.4, 1.0, arrow([[270, 315], [418, 315]], INK, gA));
+add(2.5, 1.0, arrow([[270, 345], [418, 345]], INK, gShared));
+add(2.6, 1.0, arrow([[270, 505], [418, 505]], GREY, gB, { dash: '9 7' }));
+add(2.4, 0.6, text('energy', 258, 285, { size: 19, anchor: 'end' }));
+add(2.5, 0.9, text('packaging, chemicals', 258, 315, { size: 19, anchor: 'end' }));
+add(2.6, 0.6, text('raw milk', 258, 345, { size: 19, anchor: 'end' }));
+add(2.7, 0.9, text('Resources (water)', 258, 505, { size: 19, anchor: 'end', fill: GREY }));
+[[285, INK], [315, INK], [345, INK], [505, GREY]].forEach(([y, c]) => {   // tips at the box wall
+  const g = el('g', { transform: `translate(382 ${y})` }, cover);
+  el('polygon', { points: '0,0 -13,-7.5 -13,7.5', fill: c }, g);
+});
+
+/* products */
+add(3.2, 0.9, arrow([[1030, 315], [1110, 315]], MILK_T, gA));
+add(3.3, 0.9, arrow([[950, 480], [1110, 480]], CHEESE_T, gB));
+add(3.6, 0.9, text('Pasteurized milk', 1125, 315, { size: 22, weight: 700, fill: MILK_T, parent: gA }));
+add(3.8, 0.6, text('Cheese', 1125, 480, { size: 22, weight: 700, fill: CHEESE_T, parent: gB }));
+
+/* everything leaves as one lump */
+const lump = el('g', {}, gTop);
+add(4.2, 0.8, arrow([[730, 213], [730, 150]], GREY, lump, { dash: '9 7' }));
+add(4.5, 0.9, text('Emissions (whole plant)', 730, 128, { size: 19, anchor: 'middle', fill: GREY, parent: lump }));
+add(4.4, 0.8, arrow([[730, 572], [730, 640]], GREY, lump));
+add(4.7, 0.9, text('Waste (whole plant)', 730, 665, { size: 19, anchor: 'middle', fill: GREY, parent: lump }));
+callout([
+  ['Multifunctional unit process', { weight: 700, fill: GOLD }],
+  ['Two products share one inventory.'],
+  ['Which burdens belong to milk, which to cheese?', { size: 15 }]
+], 5.2, undefined, 108);
+const firstCallout = gCall.lastChild;
+t = 7.6;
+
+/* ---------- 2. open the box: milk line ---------- */
+starts.push(t);
+add(t, 0.6, p => { firstCallout.style.opacity = 1 - p; lump.style.opacity = 1 - p; });
+add(t + 0.2, 1.2, p => { cover.style.opacity = 1 - p; });
+add(t + 0.8, 1.2, dashedDraw('M380 400 L1080 400', { stroke: INK, 'stroke-width': 2, 'stroke-dasharray': '10 7' }, gBox), ease.linear);
+processBox('P1', 'Reception &', 'standardisation', 420, 260, 170, 110, MILK, gA, t + 1.2);
+processBox('P2', 'Pasteurisation', '(HTST, 72 °C)', 640, 260, 170, 110, MILK, gA, t + 1.7);
+processBox('P3', 'Filling &', 'cold storage', 860, 260, 170, 110, MILK, gA, t + 2.2);
+add(t + 2.0, 0.5, arrow([[590, 315], [638, 315]], INK, gA));
+add(t + 2.5, 0.5, arrow([[810, 315], [858, 315]], INK, gA));
+add(t + 2.6, 0.7, text('milk line', 402, 237, { size: 16, fill: MILK_T, parent: gA }));
+t += 4.0;
+
+/* ---------- 3. cheese line ---------- */
+starts.push(t);
+processBox('P4', 'Cheese vat', '(curdling)', 420, 430, 170, 100, CHEESE, gB, t);
+processBox('P5', 'Pressing &', 'ripening', 780, 430, 170, 100, CHEESE, gB, t + 0.6);
+add(t + 0.7, 1.0, arrow([[330, 345], [330, 465], [418, 465]], INK, gB));
+add(t + 1.3, 0.8, arrow([[590, 480], [778, 480]], INK, gB));
+add(t + 1.6, 0.7, text('cheese line', 402, 415, { size: 16, fill: CHEESE_T, parent: gB }));
+callout([
+  ['Subdivision', { weight: 700, fill: GOLD }],
+  ['The black box is split into unit processes.'],
+  ['Raw milk is shared out to both lines.']
+], t + 1.8, t + 3.8 + 0.0, 108);
+t += 4.6;
+
+/* ---------- 4. emissions and wastes, each with its own process ---------- */
+starts.push(t);
+add(t, 1.2, arrow([[560, 430], [560, 405], [615, 405], [615, 140]], CHEESE_T, gB, { dash: '9 7' }));
+add(t + 0.8, 0.8, text('Emissions i', 603, 150, { size: 19, anchor: 'end', fill: CHEESE_T, parent: gB }));
+add(t + 1.0, 0.9, text('CO_{2} (curd heating)', 603, 175, { size: 16, anchor: 'end', fill: MUTED, parent: gB }));
+add(t + 0.5, 1.0, arrow([[725, 260], [725, 112]], MILK_T, gA, { dash: '9 7' }));
+add(t + 1.2, 0.8, text('Emissions ii', 725, 66, { size: 19, anchor: 'middle', fill: MILK_T, parent: gA }));
+add(t + 1.4, 0.9, text('CO_{2} (steam boiler)', 725, 91, { size: 16, anchor: 'middle', fill: MUTED, parent: gA }));
+add(t + 0.9, 1.0, arrow([[945, 260], [945, 140]], MILK_T, gA, { dash: '9 7' }));
+add(t + 1.6, 0.8, text('Emissions iii', 958, 150, { size: 19, fill: MILK_T, parent: gA }));
+add(t + 1.8, 0.9, text('refrigerant leaks', 958, 175, { size: 16, fill: MUTED, parent: gA }));
+
+const w0 = t + 2.6;
+add(w0, 1.0, arrow([[505, 530], [505, 690]], CHEESE_T, gB));
+add(w0 + 0.6, 0.6, text('Waste i', 493, 640, { size: 19, anchor: 'end', fill: CHEESE_T, parent: gB }));
+add(w0 + 0.8, 0.6, text('whey', 493, 664, { size: 16, anchor: 'end', fill: MUTED, parent: gB }));
+add(w0 + 0.4, 1.2, arrow([[725, 370], [725, 690]], MILK_T, gA));
+add(w0 + 1.0, 0.6, text('Waste ii', 713, 640, { size: 19, anchor: 'end', fill: MILK_T, parent: gA }));
+add(w0 + 1.2, 0.8, text('CIP wastewater', 713, 664, { size: 16, anchor: 'end', fill: MUTED, parent: gA }));
+add(w0 + 0.8, 1.0, arrow([[865, 530], [865, 690]], CHEESE_T, gB));
+add(w0 + 1.4, 0.6, text('Waste iii', 877, 640, { size: 19, fill: CHEESE_T, parent: gB }));
+add(w0 + 1.6, 0.9, text('brine, rind trimmings', 877, 664, { size: 16, fill: MUTED, parent: gB }));
+t = w0 + 3.2;
+
+/* ---------- 5 / 6. one product at a time ---------- */
+let dimA = [0, 0], dimB = [0, 0];
+const DIM = 0.82;
+const updDim = () => {
+  gA.style.opacity = 1 - DIM * (dimA[0] - dimA[1]);
+  gB.style.opacity = 1 - DIM * (dimB[0] - dimB[1]);
+};
+
+starts.push(t);
+add(t, 0.8, p => { dimB[0] = p; updDim(); });
+callout([
+  ['Analysed product: pasteurized milk', { weight: 700, fill: MILK_T }],
+  ['Only P1 → P2 → P3 make milk, so only their'],
+  ['inputs, emissions ii + iii and waste ii count.']
+], t + 0.5, t + 4.6, 108);
+t += 5.2;
+
+starts.push(t);
+add(t, 0.8, p => { dimA[0] = p; dimB[1] = p; updDim(); });
+callout([
+  ['Analysed product: cheese', { weight: 700, fill: CHEESE_T }],
+  ['Only P4 → P5 make cheese, so only their'],
+  ['inputs, emissions i and wastes i + iii count.']
+], t + 0.5, t + 4.6, 108);
+t += 5.2;
+
+/* ---------- 7. inventory per process ---------- */
+starts.push(t);
+add(t, 0.8, p => { dimA[1] = p; updDim(); });
+function badge(n, x, y, color, parent, t0) {
+  const g = el('g', { transform: `translate(${x} ${y})` }, parent);
+  el('rect', { x: -26, y: -14, width: 52, height: 28, rx: 14, fill: INK, stroke: color, 'stroke-width': 2.5 }, g);
+  const tx = el('text', { 'font-size': 17, 'font-weight': 700, 'text-anchor': 'middle', 'dominant-baseline': 'central', fill: BG }, g);
+  tx.textContent = n;
+  add(t0, 0.4, fade(g));
+}
+[[10, 584, 260, MILK, gA], [30, 804, 260, MILK, gA], [40, 1024, 260, MILK, gA],
+ [60, 584, 430, CHEESE, gB], [80, 944, 430, CHEESE, gB]]
+  .forEach(([n, x, y, c, g], i) => badge(n, x, y, c, g, t + 0.6 + i * 0.25));
+add(t + 1.9, 0.7, text('2 000 kg, 1 000 kg per line', 258, 368, { size: 15, anchor: 'end', fill: MUTED, parent: gShared }));
+add(t + 2.1, 0.7, text('1 kg CO_{2}-eq per kg', 258, 388, { size: 15, anchor: 'end', fill: MUTED, parent: gShared }));
+add(t + 2.3, 0.6, text('1 000 kg', 322, 425, { size: 15, anchor: 'end', fill: CHEESE_T, parent: gB }));
+add(t + 2.5, 0.6, text('1 000 kg', 1125, 342, { size: 16, fill: MUTED, parent: gA }));
+add(t + 2.6, 0.6, text('100 kg', 1125, 507, { size: 16, fill: MUTED, parent: gB }));
+callout([
+  ['kg CO_{2}-eq per batch (illustrative)', { weight: 700, fill: GOLD }],
+  ['Milk:  1 000 + 10 + 30 + 40 = 1 080', { fill: MILK_T }],
+  ['Cheese:  1 000 + 60 + 80 = 1 140', { fill: CHEESE_T }],
+  ['Whole plant (black box):  2 220', { fill: MUTED }]
+], t + 3.0, t + 7.0, 136);
+t += 7.6;
+
+/* ---------- 8. subdivision vs black-box allocation ---------- */
+starts.push(t);
+add(t, 1.6, p => {
+  const s = lerp(1, 0.5, p), dx = lerp(0, 0, p), dy = lerp(0, 190, p);
+  gD.setAttribute('transform', `translate(${dx} ${dy}) scale(${s})`);
+});
+
+svg.appendChild(gChart);
+const hatch = el('pattern', { id: 'hatch', patternUnits: 'userSpaceOnUse', width: 8, height: 8, patternTransform: 'rotate(45)' }, defs);
+el('rect', { width: 8, height: 8, fill: '#4f5d64' }, hatch);
+el('line', { x1: 0, y1: 0, x2: 0, y2: 8, stroke: '#9fadb4', 'stroke-width': 3 }, hatch);
+
+const X0 = 760, PX = 52;               // chart origin, px per kg CO2-eq/kg
+const c0 = t + 1.2;
+add(c0, 0.9, text('Carbon footprint per kg of product', X0, 60, { size: 24, weight: 700, parent: gChart }));
+add(c0 + 0.3, 1.2, text('kg CO_{2}-eq per kg · same plant, same 2 220 kg CO_{2}-eq in total', X0, 90, { size: 16, fill: MUTED, parent: gChart }));
+
+/* legend */
+const leg = el('g', {}, gChart);
+el('rect', { x: X0, y: 120, width: 16, height: 16, rx: 3, fill: MILK }, leg);
+el('rect', { x: X0 + 18, y: 120, width: 16, height: 16, rx: 3, fill: CHEESE }, leg);
+const l1 = el('text', { x: X0 + 44, y: 129, 'font-size': 16, 'dominant-baseline': 'central', fill: MUTED }, leg);
+l1.textContent = 'subdivision (own process chain)';
+el('rect', { x: X0 + 340, y: 120, width: 16, height: 16, rx: 3, fill: 'url(#hatch)' }, leg);
+const l2 = el('text', { x: X0 + 366, y: 129, 'font-size': 16, 'dominant-baseline': 'central', fill: MUTED }, leg);
+l2.textContent = 'black box + mass allocation';
+add(c0 + 0.6, 0.6, fade(leg));
+
+function hbar(val, shown, y, fill, label, t0, tip) {
+  const w = val * PX;
+  const r = el('rect', { x: X0, y, width: 0, height: 28, rx: 4, fill }, gChart);
+  el('title', {}, r).textContent = tip;
+  const inside = w > 330;
+  const tx = el('text', {
+    x: inside ? X0 + w - 10 : X0 + w + 10, y: y + 14, 'font-size': 16, 'font-weight': 600,
+    'text-anchor': inside ? 'end' : 'start', 'dominant-baseline': 'central', fill: inside ? BG : INK
+  }, gChart);
+  tx.textContent = `${shown} · ${label}`;
+  add(t0, 1.0, p => { r.setAttribute('width', w * p); tx.style.opacity = clamp((p - 0.7) / 0.3); });
+}
+add(c0 + 1.0, 0.6, text('Pasteurized milk', X0, 190, { size: 19, weight: 700, fill: MILK_T, parent: gChart }));
+hbar(1.08, '1.08', 208, MILK, 'subdivision', c0 + 1.3, 'Pasteurized milk, subdivision: 1.08 kg CO₂-eq/kg');
+hbar(2.018, '2.02', 240, 'url(#hatch)', 'black box, mass allocation', c0 + 1.6, 'Pasteurized milk, black box + mass allocation: 2.02 kg CO₂-eq/kg');
+add(c0 + 2.2, 0.6, text('Cheese', X0, 312, { size: 19, weight: 700, fill: CHEESE_T, parent: gChart }));
+hbar(11.4, '11.4', 330, CHEESE, 'subdivision', c0 + 2.5, 'Cheese, subdivision: 11.4 kg CO₂-eq/kg');
+hbar(2.018, '2.02', 362, 'url(#hatch)', 'black box, mass allocation', c0 + 2.8, 'Cheese, black box + mass allocation: 2.02 kg CO₂-eq/kg');
+const base = el('line', { x1: X0, y1: 200, x2: X0, y2: 398, stroke: GREY, 'stroke-width': 1.5 }, gChart);
+add(c0 + 1.0, 0.5, fade(base));
+
+const k0 = c0 + 4.0;
+add(k0, 0.9, text('Black box + mass allocation distorts the result:', X0, 450, { size: 18, weight: 700, fill: GOLD, parent: gChart }));
+add(k0 + 0.6, 1.0, text('• milk about 1.9 × too high  (2.02 instead of 1.08)', X0, 482, { size: 17, parent: gChart }));
+add(k0 + 1.2, 1.0, text('• cheese about 5.6 × too low  (2.02 instead of 11.4)', X0, 512, { size: 17, parent: gChart }));
+add(k0 + 1.9, 1.2, text('The plant total is the same; only the split between products differs.', X0, 552, { size: 16, fill: MUTED, parent: gChart }));
+add(k0 + 2.4, 1.2, text('Not every process inside the box serves both products equally.', X0, 578, { size: 16, fill: MUTED, parent: gChart }));
+t = k0 + 4.0;
+
+const cap = document.getElementById('cap');
+add(t, 1.0, p => { cap.style.opacity = p; });
+t += 1.0;
+
+const DUR = t + 1.5;
+
+/* ---------- player: one section at a time ---------- */
+const labels = [
+  'The dairy plant as a black box',
+  'Open the box: milk line',
+  'Cheese line',
+  'Emissions and wastes per process',
+  'Analysed product: pasteurized milk',
+  'Analysed product: cheese',
+  'Inventory per process',
+  'Subdivision vs black-box allocation'
+];
+const ends = starts.slice(1).concat(DUR);
+const LAST = starts.length - 1;
+const $ = id => document.getElementById(id);
+const playBtn = $('play'), backBtn = $('back'), skipBtn = $('skip');
+const scrub = $('scrub'), timeEl = $('time'), statusEl = $('status'), autoBox = $('auto');
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const EPS = 1e-6;
+
+let now = 0, cur = 0, dir = 1, playing = false, lastTs = null;
+
+const chips = labels.map((l, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip'; b.textContent = `${i + 1}. ${l}`;
+  b.addEventListener('click', () => goTo(i));
+  $('chips').appendChild(b);
+  return b;
+});
+
+const sectionAt = t => { let k = 0; starts.forEach((s, i) => { if (t >= s - EPS) k = i; }); return k; };
+const atEnd = () => now >= ends[cur] - EPS;
+
+function draw() {
+  render(now);
+  scrub.value = (now / DUR) * 1000;
+  timeEl.textContent = `${fmt(now)} / ${fmt(DUR)}`;
+
+  const done = !playing && atEnd();
+  statusEl.textContent = `Section ${cur + 1} of ${LAST + 1}: ${labels[cur]}` +
+    (playing ? (dir < 0 ? ' (reversing)' : '') : done ? ' (done)' : '');
+  chips.forEach((c, i) => {
+    c.classList.toggle('done', i < cur || (i === cur && done));
+    c.setAttribute('aria-current', i === cur ? 'true' : 'false');
+  });
+
+  if (playing) playBtn.textContent = 'Pause';
+  else if (done && cur === LAST) playBtn.textContent = 'Restart';
+  else if (done) playBtn.textContent = `Play section ${cur + 2}`;
+  else if (now > starts[cur] + EPS) playBtn.textContent = 'Resume';
+  else playBtn.textContent = `Play section ${cur + 1}`;
+}
+
+function goTo(i) { cur = i; now = starts[i]; dir = 1; playing = false; draw(); }
+
+function play() {                       // forward: play the next section
+  if (atEnd()) {
+    if (cur === LAST) { cur = 0; now = 0; }
+    else cur++;
+  }
+  dir = 1; playing = true; draw();
+}
+function playBackward() {               // reverse: play this section backwards,
+  if (now <= starts[cur] + EPS) {       // or the previous one if already at its start
+    if (cur === 0) return;
+    cur--;
+  }
+  dir = -1; playing = true; draw();
+}
+const pause = () => { playing = false; draw(); };
+const toggle = () => (playing ? pause() : play());
+const skip = () => { now = ends[cur]; dir = 1; playing = false; draw(); };
+const skipBack = () => { now = starts[cur]; playing = false; draw(); };
+const right = () => (playing && dir > 0 ? skip() : play());
+const left = () => (playing && dir < 0 ? skipBack() : playBackward());
+
+function frame(ts) {
+  if (lastTs == null) lastTs = ts;
+  const dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  if (playing) {
+    now += dir * dt;
+    if (dir > 0) {
+      if (now >= ends[cur] - EPS) {
+        now = ends[cur];
+        if (autoBox.checked && cur < LAST) cur++;
+        else playing = false;
+      }
+    } else if (now <= starts[cur] + EPS) {
+      now = starts[cur]; playing = false;
+    }
+    draw();
+  }
+  requestAnimationFrame(frame);
+}
+
+playBtn.addEventListener('click', toggle);
+backBtn.addEventListener('click', left);
+skipBtn.addEventListener('click', skip);
+scrub.addEventListener('input', () => {
+  playing = false;
+  now = (scrub.value / 1000) * DUR;
+  cur = sectionAt(now);
+  draw();
+});
+document.addEventListener('keydown', e => {
+  if (e.code === 'ArrowRight' || e.code === 'PageDown') { e.preventDefault(); right(); }
+  else if (e.code === 'ArrowLeft' || e.code === 'PageUp') { e.preventDefault(); left(); }
+  else if (e.code === 'Space' && !e.target.closest('button, input, summary')) { e.preventDefault(); toggle(); }
+});
+
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  cur = LAST; now = DUR;
+}
+draw();
+requestAnimationFrame(frame);
+</script>
+</div>
+</body>
+</html>
