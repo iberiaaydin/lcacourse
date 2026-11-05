@@ -108,6 +108,22 @@
   .delta { font-size: 13px; font-weight: 600; }
   .tagbest { font-size: 11px; font-weight: 700; color: var(--ok); text-transform: uppercase; letter-spacing: 0.06em; }
   #verdict { font-size: 15px; margin: 0 0 12px; }
+  .slider-row { display: flex; align-items: center; gap: 14px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+  .slider-row output { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 120px; text-align: right; }
+  .ctl { margin-bottom: 14px; }
+  .scen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 24px; }
+  @media (max-width: 900px) { .scen { grid-template-columns: minmax(0, 1fr); } }
+  .sum { background: var(--panel-2); border-radius: 10px; padding: 10px 14px; font-size: 15px; margin-top: 4px; }
+  .sum b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .chart-head h2 { margin: 0; }
+  .axes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 28px; margin-top: 12px; }
+  @media (max-width: 760px) { .axes { grid-template-columns: minmax(0, 1fr); } }
+  .axes .slider-row output { font-size: 14px; min-width: 90px; font-weight: 600; }
+  .axes label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--dim); margin-right: 12px; }
+  .axes input[type=checkbox] { accent-color: var(--accent); }
+  .axes input[type=range]:disabled { opacity: 0.35; }
 </style>
 <link rel="stylesheet" href="../course.css">
 </head>
@@ -125,66 +141,87 @@
 
 <section class="intro">
   <h1>Ceramic cup vs paper cup: when does reuse pay off?</h1>
-  <p>Functional unit: <strong>750 coffees of 300 mL</strong> served in Berlin. A paper cup is thrown away after every drink; a reusable cup is
-  used <em>N</em> times before it is replaced, so 750&nbsp;/&nbsp;<em>N</em> cups are needed. Move the slider to see how the climate change result
-  (kg CO₂-eq, ILCD midpoint) changes and where each reusable option breaks even with the paper cup.
-  Data: GreenDelta case study “Ceramic cup vs. Paper cup” (Martin, Bunsen &amp; Ciroth, 2018; openLCA 1.7.2, ecoinvent 3.4), Table 2 and Fig. 14.</p>
+  <p>Set up a usage scenario: how long one reusable cup is used, how many coffees (300 mL) a day, and how often it is washed.
+  A paper cup is thrown away after every coffee. The page shows the climate change result (kg CO₂-eq, ILCD midpoint) and where each
+  reusable option breaks even with the paper cup. Data: GreenDelta case study “Ceramic cup vs. Paper cup” (Martin, Bunsen &amp; Ciroth, 2018;
+  openLCA 1.7.2, ecoinvent 3.4), Table 2 and Fig. 14.</p>
 </section>
 
 <div class="card">
-  <div class="controls">
-    <div>
-      <p class="lbl"><label for="uses">Uses per reusable cup before it is replaced (N)</label></p>
-      <div class="uses-row">
-        <input type="range" id="uses" min="1" max="750" step="1" value="10">
-        <output id="nOut" for="uses">10</output>
+  <h2>Usage scenario</h2>
+  <div class="scen">
+    <div class="ctl">
+      <p class="lbl"><label for="dur">How long one cup is used (up to 10 years)</label></p>
+      <div class="slider-row">
+        <input type="range" id="dur" min="0" max="1000" step="1">
+        <output id="durOut" for="dur"></output>
       </div>
-      <div class="quick" role="group" aria-label="Jump to number of uses">
-        <span class="lbl" style="margin:4px 4px 0 0">Jump to:</span>
-        <button type="button" data-n="1">1</button>
-        <button type="button" data-n="5">5</button>
-        <button type="button" data-n="10">10</button>
-        <button type="button" data-n="20">20</button>
-        <button type="button" data-n="50">50</button>
-        <button type="button" data-n="100">100</button>
-        <button type="button" data-n="750">750 (one cup for all)</button>
+      <div class="quick" role="group" aria-label="Jump to a duration">
+        <button type="button" data-d="1">1 day</button>
+        <button type="button" data-d="7">1 week</button>
+        <button type="button" data-d="30.4">1 month</button>
+        <button type="button" data-d="365">1 year</button>
+        <button type="button" data-d="1825">5 years</button>
+        <button type="button" data-d="3650">10 years</button>
       </div>
     </div>
-    <div>
-      <p class="lbl">Wash the reusable cup after</p>
-      <div class="seg" role="group" aria-label="Washing frequency">
-        <button type="button" data-k="1" aria-pressed="true">every use</button>
-        <button type="button" data-k="2">every 2nd use</button>
-        <button type="button" data-k="3">every 3rd use</button>
+    <div class="ctl">
+      <p class="lbl"><label for="cpd">Coffees per day</label></p>
+      <div class="slider-row">
+        <input type="range" id="cpd" min="1" max="10" step="1" value="5">
+        <output id="cpdOut" for="cpd"></output>
       </div>
-      <p class="lbl" style="margin-top:12px">Chart x-axis</p>
-      <div class="seg" role="group" aria-label="Chart range">
-        <button type="button" data-x="100" aria-pressed="true">0 – 100 uses</button>
-        <button type="button" data-x="750">0 – 750 uses</button>
+    </div>
+    <div class="ctl">
+      <p class="lbl"><label for="wash">Wash the reusable cup after</label></p>
+      <div class="slider-row">
+        <input type="range" id="wash" min="1" max="10" step="1" value="1">
+        <output id="washOut" for="wash"></output>
       </div>
     </div>
   </div>
+  <div class="sum" id="sum" aria-live="polite"></div>
   <p class="lbl" style="margin-top:14px">Options shown (colour = washing, line style = cup type)</p>
   <div class="series" id="series"></div>
 </div>
 
 <div class="card">
-  <h2>Each case at <span id="nCases">10</span> uses per cup <span class="muted" id="casesSub"></span></h2>
+  <h2>Each case <span class="muted" id="casesSub"></span></h2>
   <div class="cases" id="cases"></div>
-  <p class="note">kg CO₂-eq for 750 coffees. Bar: the case's result; white tick: the paper cup. Click a ceramic case to show or hide it in the chart.</p>
+  <p class="note">Bar: the case's result; white tick: the paper cup. Click a ceramic case to show or hide it in the chart.</p>
 </div>
 
 <div class="card">
-  <h2>Climate change for 750 coffees <span class="muted">(kg CO₂-eq) vs number of uses per cup</span></h2>
+  <div class="chart-head">
+    <h2 id="chartTitle"></h2>
+    <div class="seg" role="group" aria-label="Chart view">
+      <button type="button" data-view="scenario" aria-pressed="true">Cumulative</button>
+      <button type="button" data-view="study">Study view: per 750 coffees (Fig. 14)</button>
+    </div>
+  </div>
+  <p class="muted" id="viewNote" style="margin:0 0 8px"></p>
   <div class="chart-wrap">
-    <svg id="chart" viewBox="0 0 900 470" role="img" aria-label="Line chart of kg CO2-eq for 750 coffees against the number of uses per reusable cup, with the paper cup as a flat reference line."></svg>
+    <svg id="chart" viewBox="0 0 900 470" role="img" aria-label="Line chart comparing the climate change result of reusable cups and the paper cup against the number of uses."></svg>
     <div id="tip" role="status"></div>
   </div>
-  <p class="note">Hover or tap the chart to read values; click to move the slider there. Rings on the paper-cup line mark the break-even points.</p>
+  <div class="axes">
+    <div>
+      <p class="lbl">X-axis: number of uses
+        <label class="chk" style="margin-left:10px"><input type="checkbox" id="xAuto" checked> auto</label>
+        <label class="chk"><input type="checkbox" id="xLog"> log scale</label></p>
+      <div class="slider-row"><input type="range" id="xMax" min="0" max="1000" step="1" aria-label="X-axis maximum" disabled><output id="xMaxOut" for="xMax"></output></div>
+    </div>
+    <div>
+      <p class="lbl">Y-axis: kg CO₂-eq
+        <label class="chk" style="margin-left:10px"><input type="checkbox" id="yAuto" checked> auto</label></p>
+      <div class="slider-row"><input type="range" id="yMax" min="0" max="1000" step="1" aria-label="Y-axis maximum" disabled><output id="yMaxOut" for="yMax"></output></div>
+    </div>
+  </div>
+  <p class="note">Hover or tap the chart to read values; click to set the scenario to that number of uses. Rings mark the break-even points.</p>
 </div>
 
 <div class="card">
-  <h2>Result at <span id="nTitle">10</span> uses per cup</h2>
+  <h2 id="tblTitle"></h2>
   <p id="verdict"></p>
   <div class="table-wrap"><table id="tbl"></table></div>
   <div class="key"><span><i style="background:var(--prod)"></i>cups: production, transport, breakage &amp; disposal</span><span><i style="background:var(--ink)"></i>washing (in the option's colour)</span></div>
@@ -198,13 +235,16 @@
     <div class="fact"><div class="big" style="color:var(--hand)">89 uses / never</div><p>Washed by hand with hot water: the mug needs 89 uses, the cup with lid never breaks even.</p></div>
     <div class="fact"><div class="big" style="color:var(--cold)">cold water</div><p>Hand-washing the mug with cold water was the best option in 13 of 15 impact categories – heating the water is what counts.</p></div>
   </div>
-  <p class="note">Model behind the curves: impact = (750 / N) × P + (750 / washing interval) × W, where P is one cup's production, transport, breakage and disposal and W is one washing. P and W were fitted to the study's Table 2 (N = 750) and Fig. 14 (N = 1); the fit gives back the study's break-even points. The cold-water option is from Table 8 and was reported for the mug only. Washing every 2nd or 3rd use follows the idea of Fig. 11. Values are for teaching; see the study for the full 15 impact categories.</p>
+  <p class="note">Model: impact = cups × P + washes × W, with P = one cup's production, transport, breakage and disposal and W = one washing (both kg CO₂-eq).
+  P and W were fitted to the study's Table 2 (750 uses) and Fig. 14 (1 use); the fit gives back the study's break-even points.
+  The scenario assumes one cup lasts the whole period; washes = uses ÷ washing interval. The break-even point is P ÷ (paper cup − W ÷ washing interval) uses,
+  the same in both chart views. Cold water is from Table 8 (mug only); washing less often extends the idea of Fig. 11. Values are for teaching.</p>
 </div>
 
 <script>
 /* ---------- data (kg CO2-eq), fitted to the study ---------- */
-const TOTAL = 750;                 // coffees in the functional unit
-const PAPER = 39.7 / TOTAL;        // one paper cup incl. lid, packaging, incineration
+const STUDY_FU = 750;              // coffees in the study's functional unit
+const PAPER = 39.7 / STUDY_FU;     // one paper cup incl. lid, packaging, incineration
 const OPTS = [
   { id: 'mugDish', name: 'Ceramic mug – dishwasher',              cup: 'mug', wash: 'dish', P: 0.4166, W: 0.01411 },
   { id: 'mugHand', name: 'Ceramic mug – by hand',                 cup: 'mug', wash: 'hand', P: 0.4158, W: 0.04825 },
@@ -216,20 +256,59 @@ const COLOR = { dish: '#3987e5', hand: '#d95926', cold: '#199e70' };
 const DASH = { mug: 'none', lid: '9 6' };
 const show = { mugDish: true, mugHand: true, mugCold: false, lidDish: true, lidHand: true };
 
-let N = 10, K = 1, XMAX = 100;
+/* ---------- state ---------- */
+let days = 365, CPD = 5, K = 1, VIEW = 'scenario';
+let xAuto = true, xLog = false, xMaxManual = 1000, yAuto = true, yMaxManual = 400;
+let XMIN = 0, XMAX = 100, YMAX = 400;
+const uses = () => Math.max(1, Math.round(days * CPD));
+
 const $ = id => document.getElementById(id);
 const fmt = (v, d = 1) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const int = v => Math.round(v).toLocaleString('en-US');
 
-const cupPart  = (o, n) => TOTAL / n * o.P;
-const washPart = o => TOTAL / K * o.W;
-const impact   = (o, n) => cupPart(o, n) + washPart(o);
-const paperTotal = () => TOTAL * PAPER;
-function breakEven(o) {
-  const room = paperTotal() - washPart(o);
-  if (room <= 0) return null;                  // washing alone is worse than paper
-  const n = TOTAL * o.P / room;
-  return n > TOTAL ? null : Math.ceil(n);
+/* ---------- model ---------- */
+/* fu = coffees in the functional unit, n = uses of one cup (cups needed = fu / n) */
+const cupPart  = (o, fu, n) => fu / n * o.P;
+const washPart = (o, fu) => fu / K * o.W;
+const impact   = (o, fu, n) => cupPart(o, fu, n) + washPart(o, fu);
+const paperOf  = fu => fu * PAPER;
+const FU = () => VIEW === 'study' ? STUDY_FU : uses();
+function breakEvenExact(o) {
+  const room = PAPER - o.W / K;
+  return room > 0 ? o.P / room : null;
 }
+const breakEven = o => { const b = breakEvenExact(o); return b ? Math.ceil(b) : null; };
+/* curves on the chart, as a function of uses n */
+const curve = (o, n) => VIEW === 'study' ? impact(o, STUDY_FU, n) : o.P + n * o.W / K;   // scenario: one cup + washes so far
+const paperCurve = n => VIEW === 'study' ? paperOf(STUDY_FU) : paperOf(n);
+
+/* ---------- formatting helpers ---------- */
+function fmtDuration(d) {
+  if (d < 1) return 'less than a day';
+  if (d < 13.5) return `${Math.round(d)} day${Math.round(d) === 1 ? '' : 's'}`;
+  if (d < 56) return `${Math.round(d / 7)} weeks`;
+  if (d < 350) return `${Math.round(d / 30.42)} month${Math.round(d / 30.42) === 1 ? '' : 's'}`;
+  if (d < 380) return '1 year';
+  return `${fmt(d / 365, d / 365 >= 9.95 || Number.isInteger(Math.round(d / 36.5) / 10) ? 0 : 1)} years`;
+}
+const usesToTime = n => fmtDuration(n / CPD);
+const washTxt = k => k === 1 ? 'every use' : `every ${k === 2 ? '2nd' : k === 3 ? '3rd' : k + 'th'} use`;
+function niceCeil(v) {
+  const e = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * e >= v - 1e-9) return m * e;
+  return 10 * e;
+}
+function niceStep(range, target = 8) {
+  const raw = range / target, e = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * e >= raw) return m * e;
+  return 10 * e;
+}
+/* log-mapped sliders */
+const DMIN = 0.2, DMAX = 3650;
+const durToSlider = d => Math.round(Math.log(d / DMIN) / Math.log(DMAX / DMIN) * 1000);
+const sliderToDur = s => DMIN * Math.pow(DMAX / DMIN, s / 1000);
+const logMap = (lo, hi) => ({ to: v => Math.round(Math.log(v / lo) / Math.log(hi / lo) * 1000), from: s => lo * Math.pow(hi / lo, s / 1000) });
+const XS = logMap(10, 40000), YS = logMap(10, 20000);
 
 /* ---------- series toggles ---------- */
 function swatch(o, w = 30) {
@@ -247,7 +326,7 @@ OPTS.forEach(o => {
   toggles[o.id] = l;
   l.innerHTML = `<input type="checkbox" ${show[o.id] ? 'checked' : ''}>${swatch(o)}${o.name.replace('Ceramic ', '')}`;
   l.classList.toggle('off', !show[o.id]);
-  l.querySelector('input').addEventListener('change', e => { show[o.id] = e.target.checked; l.classList.toggle('off', !e.target.checked); draw(); });
+  l.querySelector('input').addEventListener('change', e => setShow(o.id, e.target.checked));
   $('series').appendChild(l);
 });
 const pl = document.createElement('label');
@@ -258,84 +337,155 @@ $('series').appendChild(pl);
 /* ---------- chart ---------- */
 const NS = 'http://www.w3.org/2000/svg';
 const svg = $('chart');
-const M = { l: 62, r: 24, t: 16, b: 52 }, CW = 900, CH = 470;
-const PW = CW - M.l - M.r, PH = CH - M.t - M.b, YMAX = 400;
-const X = n => M.l + (n / XMAX) * PW;
-const Y = v => M.t + PH - Math.min(v, YMAX) / YMAX * PH;
+const M = { l: 72, r: 24, t: 16, b: 52 }, CW = 900, CH = 470;
+const PW = CW - M.l - M.r, PH = CH - M.t - M.b;
+const X = n => xLog
+  ? M.l + (Math.log(Math.max(n, 1)) - Math.log(XMIN)) / (Math.log(XMAX) - Math.log(XMIN)) * PW
+  : M.l + (n - XMIN) / (XMAX - XMIN) * PW;
+const invX = x => xLog
+  ? Math.exp(Math.log(XMIN) + (x - M.l) / PW * (Math.log(XMAX) - Math.log(XMIN)))
+  : XMIN + (x - M.l) / PW * (XMAX - XMIN);
+const Y = v => M.t + PH - v / YMAX * PH;
 function el(tag, a, parent = svg) {
   const e = document.createElementNS(NS, tag);
   for (const k in a) e.setAttribute(k, a[k]);
   parent.appendChild(e);
   return e;
 }
+const sampleN = (i, steps) => xLog || VIEW === 'study'
+  ? Math.max(XMIN, 1) * Math.pow(XMAX / Math.max(XMIN, 1), i / steps)    // dense near small n
+  : XMIN + (XMAX - XMIN) * i / steps;
+
+function axes() {
+  const N = uses();
+  XMIN = xLog ? 1 : 0;
+  XMAX = xAuto ? niceCeil(Math.max(VIEW === 'study' ? 100 : 20, N * 1.15)) : xMaxManual;
+  if (XMAX <= XMIN + 1) XMAX = XMIN + 10;
+  if (yAuto) {
+    const vis = OPTS.filter(o => show[o.id]);
+    let m = 0;
+    if (VIEW === 'study') {
+      const nLo = xLog ? 1 : Math.max(1, XMAX / 60);          // skip the vertical spike at n -> 0 on a linear axis
+      vis.forEach(o => { m = Math.max(m, curve(o, nLo)); });
+      m = Math.max(m, paperCurve(1));
+    } else {
+      vis.forEach(o => { m = Math.max(m, curve(o, XMAX)); });
+      m = Math.max(m, paperCurve(XMAX));
+    }
+    YMAX = niceCeil(m * 1.05);
+  } else YMAX = yMaxManual;
+  $('xMaxOut').textContent = int(XMAX) + ' uses';
+  $('yMaxOut').textContent = int(YMAX) + ' kg';
+  if (xAuto) $('xMax').value = XS.to(Math.min(40000, Math.max(10, XMAX)));
+  if (yAuto) $('yMax').value = YS.to(Math.min(20000, Math.max(10, YMAX)));
+}
 
 function draw() {
+  axes();
+  const N = uses();
   svg.innerHTML = '';
-  /* grid + axes */
-  for (let v = 0; v <= YMAX; v += 50) {
+  el('defs', {}).innerHTML = `<clipPath id="plot"><rect x="${M.l}" y="${M.t - 2}" width="${PW + 2}" height="${PH + 2}"/></clipPath>`;
+
+  /* grid + axis labels */
+  const ys = niceStep(YMAX, 8);
+  for (let v = 0; v <= YMAX + 1e-9; v += ys) {
     el('line', { x1: M.l, x2: CW - M.r, y1: Y(v), y2: Y(v), stroke: v ? '#263b45' : '#607b88', 'stroke-width': v ? 1 : 1.5 });
-    el('text', { x: M.l - 10, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 13, fill: '#adc0c9' }).textContent = v;
+    el('text', { x: M.l - 10, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 13, fill: '#adc0c9' }).textContent = int(v);
   }
-  const step = XMAX === 100 ? 10 : 50;
-  for (let n = 0; n <= XMAX; n += step) {
-    if (n) el('line', { x1: X(n), x2: X(n), y1: M.t, y2: M.t + PH, stroke: '#263b45' });
-    el('text', { x: X(n), y: M.t + PH + 20, 'text-anchor': 'middle', 'font-size': 13, fill: '#adc0c9' }).textContent = n;
-  }
-  el('text', { x: M.l + PW / 2, y: CH - 8, 'text-anchor': 'middle', 'font-size': 14, fill: '#adc0c9' }).textContent = 'Number of uses per cup (N)';
+  let xt = [];
+  if (xLog) { for (let e = 1; e <= XMAX; e *= 10) [1, 2, 5].forEach(m => { if (e * m >= XMIN && e * m <= XMAX) xt.push(e * m); }); }
+  else { const s = niceStep(XMAX - XMIN, 8); for (let n = XMIN; n <= XMAX + 1e-9; n += s) xt.push(n); }
+  xt.forEach(n => {
+    if (n > XMIN) el('line', { x1: X(n), x2: X(n), y1: M.t, y2: M.t + PH, stroke: '#263b45' });
+    el('text', { x: X(n), y: M.t + PH + 20, 'text-anchor': 'middle', 'font-size': 13, fill: '#adc0c9' }).textContent = int(n);
+  });
+  el('text', { x: M.l + PW / 2, y: CH - 8, 'text-anchor': 'middle', 'font-size': 14, fill: '#adc0c9' }).textContent =
+    VIEW === 'study' ? 'Uses per cup before it is replaced (N)' : `Coffees drunk = uses of the cup  (${CPD} per day)`;
   el('text', { x: 16, y: M.t + PH / 2, 'text-anchor': 'middle', 'font-size': 14, fill: '#adc0c9',
-               transform: `rotate(-90 16 ${M.t + PH / 2})` }).textContent = 'kg CO₂-eq per 750 coffees';
+               transform: `rotate(-90 16 ${M.t + PH / 2})` }).textContent = VIEW === 'study' ? 'kg CO₂-eq per 750 coffees' : 'kg CO₂-eq, cumulative';
 
-  /* current N */
-  if (N <= XMAX) el('line', { x1: X(N), x2: X(N), y1: M.t, y2: M.t + PH, stroke: '#58c4dd', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' });
+  const plot = el('g', { 'clip-path': 'url(#plot)' });
+  /* current number of uses */
+  if (N <= XMAX) el('line', { x1: X(N), x2: X(N), y1: M.t, y2: M.t + PH, stroke: '#58c4dd', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }, plot);
 
-  /* paper cup reference */
-  const py = Y(paperTotal());
-  el('line', { x1: X(0), x2: X(XMAX), y1: py, y2: py, stroke: '#f1eee6', 'stroke-width': 3 });
-  el('text', { x: CW - M.r - 4, y: py + 20, 'text-anchor': 'end', 'font-size': 13.5, 'font-weight': 600, fill: '#f1eee6', stroke: '#172a33', 'stroke-width': 5, 'paint-order': 'stroke' })
-    .textContent = `Paper cup ${fmt(paperTotal())} kg`;
+  /* paper cup */
+  const steps = 300;
+  let pd = '';
+  for (let i = 0; i <= steps; i++) {
+    const n = sampleN(i, steps);
+    pd += (i ? 'L' : 'M') + X(n).toFixed(1) + ' ' + Y(paperCurve(n)).toFixed(1);
+  }
+  el('path', { d: pd, stroke: '#f1eee6', 'stroke-width': 3, fill: 'none' }, plot);
 
   /* reusable options */
   const vis = OPTS.filter(o => show[o.id]);
   vis.forEach(o => {
     let d = '';
-    const n0 = 1, steps = 300;
     for (let i = 0; i <= steps; i++) {
-      const n = n0 * Math.pow(XMAX / n0, i / steps);   // dense near N = 1 where the curve is steep
-      d += (i ? 'L' : 'M') + X(n).toFixed(1) + ' ' + Y(impact(o, n)).toFixed(1);
+      const n = Math.max(sampleN(i, steps), VIEW === 'study' ? 1 : 0);
+      d += (i ? 'L' : 'M') + X(n).toFixed(1) + ' ' + Y(curve(o, n)).toFixed(1);
     }
-    el('path', { d, fill: 'none', stroke: COLOR[o.wash], 'stroke-width': 2.5, 'stroke-dasharray': DASH[o.cup], 'stroke-linejoin': 'round' });
+    el('path', { d, fill: 'none', stroke: COLOR[o.wash], 'stroke-width': 2.5, 'stroke-dasharray': DASH[o.cup], 'stroke-linejoin': 'round' }, plot);
   });
-  /* break-even rings, labelled */
+
+  /* paper label near the right end */
+  const pyEnd = Y(paperCurve(XMAX));
+  el('text', { x: CW - M.r - 4, y: Math.max(M.t + 14, Math.min(M.t + PH - 6, pyEnd + 20)), 'text-anchor': 'end', 'font-size': 13.5, 'font-weight': 600,
+               fill: '#f1eee6', stroke: '#172a33', 'stroke-width': 5, 'paint-order': 'stroke' }).textContent =
+    VIEW === 'study' ? `Paper cup ${fmt(paperOf(STUDY_FU))} kg` : 'Paper cup';
+
+  /* break-even rings */
   const placed = [];
   vis.forEach(o => {
-    const b = breakEven(o);
-    if (!b || b > XMAX) return;
-    const x = X(TOTAL * o.P / (paperTotal() - washPart(o)));
-    el('circle', { cx: x, cy: py, r: 7, fill: '#172a33', stroke: COLOR[o.wash], 'stroke-width': 2.5 });
-    let ly = py - 30;                                     // tag above the ring, stacked upwards
-    while (placed.some(p => Math.abs(p.x - x) < 46 && Math.abs(p.y - ly) < 22)) ly -= 24;
+    const be = breakEvenExact(o);
+    if (!be || be > XMAX || be < XMIN) return;
+    const x = X(be), y = Y(paperCurve(be));
+    if (y < M.t || y > M.t + PH) return;
+    el('circle', { cx: x, cy: y, r: 7, fill: '#172a33', stroke: COLOR[o.wash], 'stroke-width': 2.5 });
+    let ly = y - 30;
+    while (placed.some(p => Math.abs(p.x - x) < 52 && Math.abs(p.y - ly) < 22)) ly -= 24;
+    if (ly < M.t + 10) ly = y + 30;
     placed.push({ x, y: ly });
     const tag = el('g', { transform: `translate(${x} ${ly})` });
-    el('line', { x1: 0, y1: 10, x2: 0, y2: py - ly - 7, stroke: COLOR[o.wash], 'stroke-width': 1.5 }, tag);
-    el('rect', { x: -20, y: -10, width: 40, height: 20, rx: 4, fill: '#0d1a20', stroke: COLOR[o.wash], 'stroke-width': 1.5 }, tag);
-    el('text', { x: 0, y: 4.5, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: '#f1eee6' }, tag).textContent = `${b}`;
+    const up = ly < y;
+    el('line', { x1: 0, y1: up ? 10 : -10, x2: 0, y2: up ? y - ly - 7 : y - ly + 7, stroke: COLOR[o.wash], 'stroke-width': 1.5 }, tag);
+    const label = int(Math.ceil(be));
+    const w = 14 + label.length * 8;
+    el('rect', { x: -w / 2, y: -10, width: w, height: 20, rx: 4, fill: '#0d1a20', stroke: COLOR[o.wash], 'stroke-width': 1.5 }, tag);
+    el('text', { x: 0, y: 4.5, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 700, fill: '#f1eee6' }, tag).textContent = label;
   });
-  /* markers at current N (drawn last, ringed by the surface) */
-  if (N <= XMAX) {
+
+  if (!xLog && vis.some(o => { const be = breakEvenExact(o); return be && be <= XMAX && X(be) - M.l < 25; }))
+    el('text', { x: M.l + 12, y: M.t + 16, 'font-size': 12.5, fill: '#58c4dd' })
+      .textContent = 'Break-even points are bunched near 0 – tick “log scale” below to spread them out.';
+
+  /* markers at the scenario's number of uses */
+  if (N <= XMAX && N >= XMIN) {
     vis.forEach(o => {
-      const v = impact(o, N);
+      const v = curve(o, N);
       if (v > YMAX) return;
       const attrs = { fill: COLOR[o.wash], stroke: '#172a33', 'stroke-width': 2 };
       if (o.cup === 'mug') el('circle', Object.assign({ cx: X(N), cy: Y(v), r: 6 }, attrs));
       else el('rect', Object.assign({ x: X(N) - 6, y: Y(v) - 6, width: 12, height: 12 }, attrs));
     });
-    el('circle', { cx: X(N), cy: py, r: 6, fill: '#f1eee6', stroke: '#172a33', 'stroke-width': 2 });
+    const pv = paperCurve(N);
+    if (pv <= YMAX) el('circle', { cx: X(N), cy: Y(pv), r: 6, fill: '#f1eee6', stroke: '#172a33', 'stroke-width': 2 });
+  } else {
+    el('text', { x: CW - M.r - 4, y: M.t + 14, 'text-anchor': 'end', 'font-size': 12.5, fill: '#58c4dd' })
+      .textContent = `your scenario (${int(N)} uses) is outside the x-axis →`;
   }
-  if (vis.some(o => impact(o, Math.max(1, XMAX / 300)) > YMAX))
-    el('text', { x: M.l + 8, y: M.t + 12, 'font-size': 12, fill: '#adc0c9' }).textContent = '↑ values above 400 kg are cut off';
+
+  /* titles */
+  $('chartTitle').innerHTML = VIEW === 'study'
+    ? 'Climate change per 750 coffees <span class="muted">vs uses per cup</span>'
+    : `Cumulative climate change <span class="muted">· ${fmtDuration(days)} at ${CPD} coffee${CPD > 1 ? 's' : ''}/day</span>`;
+  $('viewNote').textContent = VIEW === 'study'
+    ? 'As in the study (Fig. 14): 750 coffees are served; a cup used N times means 750 ÷ N cups are needed. The paper cup is flat.'
+    : 'Your scenario: the reusable lines start at the burden of one cup (≈ 0.42 kg, about 8 paper cups), then every washing adds a little; every paper cup adds 53 g. Where the lines cross is the break-even point.';
 
   table();
   cases();
+  summary();
 }
 
 /* ---------- hover / tap tooltip ---------- */
@@ -343,14 +493,14 @@ const tip = $('tip');
 function nFromEvent(e) {
   const r = svg.getBoundingClientRect();
   const x = (e.clientX - r.left) / r.width * CW;
-  return Math.round(Math.min(XMAX, Math.max(1, (x - M.l) / PW * XMAX)));
+  return Math.round(Math.min(XMAX, Math.max(1, invX(Math.min(M.l + PW, Math.max(M.l, x))))));
 }
 function showTip(e) {
   const n = nFromEvent(e);
   const rows = OPTS.filter(o => show[o.id]).map(o =>
-    `<div class="row"><span>${swatch(o, 22)}${o.name.replace('Ceramic ', '')}</span><b>${fmt(impact(o, n))}</b></div>`).join('');
-  tip.innerHTML = `<div style="margin-bottom:4px;color:#adc0c9">N = <b style="color:#f1eee6">${n}</b> uses · kg CO₂-eq</div>${rows}
-    <div class="row"><span>${swatch(null, 22)}Paper cup</span><b>${fmt(paperTotal())}</b></div>`;
+    `<div class="row"><span>${swatch(o, 22)}${o.name.replace('Ceramic ', '')}</span><b>${fmt(curve(o, n))}</b></div>`).join('');
+  tip.innerHTML = `<div style="margin-bottom:4px;color:#adc0c9"><b style="color:#f1eee6">${int(n)}</b> uses · ≈ ${usesToTime(n)} · kg CO₂-eq</div>${rows}
+    <div class="row"><span>${swatch(null, 22)}Paper cup</span><b>${fmt(paperCurve(n))}</b></div>`;
   tip.style.display = 'block';
   const wrap = svg.parentElement.getBoundingClientRect();
   let left = e.clientX - wrap.left + 16;
@@ -361,9 +511,8 @@ function showTip(e) {
 svg.addEventListener('pointermove', showTip);
 svg.addEventListener('pointerdown', showTip);
 svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
-svg.addEventListener('click', e => setN(nFromEvent(e)));
+svg.addEventListener('click', e => setDays(nFromEvent(e) / CPD));
 
-/* ---------- results table ---------- */
 /* ---------- case cards with icons ---------- */
 const ICON_STROKE = '#f1eee6';
 function cupIcon(kind) {
@@ -410,14 +559,16 @@ paperCase.innerHTML = `<div class="top">${icon('paper', 'paper')}<div class="nm"
   <div class="val"></div><div class="cbar"><span style="background:var(--paper)"></span><i></i></div><div class="sub"></div><div class="delta">reference</div>`;
 $('cases').appendChild(paperCase);
 
+
 function cases() {
-  $('nCases').textContent = N;
-  $('casesSub').textContent = `· washed ${K === 1 ? 'after every use' : `after every ${K === 2 ? '2nd' : '3rd'} use`}`;
-  const pt = paperTotal();
-  const vals = OPTS.map(o => impact(o, N));
+  const N = uses(), fu = FU(), pt = paperOf(fu);
+  $('casesSub').textContent = VIEW === 'study'
+    ? `· per 750 coffees, each cup used ${int(N)} times, washed after ${washTxt(K)}`
+    : `· ${int(N)} coffees in ${fmtDuration(days)}, one cup, washed after ${washTxt(K)}`;
+  const vals = OPTS.map(o => impact(o, fu, N));
   const max = Math.max(pt, ...vals);
   const bestId = OPTS[vals.indexOf(Math.min(...vals))].id;
-  const cups = TOTAL / N;
+  const cups = fu / N;
   const fill = (el, v, sub) => {
     el.querySelector('.val').innerHTML = `${fmt(v)} <small>kg CO₂-eq</small>`;
     el.querySelector('.cbar span').style.width = (v / max * 100).toFixed(2) + '%';
@@ -426,69 +577,80 @@ function cases() {
   };
   OPTS.forEach((o, i) => {
     const el = caseEls[o.id], v = vals[i], d = (v - pt) / pt * 100;
-    fill(el, v, `${fmt(v / TOTAL * 1000, 0)} g per coffee · ${fmt(cups, cups < 10 ? 1 : 0)} cup${cups === 1 ? '' : 's'}`);
+    fill(el, v, `${fmt(v / fu * 1000, 0)} g per coffee · ${fmt(cups, cups < 10 && cups !== 1 ? 1 : 0)} cup${cups === 1 ? '' : 's'} · ${int(fu / K)} washes`);
     const be = breakEven(o);
     el.querySelector('.delta').innerHTML = `<span class="${d < 0 ? 'better' : 'worse'}">${d < 0 ? '' : '+'}${fmt(d, 0)} % vs paper</span>`
-      + `<div class="sub" style="font-weight:400">break-even: ${be ? be + ' uses' : 'never'}</div>`
-      + (o.id === bestId ? '<div class="tagbest">lowest at this N</div>' : '');
+      + `<div class="sub" style="font-weight:400">break-even: ${be ? `${int(be)} uses (≈ ${usesToTime(be)})` : 'never'}</div>`
+      + (o.id === bestId ? '<div class="tagbest">lowest in this scenario</div>' : '');
     el.classList.toggle('best', o.id === bestId);
     el.setAttribute('aria-pressed', show[o.id]);
     el.setAttribute('aria-label', `${o.name}: ${fmt(v)} kg CO2-eq, ${fmt(d, 0)} % versus paper. ${show[o.id] ? 'Shown' : 'Hidden'} in chart; click to toggle.`);
   });
-  fill(paperCase, pt, `${fmt(pt / TOTAL * 1000, 0)} g per coffee · ${TOTAL} cups`);
+  fill(paperCase, pt, `${fmt(PAPER * 1000, 0)} g per coffee · ${int(fu)} cups`);
 }
 
 function table() {
-  $('nTitle').textContent = N;
-  const cups = TOTAL / N, pt = paperTotal();
+  const N = uses(), fu = FU(), pt = paperOf(fu), cups = fu / N;
+  $('tblTitle').innerHTML = VIEW === 'study'
+    ? `Result per 750 coffees <span class="muted">(each cup used ${int(N)} times)</span>`
+    : `Result for your scenario <span class="muted">(${int(N)} coffees)</span>`;
   const rows = OPTS.filter(o => show[o.id]);
-  const maxV = Math.max(pt, ...rows.map(o => impact(o, N)));
-  let h = `<thead><tr><th>Option</th><th>Cups needed</th><th>Cups</th><th>Washing</th><th>Total</th><th>g per coffee</th><th>vs paper</th><th>Break-even</th><th></th></tr></thead><tbody>`;
+  const maxV = Math.max(pt, ...rows.map(o => impact(o, fu, N)));
+  let h = `<thead><tr><th>Option</th><th>Cups</th><th>Washes</th><th>Cups, kg</th><th>Washing, kg</th><th>Total, kg</th><th>g per coffee</th><th>vs paper</th><th>Break-even</th><th></th></tr></thead><tbody>`;
   rows.forEach(o => {
-    const c = cupPart(o, N), w = washPart(o), t = c + w, diff = (t - pt) / pt * 100, b = breakEven(o);
-    h += `<tr><td>${swatch(o, 22)}${o.name}</td><td>${fmt(cups, cups < 10 ? 1 : 0)}</td><td>${fmt(c)}</td><td>${fmt(w)}</td>
-      <td><b>${fmt(t)}</b></td><td>${fmt(t / TOTAL * 1000, 0)}</td>
+    const c = cupPart(o, fu, N), w = washPart(o, fu), t = c + w, diff = (t - pt) / pt * 100, b = breakEven(o);
+    h += `<tr><td>${swatch(o, 22)}${o.name}</td><td>${fmt(cups, cups < 10 && cups !== 1 ? 1 : 0)}</td><td>${int(fu / K)}</td><td>${fmt(c)}</td><td>${fmt(w)}</td>
+      <td><b>${fmt(t)}</b></td><td>${fmt(t / fu * 1000, 0)}</td>
       <td class="${diff < 0 ? 'better' : 'worse'}">${diff < 0 ? '' : '+'}${fmt(diff, 0)} %</td>
-      <td>${b ? b + ' uses' : '<span class="worse">never</span>'}</td>
+      <td>${b ? `${int(b)} uses` : '<span class="worse">never</span>'}</td>
       <td class="bar-cell"><div class="stack" title="cups ${fmt(c)} + washing ${fmt(w)} kg CO₂-eq">
         <span style="width:${(c / maxV * 100).toFixed(2)}%;background:var(--prod)"></span>
         <span style="width:${(w / maxV * 100).toFixed(2)}%;background:${COLOR[o.wash]}"></span></div></td></tr>`;
   });
-  h += `<tr><td>${swatch(null, 22)}Paper cup</td><td>${TOTAL}</td><td>${fmt(pt)}</td><td>–</td><td><b>${fmt(pt)}</b></td>
-    <td>${fmt(pt / TOTAL * 1000, 0)}</td><td>–</td><td>–</td>
+  h += `<tr><td>${swatch(null, 22)}Paper cup</td><td>${int(fu)}</td><td>–</td><td>${fmt(pt)}</td><td>–</td><td><b>${fmt(pt)}</b></td>
+    <td>${fmt(PAPER * 1000, 0)}</td><td>–</td><td>–</td>
     <td class="bar-cell"><div class="stack"><span style="width:${(pt / maxV * 100).toFixed(2)}%;background:var(--paper)"></span></div></td></tr></tbody>`;
   $('tbl').innerHTML = h;
 
-  const better = rows.filter(o => impact(o, N) < pt);
-  const best = rows.slice().sort((a, b) => impact(a, N) - impact(b, N))[0];
+  const better = rows.filter(o => impact(o, fu, N) < pt);
+  const best = rows.slice().sort((a, b) => impact(a, fu, N) - impact(b, fu, N))[0];
   $('verdict').innerHTML = !rows.length ? 'Select at least one reusable option above.'
     : better.length === 0
-      ? `At <b>${N}</b> uses per cup, the paper cup is still better than every selected reusable option.`
-      : `At <b>${N}</b> uses per cup, ${better.length === rows.length ? 'every selected reusable option beats' : `${better.length} of ${rows.length} selected options beat`} the paper cup. Lowest: <b>${best.name}</b> with ${fmt(impact(best, N))} kg CO₂-eq (${fmt(impact(best, N) / pt * 100, 0)} % of paper).`;
+      ? `With ${int(N)} uses per cup, the paper cup is still better than every selected reusable option.`
+      : `With ${int(N)} uses per cup, ${better.length === rows.length ? 'every selected reusable option beats' : `${better.length} of ${rows.length} selected options beat`} the paper cup. Lowest: <b>${best.name}</b> with ${fmt(impact(best, fu, N))} kg CO₂-eq (${fmt(impact(best, fu, N) / pt * 100, 0)} % of paper).`;
+}
+
+function summary() {
+  const N = uses();
+  $('durOut').textContent = fmtDuration(days);
+  $('cpdOut').textContent = `${CPD} / day`;
+  $('washOut').textContent = washTxt(K);
+  $('sum').innerHTML = `${fmtDuration(days)} × ${CPD} coffee${CPD > 1 ? 's' : ''} a day = <b>${int(N)}</b> uses of one reusable cup
+    <span class="muted">· ${int(N / K)} washes · or ${int(N)} paper cups</span>`;
 }
 
 /* ---------- controls ---------- */
-function setN(n) {
-  N = Math.min(750, Math.max(1, Math.round(n)));
-  $('uses').value = N; $('nOut').textContent = N;
-  if (N > XMAX) setX(750, false);
+function setDays(d) {
+  days = Math.min(DMAX, Math.max(1 / CPD, d));
+  $('dur').value = durToSlider(Math.max(DMIN, days));
   draw();
 }
-function setX(x, redraw = true) {
-  XMAX = x;
-  document.querySelectorAll('[data-x]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.x === x));
-  if (redraw) draw();
-}
-$('uses').addEventListener('input', e => setN(+e.target.value));
-document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => setN(+b.dataset.n)));
-document.querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', () => setX(+b.dataset.x)));
-document.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => {
-  K = +b.dataset.k;
-  document.querySelectorAll('[data-k]').forEach(x => x.setAttribute('aria-pressed', x === b));
+$('dur').addEventListener('input', e => { days = sliderToDur(+e.target.value); draw(); });
+document.querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => setDays(+b.dataset.d)));
+$('cpd').addEventListener('input', e => { CPD = +e.target.value; draw(); });
+$('wash').addEventListener('input', e => { K = +e.target.value; draw(); });
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+  VIEW = b.dataset.view;
+  document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', x === b));
   draw();
 }));
+$('xAuto').addEventListener('change', e => { xAuto = e.target.checked; $('xMax').disabled = xAuto; if (!xAuto) xMaxManual = XMAX; draw(); });
+$('yAuto').addEventListener('change', e => { yAuto = e.target.checked; $('yMax').disabled = yAuto; if (!yAuto) yMaxManual = YMAX; draw(); });
+$('xLog').addEventListener('change', e => { xLog = e.target.checked; draw(); });
+$('xMax').addEventListener('input', e => { xMaxManual = niceCeil(XS.from(+e.target.value)); draw(); });
+$('yMax').addEventListener('input', e => { yMaxManual = niceCeil(YS.from(+e.target.value)); draw(); });
 
-draw();
+setDays(365);
 </script>
 </div>
 </body>
