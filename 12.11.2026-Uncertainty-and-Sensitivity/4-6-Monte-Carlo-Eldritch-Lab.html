@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson eldritch">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eldritch Lab: A Monte Carlo Experiment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #eeeaf6;
+    --dim: #aab3c8;
+    --line: #2b3754;
+    --panel: #141b2d;
+    --panel-2: #1c2540;
+    --panel-3: #232e4f;
+    /* data colours – validated (dataviz validator, dark, CVD-safe) */
+    --violet: #8b6fe0;
+    --cyan: #2ea3bd;
+    --gold: #b8891f;
+    --miss: #5f6b80;
+    --theory: #eeeaf6;
+    /* UI glow colours (decorative / text) */
+    --violet-ui: #b9a3ff;
+    --cyan-ui: #6fd6ec;
+    --gold-ui: #f4c95d;
+    --ok: #83c167;
+    --bad: #ff8a7a;
+    --fantasy: "Cinzel", "Trajan Pro", Georgia, "Times New Roman", serif;
+  }
+  html.course-lesson.eldritch { --background: #0a0f1d; }
+  * { box-sizing: border-box; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; margin-bottom: 20px;
+          background: radial-gradient(ellipse at 15% 20%, rgba(139,111,224,.28), transparent 55%),
+                      radial-gradient(ellipse at 90% 90%, rgba(46,163,189,.18), transparent 55%), var(--panel); }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .hero-inner { position: relative; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 24px; padding: 26px clamp(16px, 3vw, 32px); }
+  @media (max-width: 860px) { .hero-inner { grid-template-columns: minmax(0, 1fr); } }
+  .hero h1 { font-family: var(--fantasy); font-weight: 700; margin: 0 0 4px; font-size: clamp(1.6rem, 3.4vw, 2.6rem); letter-spacing: .02em; line-height: 1.15;
+             background: linear-gradient(90deg, #d9ccff, #8fe3f5); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .sub { font-family: var(--fantasy); color: var(--violet-ui); margin: 0 0 12px; font-size: 1rem; letter-spacing: .08em; }
+  .hero p { color: var(--dim); margin: 0 0 10px; max-width: 70ch; }
+  .sheet { background: rgba(10,15,29,.72); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(2px); }
+  .sheet h2 { font-family: var(--fantasy); margin: 0; font-size: 1.15rem; color: var(--gold-ui); letter-spacing: .04em; }
+  .sheet .cls { color: var(--dim); font-size: 13px; margin-bottom: 8px; }
+  .sheet dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .sheet dt { color: var(--dim); }
+  .sheet dd { margin: 0; font-weight: 600; }
+  .sheet .spell { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--dim); }
+  .sheet .spell b { color: var(--violet-ui); }
+
+  /* ---------- general ---------- */
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; min-width: 0; }
+  .card h2 { margin: 0 0 10px; font-size: 1.05rem; font-weight: 600; }
+  .card h2.f, .section-title { font-family: var(--fantasy); letter-spacing: .03em; }
+  .section-title { font-size: clamp(1.25rem, 2.4vw, 1.7rem); margin: 34px 0 6px; color: #d9ccff; font-weight: 700; }
+  .section-lead { color: var(--dim); margin: 0 0 16px; max-width: 95ch; }
+  .muted { color: var(--dim); font-size: 14px; }
+  .small { font-size: 12.5px; color: var(--dim); }
+  .note { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
+  button {
+    font: inherit; font-size: 13.5px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer;
+  }
+  button:hover:not(:disabled) { border-color: var(--violet-ui); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button[aria-pressed="true"] { border-color: var(--violet-ui); color: var(--violet-ui); background: rgba(139,111,224,.12); }
+  button.primary { background: linear-gradient(135deg, #7d5ee0, #4a8fd8); color: #fff; border-color: transparent; font-weight: 700; padding: 8px 18px;
+                   box-shadow: 0 0 18px rgba(139,111,224,.45); }
+  button.primary:hover:not(:disabled) { filter: brightness(1.12); }
+  button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan-ui); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+  input[type=range] { accent-color: var(--violet); width: 100%; }
+  input[type=text], input[type=number] { font: inherit; font-size: 13.5px; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; font-variant-numeric: tabular-nums; }
+  .chk { display: inline-flex; gap: 7px; align-items: center; font-size: 13.5px; color: var(--dim); cursor: pointer; }
+  .chk input { accent-color: var(--violet); }
+  .info { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--line); color: var(--dim);
+          font-size: 11px; font-weight: 700; cursor: help; vertical-align: 1px; margin-left: 4px; background: var(--panel-2); font-style: normal; }
+  .info:hover, .info:focus-visible { color: var(--cyan-ui); border-color: var(--cyan-ui); }
+  abbr[data-tip] { text-decoration: underline dotted var(--dim); cursor: help; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 600; font-size: 12.5px; }
+  .lesson { border-left: 3px solid var(--gold-ui); padding: 8px 12px; background: var(--panel-2); border-radius: 0 8px 8px 0; font-size: 14px; margin-top: 12px; }
+  .formula { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", Georgia, serif; font-size: 16px; background: var(--panel-2);
+             padding: 10px 14px; border-radius: 8px; overflow-x: auto; margin: 8px 0; line-height: 1.7; border-left: 3px solid var(--violet); }
+  .formula .v { color: var(--cyan-ui); font-family: system-ui, sans-serif; font-size: 14px; font-variant-numeric: tabular-nums; }
+  var { font-style: italic; }
+
+  /* ---------- main 3-column layout ---------- */
+  .lab { display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(280px, 340px); gap: 20px; align-items: start; }
+  @media (max-width: 1250px) { .lab { grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); } .lab > .stats-col { grid-column: 1 / -1; } }
+  @media (max-width: 820px) { .lab { grid-template-columns: minmax(0, 1fr); } }
+  .ctl { margin-bottom: 14px; }
+  .ctl:last-child { margin-bottom: 0; }
+  .ctl .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13.5px; }
+  .ctl .top label, .ctl .top .lab-t { color: var(--dim); }
+  .ctl output, .ctl .val { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .ctl .hint { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .group-t { font-family: var(--fantasy); font-size: .95rem; color: var(--violet-ui); margin: 4px 0 10px; letter-spacing: .04em; }
+  hr.sep { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+  .modbox { background: rgba(184,137,31,.1); border: 1px dashed var(--gold); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: var(--dim); }
+  .modbox b { color: var(--gold-ui); }
+
+  /* ---------- stage ---------- */
+  .stage-wrap { position: relative; background: radial-gradient(ellipse at 50% 60%, #18203a, #0b1020 75%); border-radius: 10px; border: 1px solid var(--line); overflow: hidden; }
+  #stage { display: block; width: 100%; height: auto; }
+  #stage text { font-family: system-ui, sans-serif; }
+  .beam-path { fill: none; stroke-linecap: round; transition: stroke-dashoffset .38s ease-out, opacity .3s; }
+  .d20 polygon { transition: fill .25s, stroke .25s; }
+  .burst { transform-box: fill-box; transform-origin: center; }
+  @keyframes burst { from { transform: scale(.2); opacity: 1; } to { transform: scale(2.4); opacity: 0; } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .shake { animation: shake .25s 2; }
+  .run-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-top: 12px; }
+  .progress { flex: 1; min-width: 140px; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .progress div { height: 100%; width: 0; background: linear-gradient(90deg, var(--violet), var(--cyan)); }
+  #runTxt { font-size: 13px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .beamlog { margin: 10px 0 0; padding: 0; list-style: none; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .beamlog li { padding: 4px 8px; border-left: 3px solid var(--miss); background: var(--panel-2); border-radius: 0 6px 6px 0; margin-bottom: 4px; }
+  .beamlog li.hit { border-left-color: var(--violet); }
+  .beamlog li.crit { border-left-color: var(--gold-ui); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .06em; padding: 1px 6px; border-radius: 4px; margin-right: 6px; }
+  .tag.miss { background: #2a3245; color: #aab3c8; }
+  .tag.hit { background: rgba(139,111,224,.25); color: var(--violet-ui); }
+  .tag.crit { background: rgba(244,201,93,.18); color: var(--gold-ui); }
+  .browse { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--dim); }
+  .stale { display: none; margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; background: rgba(244,201,93,.1); border: 1px solid rgba(244,201,93,.35); color: var(--gold-ui); font-size: 13px; }
+  .stale.on { display: block; }
+
+  /* ---------- stats ---------- */
+  .kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .kpi > div { background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
+  .kpi .l { font-size: 12px; color: var(--dim); }
+  .kpi .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .kpi .s { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  #statTable td:nth-child(3) { color: var(--dim); }
+  .ci { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+
+  /* ---------- charts ---------- */
+  .charts { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 1000px) { .charts { grid-template-columns: minmax(0, 1fr); } }
+  .charts .wide { grid-column: 1 / -1; }
+  svg.chart { display: block; width: 100%; height: auto; }
+  svg.chart text { font-family: system-ui, sans-serif; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--dim); margin-top: 6px; }
+  .legend svg { vertical-align: middle; margin-right: 5px; }
+  .chart-ctl { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 8px; font-size: 13.5px; }
+  .chart-ctl .ctl { margin: 0; min-width: 220px; flex: 1; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .tile { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; border-top: 3px solid var(--gold); }
+  .tile .l { font-size: 12.5px; color: var(--dim); }
+  .tile .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .empty { color: var(--dim); font-size: 14px; padding: 30px 10px; text-align: center; }
+
+  /* ---------- tooltip ---------- */
+  #tip { position: fixed; z-index: 50; pointer-events: none; max-width: 320px; background: #0b1020; border: 1px solid var(--line); border-radius: 8px;
+         padding: 8px 10px; font-size: 13px; line-height: 1.5; display: none; box-shadow: 0 8px 24px rgba(0,0,0,.45); font-variant-numeric: tabular-nums; }
+  #tip b { color: var(--ink); }
+
+  /* ---------- education, experiments, glossary ---------- */
+  .edu { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .edu .card { margin: 0; }
+  .edu h3, .exp h3 { margin: 0 0 6px; font-size: 1rem; font-family: var(--fantasy); color: var(--violet-ui); letter-spacing: .03em; }
+  .edu p, .exp p { margin: 0 0 8px; color: var(--dim); font-size: 14px; }
+  .edu p b, .exp p b { color: var(--ink); }
+  .faces { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 3px; align-items: end; height: 110px; margin: 8px 0 2px; }
+  .faces div { border-radius: 3px 3px 0 0; position: relative; min-height: 2px; }
+  .faces-n { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 3px; font-size: 11px; color: var(--dim); text-align: center; font-variant-numeric: tabular-nums; }
+  .exps { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  @media (max-width: 420px) { .exps, .edu { grid-template-columns: minmax(0, 1fr); } }
+  .exp { margin: 0; display: flex; flex-direction: column; }
+  .exp .letter { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--violet); color: #fff; font-weight: 800; font-size: 13px; margin-right: 8px; font-family: system-ui, sans-serif; }
+  .exp .q { font-size: 13.5px; color: var(--ink); background: var(--panel-2); border-radius: 8px; padding: 6px 10px; margin: 0 0 10px; }
+  .exp .out { margin-top: 10px; }
+  .exp .out table { font-size: 13px; }
+  .gloss { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 4px 24px; margin: 0; }
+  .gloss div { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .gloss dt { font-weight: 700; color: var(--ink); }
+  .gloss dd { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  .cmp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 900px) { .cmp-grid { grid-template-columns: minmax(0, 1fr); } }
+  .pass { color: var(--ok); font-weight: 700; }
+  .fail { color: var(--bad); font-weight: 700; }
+  details.tests summary { cursor: pointer; font-weight: 600; }
+  .tests td { white-space: normal; text-align: left; }
+  .credits { font-size: 12px; color: var(--dim); margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { .beam-path { transition: none; } .shake { animation: none; } }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<!-- ================= HERO ================= -->
+<section class="hero" aria-labelledby="appTitle">
+  <canvas id="particles" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <div>
+      <h1 id="appTitle">Eldritch Lab</h1>
+      <p class="sub">A Monte Carlo Experiment</p>
+      <p>A spellcaster fires beams of energy at a target. Every beam needs a dice roll to hit, and another dice roll for damage. How much damage
+      does one spell deal? There is no single answer – there is a <strong>probability distribution</strong>. This lab estimates it by
+      <strong>Monte Carlo simulation</strong> (casting the spell thousands of times with random dice) and checks the estimate against the
+      <strong>exact</strong> distribution worked out with probability theory.</p>
+      <p>No game knowledge needed: hover the <i class="info" tabindex="0" data-tip="Small ⓘ icons and dotted words explain terms. The glossary at the bottom explains all game words.">i</i> icons, or see the
+      <a href="#glossary" style="color:var(--cyan-ui)">glossary</a>. Dice notation: <abbr tabindex="0" data-tip="<b>Dice notation NdX</b>: roll N dice with X sides each and add them up.<br>1d20 = one 20-sided die (1–20, each 1/20).<br>1d10 + 5 = one 10-sided die plus 5 (6–15).<br>2d10 = two 10-sided dice added (2–20, 11 is most likely).">1d20, 1d10, 2d10</abbr>.</p>
+      <p class="small">Rules model: fifth-edition fantasy role-playing rules (2014), SRD 5.1. The character is fictional.</p>
+    </div>
+    <div class="sheet" aria-label="Character sheet">
+      <h2>Vaelis the Voidcaller</h2>
+      <div class="cls" id="sheetCls">Warlock · Level 20</div>
+      <dl id="sheetDl"></dl>
+      <div class="spell" id="sheetSpell"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LAB ================= -->
+<div class="lab">
+  <!-- left: settings -->
+  <aside class="card" aria-label="Simulation settings">
+    <h2 class="f">Settings</h2>
+    <div class="group-t">The Warlock</div>
+    <div class="ctl">
+      <div class="top"><label for="level">Warlock level <i class="info" tabindex="0" data-tip="Character level (1–20). Higher levels add Eldritch Blast beams (1 → 2 → 3 → 4 at levels 5, 11, 17) and raise the proficiency bonus.">i</i></label><output id="levelOut" for="level"></output></div>
+      <input type="range" id="level" min="1" max="20" step="1" value="20">
+      <div class="hint" id="levelHint"></div>
+    </div>
+    <div class="ctl">
+      <div class="top"><label for="cha">Charisma score <i class="info" tabindex="0" data-tip="Charisma powers a warlock's spells. Modifier = floor((score − 10) / 2): 10 → +0, 12 → +1, … 20 → +5. It is added to the attack roll and, with Agonizing Blast, to the damage of every beam that hits.">i</i></label><output id="chaOut" for="cha"></output></div>
+      <input type="range" id="cha" min="10" max="20" step="2" value="20">
+      <div class="hint" id="chaHint"></div>
+    </div>
+    <div class="ctl">
+      <label class="chk"><input type="checkbox" id="agon" checked> Agonizing Blast <i class="info" tabindex="0" data-tip="An eldritch invocation (a warlock upgrade). Each beam that hits deals + Charisma modifier extra damage. Available from level 2 in this model.">i</i></label>
+      <div class="hint" id="agonHint"></div>
+    </div>
+    <hr class="sep">
+    <div class="group-t">The Enemy</div>
+    <div class="ctl">
+      <div class="top"><label for="ac">Armor Class (AC) <i class="info" tabindex="0" data-tip="Armor Class: how hard the enemy is to hit. A beam hits if d20 + attack bonus ≥ AC. Typical: 12 (leather-clad bandit) … 18 (knight in plate) … 25 (ancient dragon-tier).">i</i></label><output id="acOut" for="ac"></output></div>
+      <input type="range" id="ac" min="10" max="25" step="1" value="18">
+      <div class="hint">AC is how difficult the enemy is to hit. Higher AC → more misses.</div>
+    </div>
+    <div class="ctl">
+      <div class="top"><label for="hp">Enemy hit points (HP) <i class="info" tabindex="0" data-tip="Hit points: how much damage the enemy can take. The enemy is defeated by one casting if its total damage ≥ HP.">i</i></label><output id="hpOut" for="hp"></output></div>
+      <input type="range" id="hp" min="10" max="300" step="1" value="40">
+      <div class="hint" id="hpHint"></div>
+    </div>
+    <hr class="sep">
+    <div class="group-t">Attack conditions</div>
+    <div class="ctl">
+      <div class="seg" role="group" aria-label="Attack condition" id="modeSeg">
+        <button type="button" data-atk="normal" aria-pressed="true" data-tip="Roll 1d20.">Normal</button>
+        <button type="button" data-atk="adv" data-tip="Roll 2d20 and keep the <b>higher</b> result (e.g. the target is blinded).">Advantage</button>
+        <button type="button" data-atk="dis" data-tip="Roll 2d20 and keep the <b>lower</b> result (e.g. the warlock is poisoned).">Disadvantage</button>
+      </div>
+      <div class="hint">Natural 1 / natural 20 are judged on the kept d20.</div>
+    </div>
+    <div class="ctl">
+      <div class="top"><span class="lab-t">Critical hit rule</span></div>
+      <label class="chk"><input type="radio" name="crit" value="standard" checked> Standard: natural 20 doubles the damage dice</label><br>
+      <label class="chk"><input type="radio" name="crit" value="none"> Natural 20 deals normal damage</label>
+      <div class="modbox" id="critMod" style="margin-top:6px;display:none"><b>Educational modification – not an official rule.</b> A natural 20 still always hits, but rolls only 1d10.</div>
+    </div>
+  </aside>
+
+  <!-- centre: stage + run controls -->
+  <section class="card" aria-label="Combat visualisation and simulation controls">
+    <h2 class="f">The Proving Ground</h2>
+    <div class="stage-wrap"><svg id="stage" viewBox="0 0 800 330" role="img" aria-label="Combat stage: the warlock on the left fires beams at the enemy on the right. Each beam shows its d20 roll, result and damage."></svg></div>
+    <ul class="beamlog" id="beamlog" aria-live="polite"></ul>
+    <div class="browse" id="browse" hidden>
+      <button type="button" id="prevCast" aria-label="Previous casting">◀</button>
+      <span id="castLbl"></span>
+      <button type="button" id="nextCast" aria-label="Next casting">▶</button>
+      <button type="button" id="replay">Replay animation</button>
+      <button type="button" id="skipAnim" hidden>Skip animation</button>
+    </div>
+
+    <hr class="sep">
+    <div class="ctl" style="margin-bottom:10px">
+      <div class="top"><span class="lab-t">Number of simulations <i class="info" tabindex="0" data-tip="Each simulation is one casting of Eldritch Blast, with one d20 attack roll per beam and damage dice for every beam that hits.">i</i></span></div>
+      <div class="seg" role="group" aria-label="Number of simulations" id="nSeg">
+        <button type="button" data-n="10">10</button>
+        <button type="button" data-n="100">100</button>
+        <button type="button" data-n="1000" aria-pressed="true">1 000</button>
+        <button type="button" data-n="10000">10 000</button>
+        <button type="button" data-n="100000">100 000</button>
+        <button type="button" data-n="1000000">1 000 000</button>
+      </div>
+    </div>
+    <div class="run-row">
+      <label class="small" for="seed">Seed <i class="info" tabindex="0" data-tip="The seed starts the pseudorandom number generator (mulberry32). The same seed and the same settings always give identical results. Tick “fixed seed” to reuse the typed seed; otherwise every run picks a new random seed and shows it here.">i</i></label>
+      <input type="text" id="seed" inputmode="numeric" size="11" placeholder="random" autocomplete="off">
+      <label class="chk"><input type="checkbox" id="fixedSeed"> fixed seed</label>
+      <label class="chk"><input type="checkbox" id="animOn" checked> animate</label>
+    </div>
+    <div class="run-row">
+      <button type="button" class="primary" id="go">✦ Run simulation</button>
+      <button type="button" id="rerun" disabled data-tip="Run again with the seed of the last run and the current settings.">Rerun same seed</button>
+      <button type="button" id="reset">Reset</button>
+      <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+    </div>
+    <div id="runTxt" aria-live="polite" style="margin-top:6px"></div>
+    <p class="note" id="animNote">Animation plays the first castings for runs under 10 000 simulations (up to 10 castings). Larger runs skip it.</p>
+  </section>
+
+  <!-- right: stats -->
+  <aside class="card stats-col" aria-label="Key statistics">
+    <h2 class="f">Key Statistics</h2>
+    <div class="stale" id="stale">Settings changed – the results are from the previous run. Press <b>Run simulation</b> to update.</div>
+    <div class="kpi">
+      <div><div class="l">Mean damage / casting</div><div class="n" id="kMean">—</div><div class="s" id="kMeanX"></div></div>
+      <div><div class="l">P(defeat enemy)</div><div class="n" id="kDef">—</div><div class="s" id="kDefX"></div></div>
+      <div><div class="l">Hit chance / beam</div><div class="n" id="kHit">—</div><div class="s" id="kHitX"></div></div>
+      <div><div class="l">P(zero damage)</div><div class="n" id="kZero">—</div><div class="s" id="kZeroX"></div></div>
+    </div>
+    <div class="table-wrap"><table id="statTable"></table></div>
+    <div class="ci" id="ciBox"></div>
+    <div class="run-row">
+      <button type="button" id="csvRes" disabled>Export results CSV</button>
+      <button type="button" id="csvSum" disabled>Export summary CSV</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ================= CHARTS ================= -->
+<h2 class="section-title">The Results</h2>
+<p class="section-lead">Violet = simulated (Monte Carlo). White = exact (probability theory). With more simulations the violet bars settle onto the white marks.</p>
+<div class="charts">
+  <div class="card wide">
+    <h2>Damage distribution per casting <span class="muted" id="histSub"></span></h2>
+    <div class="chart-ctl">
+      <div class="seg" role="group" aria-label="Histogram scale">
+        <button type="button" data-hist="freq" aria-pressed="true" data-tip="Frequency: how many castings dealt each damage value.">Frequency</button>
+        <button type="button" data-hist="prob" data-tip="Relative frequency (probability): share of castings, so all bars add up to 1.">Probability</button>
+      </div>
+      <div class="ctl">
+        <div class="top"><label for="thr">Damage threshold <var>t</var></label><output id="thrOut" for="thr"></output></div>
+        <input type="range" id="thr" min="0" max="100" step="1" value="40">
+      </div>
+      <div class="small" id="thrTxt" style="min-width:230px"></div>
+    </div>
+    <svg class="chart" id="hist" viewBox="0 0 900 330" role="img" aria-label="Histogram of total damage per casting, simulated bars with exact probabilities as dots"></svg>
+    <div class="legend" id="histLegend"></div>
+  </div>
+
+  <div class="card">
+    <h2>Convergence – the Law of Large Numbers</h2>
+    <div class="chart-ctl">
+      <div class="seg" role="group" aria-label="x axis scale">
+        <button type="button" data-conv="log" aria-pressed="true">Log x-axis</button>
+        <button type="button" data-conv="lin">Linear x-axis</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="convBand" checked> 95 % confidence band</label>
+    </div>
+    <svg class="chart" id="conv" viewBox="0 0 600 320" role="img" aria-label="Running mean damage against number of simulations, with the exact expected damage as a horizontal line"></svg>
+    <div class="legend" id="convLegend"></div>
+    <p class="note" id="convNote"></p>
+  </div>
+
+  <div class="card">
+    <h2>Successful beams per casting</h2>
+    <svg class="chart" id="hits" viewBox="0 0 600 320" role="img" aria-label="Probability of 0 to 4 successful beams, simulated versus binomial distribution"></svg>
+    <div class="legend" id="hitsLegend"></div>
+    <p class="note" id="hitsNote"></p>
+  </div>
+
+  <div class="card wide">
+    <h2>Critical hit analysis</h2>
+    <div class="tiles" id="critTiles"></div>
+    <p class="note" id="critNote"></p>
+  </div>
+</div>
+
+<!-- ================= COMPARISON ================= -->
+<h2 class="section-title">Compare Two Configurations</h2>
+<p class="section-lead">Run a simulation, save it as A; change a setting, run again, save it as B. The table shows both side by side.</p>
+<div class="card">
+  <div class="run-row" style="margin-top:0">
+    <button type="button" id="saveA" disabled>Save current run as A</button>
+    <button type="button" id="saveB" disabled>Save current run as B</button>
+    <button type="button" id="clearCmp">Clear</button>
+  </div>
+  <div class="cmp-grid" style="margin-top:12px">
+    <div class="table-wrap"><table id="cmpTable"></table></div>
+    <div><svg class="chart" id="cmpChart" viewBox="0 0 600 280" role="img" aria-label="Exact damage distributions of configuration A and B"></svg><div class="legend" id="cmpLegend"></div></div>
+  </div>
+</div>
+
+<!-- ================= EDUCATION ================= -->
+<h2 class="section-title" id="understand">Understanding Monte Carlo Simulation</h2>
+<p class="section-lead"><b>Monte Carlo simulation</b> estimates probabilities and expected outcomes by generating random events over and over again and
+counting what happens. Here, the computer casts Eldritch Blast thousands of times – rolling every die with a random number generator – to estimate the
+Warlock's damage distribution. Because this game is simple, we can also work out the exact answer and see how close the simulation gets.</p>
+
+<div class="card">
+  <h2 class="f">How accurate is the estimate?</h2>
+  <div id="accBox" class="muted">Run a simulation to see the confidence interval and the error.</div>
+  <div class="formula">95 % CI ≈ <span style="text-decoration:overline">x</span> ± 1.96 · <var>s</var> / √<var>N</var>
+    &nbsp;&nbsp;&nbsp;absolute error = |<span style="text-decoration:overline">x</span> − E[D]| &nbsp;&nbsp;&nbsp; relative error = |<span style="text-decoration:overline">x</span> − E[D]| / E[D]</div>
+  <p class="note">This is an <b>approximate</b> confidence interval: it relies on the central limit theorem, so it is rough for small samples (N = 10 or 100).
+  About 95 % of runs produce an interval that contains the exact value – so roughly 1 run in 20 will miss it, and that is expected.</p>
+  <div class="lesson">Why does accuracy improve with N? The standard error <var>s</var>/√<var>N</var> shrinks with the square root of N: 100× more simulations
+  give a 10× narrower interval. Any single run can still land high or low – the fluctuations get smaller, they do not disappear.</div>
+</div>
+
+<div class="card">
+  <h2 class="f">The exact model, step by step <span class="muted" id="exactSub" style="font-family:system-ui,sans-serif"></span></h2>
+  <p class="muted" style="margin:0 0 4px">1 · Which d20 results hit? Every bar is one face of the kept d20; its height is the probability of that face.</p>
+  <div class="faces" id="faces" aria-hidden="true"></div>
+  <div class="faces-n" id="facesN" aria-hidden="true"></div>
+  <div class="legend" id="facesLegend"></div>
+  <div id="exactSteps"></div>
+</div>
+
+<div class="edu" id="eduCards"></div>
+
+<!-- ================= EXPERIMENTS ================= -->
+<h2 class="section-title">Classroom Experiments</h2>
+<p class="section-lead">Each experiment uses the current settings and changes one thing. Results appear in the card; the seed is fixed per experiment so the class can reproduce them.</p>
+<div class="exps" id="exps"></div>
+
+<!-- ================= GLOSSARY ================= -->
+<h2 class="section-title" id="glossary">Glossary</h2>
+<div class="card"><dl class="gloss" id="gloss"></dl></div>
+
+<!-- ================= TESTS ================= -->
+<div class="card">
+  <details class="tests" id="testDetails">
+    <summary id="testSum">Validation tests</summary>
+    <p class="muted">These automated tests run every time the page loads. They check the simulation engine and the exact model against the rules and the
+    reference case (level 20, Charisma 20, Agonizing Blast, +11 vs AC 18, normal rolls: 30 % miss, 65 % hit, 5 % critical, 30.5 expected damage).</p>
+    <div class="table-wrap"><table id="testTable"></table></div>
+    <div class="run-row"><button type="button" id="rerunTests">Run tests again</button></div>
+  </details>
+</div>
+
+<p class="credits">Game mechanics from the System Reference Document 5.1 by Wizards of the Coast LLC, licensed under
+<a href="https://creativecommons.org/licenses/by/4.0/legalcode" style="color:var(--cyan-ui)">CC-BY-4.0</a>. This teaching tool is not affiliated with or endorsed by Wizards of the Coast.
+Vaelis the Voidcaller is a fictional character made for this lab.</p>
+
+</div>
+<div id="tip" role="tooltip"></div>
+
+<!-- ======================================================================
+     ENGINE – pure functions, no DOM. Simulation + exact probability model.
+     ====================================================================== -->
+<script id="engine">
+const Eldritch = (() => {
+  const beamsForLevel = lvl => lvl >= 17 ? 4 : lvl >= 11 ? 3 : lvl >= 5 ? 2 : 1;
+  const profForLevel = lvl => lvl >= 17 ? 6 : lvl >= 13 ? 5 : lvl >= 9 ? 4 : lvl >= 5 ? 3 : 2;   // 2014 progression
+  const abilityMod = score => Math.floor((score - 10) / 2);
+
+  /* cfg: { level, cha, agonizing, ac, hp, mode: 'normal'|'adv'|'dis', critRule: 'standard'|'none' } */
+  function derive(cfg) {
+    const prof = profForLevel(cfg.level), mod = abilityMod(cfg.cha);
+    const agon = !!cfg.agonizing && cfg.level >= 2;
+    return { B: beamsForLevel(cfg.level), prof, mod, A: prof + mod, C: agon ? mod : 0, agon,
+             AC: cfg.ac, HP: cfg.hp, mode: cfg.mode, critDice: cfg.critRule === 'none' ? 1 : 2 };
+  }
+
+  /* ---------- random numbers ---------- */
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+  function parseSeed(s) {
+    s = String(s).trim();
+    if (/^\d{1,10}$/.test(s)) return Number(s) >>> 0;
+    let h = 0x811c9dc5;                                     // FNV-1a for text seeds
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return h >>> 0;
+  }
+  const die = (r, sides) => 1 + Math.floor(r() * sides);
+
+  /* ---------- one beam ---------- */
+  // outcome: 0 = miss, 1 = normal hit, 2 = critical hit
+  function outcomeOf(face, A, AC) {
+    if (face === 1) return 0;          // natural 1 always misses
+    if (face === 20) return 2;         // natural 20 always hits critically
+    return face + A >= AC ? 1 : 0;
+  }
+  function keptFace(r1, r2, mode) { return mode === 'adv' ? Math.max(r1, r2) : mode === 'dis' ? Math.min(r1, r2) : r1; }
+
+  // Fills o with {r1, r2, face, out, d1, d2, dmg}. Draw order: d20 (×2 with adv/dis), then 1d10, then 2nd d10 on a crit.
+  function rollBeam(r, p, o) {
+    o.r1 = die(r, 20); o.r2 = p.mode === 'normal' ? 0 : die(r, 20);
+    o.face = keptFace(o.r1, o.r2, p.mode);
+    o.out = outcomeOf(o.face, p.A, p.AC);
+    o.d1 = 0; o.d2 = 0; o.dmg = 0;
+    if (o.out > 0) {
+      o.d1 = die(r, 10);
+      if (o.out === 2 && p.critDice === 2) o.d2 = die(r, 10);   // crit doubles the dice, never the modifier
+      o.dmg = o.d1 + o.d2 + p.C;
+    }
+    return o;
+  }
+
+  /* ---------- batched simulation ---------- */
+  const DETAIL_MAX = 1000;
+  function createRun(cfg, N, seed) {
+    const p = derive(cfg), B = p.B;
+    return { cfg: { ...cfg }, p, N, seed: seed >>> 0, B, done: 0, rng: mulberry32(seed),
+      total: new Uint16Array(N), hits: new Uint8Array(N), crits: new Uint8Array(N),
+      beamDmg: new Uint8Array(N * B), beamOut: new Uint8Array(N * B), detail: [] };
+  }
+  function step(run, count) {
+    const { p, B, rng, total, hits, crits, beamDmg, beamOut, detail } = run;
+    const o = {}, end = Math.min(run.N, run.done + count);
+    for (let i = run.done; i < end; i++) {
+      let tot = 0, h = 0, c = 0;
+      const rec = i < DETAIL_MAX ? [] : null;
+      for (let b = 0; b < B; b++) {
+        rollBeam(rng, p, o);
+        const k = i * B + b;
+        beamDmg[k] = o.dmg; beamOut[k] = o.out; tot += o.dmg;
+        if (o.out) h++;
+        if (o.out === 2) c++;
+        if (rec) rec.push({ r1: o.r1, r2: o.r2, face: o.face, out: o.out, d1: o.d1, d2: o.d2, dmg: o.dmg });
+      }
+      total[i] = tot; hits[i] = h; crits[i] = c;
+      if (rec) detail.push(rec);
+    }
+    run.done = end;
+    return run.done >= run.N;
+  }
+  function simulate(cfg, N, seed) { const run = createRun(cfg, N, seed); step(run, N); return run; }
+
+  /* ---------- empirical summary ---------- */
+  function convIndices(N, k = 1000) {           // ≤ 2k sample points: log-spaced ∪ evenly spaced
+    const s = new Set();
+    for (let j = 0; j < k; j++) {
+      s.add(Math.max(1, Math.round(Math.exp(Math.log(N) * j / (k - 1)))));
+      s.add(Math.max(1, Math.round(N * (j + 1) / k)));
+    }
+    return [...s].filter(n => n <= N).sort((a, b) => a - b);
+  }
+  function summarize(run) {
+    const { N, B, p, total, hits, crits, beamDmg, beamOut } = run;
+    const maxD = B * (10 * p.critDice + p.C);
+    const counts = new Float64Array(maxD + 1), hitCounts = new Float64Array(B + 1);
+    let mean = 0, M2 = 0, min = Infinity, max = -Infinity, zero = 0, hitSum = 0, critSum = 0, anyCrit = 0, defeated = 0;
+    let critDmg = 0, critN = 0, allDmg = 0;
+    const idx = convIndices(N), conv = []; let ip = 0;
+    for (let i = 0; i < N; i++) {
+      const x = total[i];
+      const d = x - mean; mean += d / (i + 1); M2 += d * (x - mean);       // Welford
+      if (idx[ip] === i + 1) { conv.push([i + 1, mean, i > 0 ? Math.sqrt(M2 / i) : 0]); ip++; }
+      counts[x]++; hitCounts[hits[i]]++;
+      if (x < min) min = x; if (x > max) max = x;
+      if (x === 0) zero++;
+      if (x >= p.HP) defeated++;
+      hitSum += hits[i]; critSum += crits[i]; if (crits[i]) anyCrit++;
+      allDmg += x;
+    }
+    for (let k = 0; k < N * B; k++) if (beamOut[k] === 2) { critDmg += beamDmg[k]; critN++; }
+    const sd = N > 1 ? Math.sqrt(M2 / (N - 1)) : 0;
+    // median: average of the two middle order statistics
+    const rankVal = r => { let c = 0; for (let x = 0; x <= maxD; x++) { c += counts[x]; if (c > r) return x; } return maxD; };
+    const median = (rankVal(Math.floor((N - 1) / 2)) + rankVal(Math.ceil((N - 1) / 2))) / 2;
+    const se = sd / Math.sqrt(N);
+    return { N, B, maxD, counts, hitCounts, mean, sd, se, ci: [mean - 1.96 * se, mean + 1.96 * se], min, max, median,
+      p0: zero / N, avgHits: hitSum / N, hitRate: hitSum / (N * B), critRate: critSum / (N * B), pAnyCrit: anyCrit / N,
+      pDefeat: defeated / N, avgCritDmg: critN ? critDmg / critN : NaN, critShare: allDmg ? critDmg / allDmg : 0, conv,
+      pAtLeast: t => { let c = 0; for (let x = Math.max(0, t); x <= maxD; x++) c += counts[x]; return c / N; } };
+  }
+
+  /* ---------- exact model ---------- */
+  function faceDist(mode) {                    // P(kept d20 = f), f = 1..20, by enumeration
+    const P = new Array(21).fill(0);
+    if (mode === 'normal') { for (let f = 1; f <= 20; f++) P[f] = 1 / 20; return P; }
+    for (let a = 1; a <= 20; a++) for (let b = 1; b <= 20; b++) P[keptFace(a, b, mode)] += 1 / 400;
+    return P;
+  }
+  function beamProbs(p) {
+    const P = faceDist(p.mode); let miss = 0, hit = 0, crit = 0;
+    for (let f = 1; f <= 20; f++) { const o = outcomeOf(f, p.A, p.AC); if (o === 0) miss += P[f]; else if (o === 1) hit += P[f]; else crit += P[f]; }
+    return { miss, hit, crit, faces: P };
+  }
+  function convolve(a, b) {
+    const out = new Array(a.length + b.length - 1).fill(0);
+    for (let i = 0; i < a.length; i++) if (a[i]) for (let j = 0; j < b.length; j++) out[i + j] += a[i] * b[j];
+    return out;
+  }
+  function binom(n, k) { let c = 1; for (let i = 1; i <= k; i++) c = c * (n - k + i) / i; return c; }
+  function exact(cfg) {
+    const p = derive(cfg), pr = beamProbs(p), C = p.C;
+    // per-beam damage pmf
+    const beam = new Array(10 * p.critDice + C + 1).fill(0);
+    beam[0] += pr.miss;
+    for (let k = 1; k <= 10; k++) beam[k + C] += pr.hit / 10;
+    if (p.critDice === 2) { for (let a = 1; a <= 10; a++) for (let b = 1; b <= 10; b++) beam[a + b + C] += pr.crit / 100; }
+    else for (let k = 1; k <= 10; k++) beam[k + C] += pr.crit / 10;
+    let pmf = [1];
+    for (let b = 0; b < p.B; b++) pmf = convolve(pmf, beam);
+    let mean = 0, m2 = 0, sum = 0;
+    pmf.forEach((q, x) => { mean += q * x; m2 += q * x * x; sum += q; });
+    const variance = m2 - mean * mean;
+    let cdf = 0, median = 0;
+    for (let x = 0; x < pmf.length; x++) { cdf += pmf[x]; if (cdf >= 0.5 - 1e-12) { median = x; break; } }
+    const support = pmf.map((q, x) => q > 1e-15 ? x : -1).filter(x => x >= 0);
+    const pAtLeast = t => { let s = 0; for (let x = Math.max(0, Math.ceil(t)); x < pmf.length; x++) s += pmf[x]; return s; };
+    const pHitAny = pr.hit + pr.crit;
+    const hitsPmf = []; for (let k = 0; k <= p.B; k++) hitsPmf.push(binom(p.B, k) * pHitAny ** k * (1 - pHitAny) ** (p.B - k));
+    const eNormal = 5.5 + C, eCrit = (p.critDice === 2 ? 11 : 5.5) + C;
+    const eBeam = pr.hit * eNormal + pr.crit * eCrit;
+    return { p, pr, beam, pmf, sum, mean, variance, sd: Math.sqrt(Math.max(0, variance)), median,
+      min: support[0], max: support[support.length - 1], p0: pmf[0] || 0, pAtLeast, pDefeat: pAtLeast(p.HP),
+      hitsPmf, pHitAny, eNormal, eCrit, eBeam, eTotal: p.B * eBeam, avgHits: p.B * pHitAny,
+      pAnyCrit: 1 - (1 - pr.crit) ** p.B, critContribution: p.B * pr.crit * eCrit,
+      critExtra: p.critDice === 2 ? p.B * pr.crit * 5.5 : 0 };
+  }
+
+  return { beamsForLevel, profForLevel, abilityMod, derive, mulberry32, parseSeed, die, outcomeOf, keptFace, rollBeam,
+           createRun, step, simulate, summarize, faceDist, beamProbs, convolve, exact, DETAIL_MAX };
+})();
+</script>
+
+<!-- ======================================================================
+     TESTS – automated validation of the engine (also runnable headless).
+     ====================================================================== -->
+<script id="tests">
+function runEldritchTests(E) {
+  const results = [];
+  const t = (name, fn) => { try { const d = fn(); results.push({ name, pass: d === true || (d && d.pass), detail: d && d.detail || '' }); }
+                            catch (e) { results.push({ name, pass: false, detail: 'Error: ' + e.message }); } };
+  const near = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol;
+  // stub RNG that returns chosen die faces: u(face, sides)
+  const u = (face, sides) => (face - 0.5) / sides;
+  const seq = arr => { let i = 0; return () => { if (i >= arr.length) throw new Error('stub RNG exhausted'); return arr[i++]; }; };
+  const REF = { level: 20, cha: 20, agonizing: true, ac: 18, hp: 40, mode: 'normal', critRule: 'standard' };
+
+  t('Beam scaling: 1 beam at level 1–4, 2 at 5, 3 at 11, 4 at 17', () => {
+    const got = [1, 4, 5, 10, 11, 16, 17, 20].map(E.beamsForLevel).join(',');
+    return { pass: got === '1,1,2,2,3,3,4,4', detail: 'levels 1,4,5,10,11,16,17,20 → ' + got };
+  });
+  t('Proficiency (2014) and spell attack bonus: level 20, Charisma 20 → +6, +11', () => {
+    const pr = [1, 5, 9, 13, 17].map(E.profForLevel).join(','), d = E.derive(REF);
+    return { pass: pr === '2,3,4,5,6' && d.A === 11 && d.C === 5 && d.B === 4, detail: `prof ${pr}; A = +${d.A}; C = ${d.C}` };
+  });
+  t('Natural 1 always misses (even +30 vs AC 10)', () => {
+    const p = { ...E.derive(REF), A: 30, AC: 10 }, o = {};
+    E.rollBeam(seq([u(1, 20)]), p, o);
+    const pr = E.beamProbs(p);
+    return { pass: E.outcomeOf(1, 30, 10) === 0 && o.out === 0 && o.dmg === 0 && near(pr.miss, 0.05), detail: `P(miss) = ${pr.miss}` };
+  });
+  t('Natural 20 always hits critically (even +0 vs AC 40)', () => {
+    const pr = E.beamProbs({ mode: 'normal', A: 0, AC: 40 });
+    return { pass: E.outcomeOf(20, 0, 40) === 2 && near(pr.crit, 0.05) && near(pr.hit, 0), detail: `P(crit) = ${pr.crit}, P(hit) = ${pr.hit}` };
+  });
+  t('Advantage keeps the higher d20, disadvantage the lower', () => {
+    const o = {}, pa = { ...E.derive({ ...REF, mode: 'adv' }) }, pd = { ...E.derive({ ...REF, mode: 'dis' }) };
+    E.rollBeam(seq([u(3, 20), u(17, 20), u(4, 10)]), pa, o); const a = o.face, ad = o.dmg;
+    E.rollBeam(seq([u(3, 20), u(17, 20)]), pd, o); const d = o.face, dd = o.dmg;
+    return { pass: a === 17 && ad === 9 && d === 3 && dd === 0, detail: `rolls 3 & 17 → adv ${a} (dmg ${ad}), dis ${d} (dmg ${dd})` };
+  });
+  t('Advantage/disadvantage exact probabilities (400 pairs)', () => {
+    const A = E.faceDist('adv'), D = E.faceDist('dis'); let ok = true;
+    for (let k = 1; k <= 20; k++) ok = ok && near(A[k], (2 * k - 1) / 400) && near(D[k], (41 - 2 * k) / 400);
+    const pa = E.beamProbs(E.derive({ ...REF, mode: 'adv' })), pd = E.beamProbs(E.derive({ ...REF, mode: 'dis' }));
+    ok = ok && near(pa.miss, 0.09) && near(pa.crit, 0.0975) && near(pd.miss, 0.51) && near(pd.crit, 0.0025);
+    return { pass: ok, detail: `vs AC 18: adv miss ${pa.miss.toFixed(4)}, crit ${pa.crit.toFixed(4)}; dis miss ${pd.miss.toFixed(4)}, crit ${pd.crit.toFixed(4)}` };
+  });
+  t('Critical hit doubles the dice only: 2d10 (4+6) + 5 = 15', () => {
+    const o = {}; E.rollBeam(seq([u(20, 20), u(4, 10), u(6, 10)]), E.derive(REF), o);
+    const ex = E.exact(REF);
+    return { pass: o.out === 2 && o.dmg === 15 && near(ex.eCrit, 16) && near(ex.eNormal, 10.5), detail: `damage ${o.dmg}; E[crit beam] = ${ex.eCrit}` };
+  });
+  t('Agonizing Blast adds Charisma modifier to each successful beam', () => {
+    const rolls = []; for (let b = 0; b < 4; b++) rolls.push(u(15, 20), u(1, 10));
+    const on = E.createRun(REF, 1, 1); on.rng = seq(rolls.slice()); E.step(on, 1);
+    const off = E.createRun({ ...REF, agonizing: false }, 1, 1); off.rng = seq(rolls.slice()); E.step(off, 1);
+    const lvl1 = E.derive({ ...REF, level: 1 });
+    return { pass: on.total[0] === 24 && off.total[0] === 4 && lvl1.C === 0, detail: `4 hits, each d10 = 1: with ${on.total[0]}, without ${off.total[0]}; level 1 bonus ${lvl1.C}` };
+  });
+  t('Exact distributions sum to 1 (all modes, levels, AC, rules)', () => {
+    let worst = 0;
+    for (const mode of ['normal', 'adv', 'dis']) for (const level of [1, 5, 11, 20]) for (const ac of [10, 15, 18, 25])
+      for (const critRule of ['standard', 'none']) for (const agonizing of [true, false]) {
+        const ex = E.exact({ level, cha: 16, agonizing, ac, hp: 50, mode, critRule });
+        worst = Math.max(worst, Math.abs(ex.sum - 1), Math.abs(ex.hitsPmf.reduce((a, b) => a + b, 0) - 1),
+          Math.abs(ex.beam.reduce((a, b) => a + b, 0) - 1), Math.abs(ex.mean - ex.eTotal));
+      }
+    return { pass: worst < 1e-9, detail: `max deviation ${worst.toExponential(2)} (also checks pmf mean = B·E[beam])` };
+  });
+  t('Reference case: 30 % / 65 % / 5 %, 7.625 per beam, 30.5 per casting', () => {
+    const ex = E.exact(REF);
+    return { pass: near(ex.pr.miss, 0.30) && near(ex.pr.hit, 0.65) && near(ex.pr.crit, 0.05) && near(ex.eBeam, 7.625) && near(ex.eTotal, 30.5) && near(ex.mean, 30.5),
+      detail: `miss ${ex.pr.miss.toFixed(4)}, hit ${ex.pr.hit.toFixed(4)}, crit ${ex.pr.crit.toFixed(4)}; E = ${ex.mean.toFixed(6)}` };
+  });
+  t('Reference case: P(all miss) = 0.30⁴ = 0.81 %, P(≥1 crit) = 1 − 0.95⁴ ≈ 18.55 %', () => {
+    const ex = E.exact(REF);
+    return { pass: near(ex.p0, 0.0081) && near(ex.pAnyCrit, 1 - 0.95 ** 4) && near(ex.hitsPmf[0], 0.0081),
+      detail: `P(0) = ${(ex.p0 * 100).toFixed(4)} %, P(≥1 crit) = ${(ex.pAnyCrit * 100).toFixed(4)} %` };
+  });
+  t('Hits per casting follow Binomial(B, p)', () => {
+    const ex = E.exact(REF), p = 0.7, exp = [0.3 ** 4, 4 * 0.7 * 0.3 ** 3, 6 * 0.49 * 0.09, 4 * 0.343 * 0.3, 0.7 ** 4];
+    return { pass: exp.every((v, k) => near(v, ex.hitsPmf[k])), detail: ex.hitsPmf.map(v => v.toFixed(4)).join(' · ') };
+  });
+  t('Fixed seed reproduces identical results; batching does not change them', () => {
+    const a = E.simulate(REF, 5000, 12345), b = E.simulate(REF, 5000, 12345), c = E.simulate(REF, 5000, 54321);
+    const d = E.createRun(REF, 5000, 12345); while (!E.step(d, 777));
+    const same = (x, y) => x.total.every((v, i) => v === y.total[i]) && x.beamDmg.every((v, i) => v === y.beamDmg[i]);
+    return { pass: same(a, b) && same(a, d) && !same(a, c) && E.parseSeed('dragon') === E.parseSeed('dragon'), detail: 'seed 12345 ×2 equal, chunked equal, seed 54321 differs' };
+  });
+  t('Enemy-defeat probability: exact P(D ≥ HP) and simulated flag', () => {
+    const ex = E.exact(REF), hp1 = E.exact({ ...REF, hp: 1 }), hpBig = E.exact({ ...REF, hp: 101 });
+    let manual = 0; ex.pmf.forEach((q, x) => { if (x >= 40) manual += q; });
+    const run = E.simulate(REF, 200000, 2024), s = E.summarize(run);
+    let flagged = 0; for (let i = 0; i < run.N; i++) if (run.total[i] >= 40) flagged++;
+    const se = Math.sqrt(ex.pDefeat * (1 - ex.pDefeat) / run.N);
+    return { pass: near(ex.pDefeat, manual) && near(hp1.pDefeat, 1 - ex.p0) && hpBig.pDefeat === 0 && near(s.pDefeat, flagged / run.N) && Math.abs(s.pDefeat - ex.pDefeat) < 4 * se,
+      detail: `HP 40: exact ${(ex.pDefeat * 100).toFixed(3)} %, simulated ${(s.pDefeat * 100).toFixed(3)} % (N = 200 000)` };
+  });
+  t('Monte Carlo mean agrees with the exact mean (|error| < 4 SE)', () => {
+    let ok = true, det = [];
+    for (const mode of ['normal', 'adv', 'dis']) {
+      const cfg = { ...REF, mode }, ex = E.exact(cfg), s = E.summarize(E.simulate(cfg, 100000, 99));
+      const z = (s.mean - ex.mean) / (ex.sd / Math.sqrt(s.N)); ok = ok && Math.abs(z) < 4 && Math.abs(s.p0 - ex.p0) < 0.003;
+      det.push(`${mode}: ${s.mean.toFixed(3)} vs ${ex.mean.toFixed(3)} (z = ${z.toFixed(2)})`);
+    }
+    return { pass: ok, detail: det.join('; ') };
+  });
+  return results;
+}
+if (typeof module !== 'undefined') module.exports = { runEldritchTests };
+</script>
+
+<!-- ======================================================================
+     USER INTERFACE
+     ====================================================================== -->
+<script>
+const E = Eldritch;
+const $ = id => document.getElementById(id);
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DEFAULT = { level: 20, cha: 20, agonizing: true, ac: 18, hp: 40, mode: 'normal', critRule: 'standard' };
+let cfg = { ...DEFAULT }, N = 1000, run = null, sum = null, runEx = null, lastSeed = null, runToken = 0, animToken = 0, castIdx = 0;
+const view = { hist: 'freq', conv: 'log', thr: 40 };
+const MODE_NAME = { normal: 'Normal', adv: 'Advantage', dis: 'Disadvantage' };
+const COL = { violet: '#8b6fe0', cyan: '#2ea3bd', gold: '#b8891f', goldUi: '#f4c95d', miss: '#5f6b80', theory: '#eeeaf6', grid: '#2b3754', dim: '#aab3c8', ink: '#eeeaf6', violetUi: '#b9a3ff' };
+
+/* ---------- formatting ---------- */
+const fmt = (x, d = 2) => Number.isFinite(x) ? x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+const fint = x => Number.isFinite(x) ? Math.round(x).toLocaleString('en-US').replace(/,/g, ' ') : '—';
+const pct = (p, d = 2) => Number.isFinite(p) ? (p * 100).toFixed(d) + ' %' : '—';
+const sgn = v => v >= 0 ? '+' + v : '−' + Math.abs(v);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const cfgEq = (a, b) => ['level', 'cha', 'agonizing', 'ac', 'hp', 'mode', 'critRule'].every(k => a[k] === b[k]);
+const cfgLabel = c => { const d = E.derive(c); return `L${c.level}, CHA ${c.cha}, ${sgn(d.A)} vs AC ${c.ac}, ${MODE_NAME[c.mode]}${d.agon ? ', Agonizing' : ''}${c.critRule === 'none' ? ', no crit dice' : ''}`; };
+
+/* ---------- tooltip ---------- */
+const tip = $('tip');
+function showTip(html, x, y) {
+  tip.innerHTML = html; tip.style.display = 'block';
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let left = x + 14, top = y + 14;
+  if (left + w > innerWidth - 8) left = Math.max(8, x - w - 14);
+  if (top + h > innerHeight - 8) top = Math.max(8, y - h - 14);
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+const hideTip = () => { tip.style.display = 'none'; };
+document.addEventListener('mouseover', e => { const el = e.target.closest('[data-tip]'); if (el) showTip(el.dataset.tip, e.clientX, e.clientY); });
+document.addEventListener('mousemove', e => { const el = e.target.closest('[data-tip]'); if (el && tip.style.display === 'block') showTip(el.dataset.tip, e.clientX, e.clientY); });
+document.addEventListener('mouseout', e => { if (e.target.closest('[data-tip]')) hideTip(); });
+document.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); if (el) { const r = el.getBoundingClientRect(); showTip(el.dataset.tip, r.left, r.bottom); } });
+document.addEventListener('focusout', hideTip);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+
+/* ---------- particles (decorative) ---------- */
+(function particles() {
+  const cv = $('particles'), ctx = cv.getContext('2d'); if (REDUCED || !ctx) return;
+  let W = 0, H = 0, visible = true; const P = [];
+  const resize = () => { const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  resize(); addEventListener('resize', resize);
+  for (let i = 0; i < 55; i++) P.push({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.8, v: 0.00015 + Math.random() * 0.0005, ph: Math.random() * 6.28, c: Math.random() < 0.65 ? '185,163,255' : '111,214,236' });
+  new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) requestAnimationFrame(frame); }).observe(cv);
+  function frame(t) {
+    if (!visible) return;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of P) {
+      p.y -= p.v; if (p.y < -0.02) { p.y = 1.02; p.x = Math.random(); }
+      const a = 0.25 + 0.35 * Math.sin(t / 900 + p.ph) ** 2;
+      ctx.beginPath(); ctx.fillStyle = `rgba(${p.c},${a})`; ctx.arc(p.x * W + Math.sin(t / 2000 + p.ph) * 6, p.y * H, p.r, 0, 6.283); ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ======================================================================
+   SETTINGS
+   ====================================================================== */
+function syncControls() {
+  $('level').value = cfg.level; $('cha').value = cfg.cha; $('agon').checked = cfg.agonizing; $('ac').value = cfg.ac; $('hp').value = cfg.hp;
+  document.querySelectorAll('[data-atk]').forEach(b => b.setAttribute('aria-pressed', b.dataset.atk === cfg.mode));
+  document.querySelectorAll('input[name=crit]').forEach(r => { r.checked = r.value === cfg.critRule; });
+  document.querySelectorAll('[data-n]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === N));
+}
+function onConfigChange() {
+  const d = E.derive(cfg), ex = E.exact(cfg);
+  $('levelOut').textContent = cfg.level;
+  $('levelHint').textContent = `${d.B} beam${d.B > 1 ? 's' : ''} · proficiency ${sgn(d.prof)}`;
+  $('chaOut').textContent = cfg.cha;
+  $('chaHint').textContent = `modifier ${sgn(d.mod)} → spell attack ${sgn(d.prof)} ${d.mod >= 0 ? '+' : '−'} ${Math.abs(d.mod)} = ${sgn(d.A)}`;
+  $('agon').disabled = cfg.level < 2;
+  $('agonHint').textContent = cfg.level < 2 ? 'Requires warlock level 2.' : d.agon ? `Each hitting beam: 1d10 ${sgn(d.C)}` : 'Each hitting beam: 1d10';
+  $('acOut').textContent = cfg.ac;
+  $('hpOut').textContent = cfg.hp;
+  $('hpHint').textContent = cfg.hp > ex.max ? `More than the maximum possible damage (${ex.max}) – one casting can never defeat it.` : '';
+  $('critMod').style.display = cfg.critRule === 'none' ? 'block' : 'none';
+  // character sheet
+  $('sheetCls').textContent = `Warlock · Level ${cfg.level}`;
+  $('sheetDl').innerHTML = [
+    ['Charisma', `${cfg.cha} (${sgn(d.mod)})`], ['Proficiency bonus', sgn(d.prof)], ['Spell attack bonus', sgn(d.A)],
+    ['Eldritch Blast beams', d.B], ['Invocation', d.agon ? 'Agonizing Blast' : '—'], ['Target', `AC ${cfg.ac}, ${cfg.hp} HP`]
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('sheetSpell').innerHTML = `<b>Eldritch Blast</b> – ${d.B} beam${d.B > 1 ? 's' : ''}, each: attack roll 1d20 ${sgn(d.A)} vs AC ${cfg.ac};
+    hit → 1d10${d.C ? ' ' + sgn(d.C) : ''} force damage; natural 20 → ${d.critDice === 2 ? '2d10' : '1d10'}${d.C ? ' ' + sgn(d.C) : ''}.
+    <br>Exact expectation: <b>${fmt(ex.mean, 3)}</b> damage per casting.`;
+  // threshold slider range
+  $('thr').max = Math.max(ex.max, 1); if (view.thr > ex.max) { view.thr = ex.max; $('thr').value = view.thr; }
+  $('stale').classList.toggle('on', !!run && !cfgEq(run.cfg, cfg));
+  renderExactSteps();
+  renderStats();
+  if (!run) { renderStageIdle(); renderCharts(); }
+}
+$('level').addEventListener('input', e => { cfg.level = +e.target.value; onConfigChange(); });
+$('cha').addEventListener('input', e => { cfg.cha = +e.target.value; onConfigChange(); });
+$('agon').addEventListener('change', e => { cfg.agonizing = e.target.checked; onConfigChange(); });
+$('ac').addEventListener('input', e => { cfg.ac = +e.target.value; onConfigChange(); });
+$('hp').addEventListener('input', e => { cfg.hp = +e.target.value; onConfigChange(); });
+document.querySelectorAll('[data-atk]').forEach(b => b.addEventListener('click', () => { cfg.mode = b.dataset.atk; syncControls(); onConfigChange(); }));
+document.querySelectorAll('input[name=crit]').forEach(r => r.addEventListener('change', () => { cfg.critRule = r.value; onConfigChange(); }));
+document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => { N = +b.dataset.n; syncControls(); }));
+if (REDUCED) $('animOn').checked = false;
+
+/* ======================================================================
+   SIMULATION RUNNER (batched, keeps the page responsive)
+   ====================================================================== */
+function newSeed() { return (crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Math.floor(Math.random() * 4294967296)) >>> 0; }
+function startRun(seed) {
+  const my = ++runToken; animToken++;
+  lastSeed = seed; $('seed').value = String(seed);
+  const r = E.createRun(cfg, N, seed);
+  const CHUNK = Math.max(5000, Math.round(250000 / r.B));
+  $('go').disabled = true; $('runTxt').textContent = 'Casting…';
+  const t0 = performance.now();
+  const tick = () => {
+    if (my !== runToken) return;
+    const done = E.step(r, CHUNK);
+    $('bar').style.width = (100 * r.done / r.N).toFixed(1) + '%';
+    $('runTxt').textContent = `Casting… ${fint(r.done)} / ${fint(r.N)}`;
+    if (!done) { setTimeout(tick, 0); return; }
+    run = r; sum = E.summarize(r); runEx = E.exact(r.cfg); castIdx = 0;
+    $('go').disabled = false; $('rerun').disabled = false;
+    ['csvRes', 'csvSum', 'saveA', 'saveB'].forEach(id => { $(id).disabled = false; });
+    $('runTxt').textContent = `${fint(r.N)} castings (${fint(r.N * r.B)} attack rolls) in ${fmt((performance.now() - t0) / 1000, 2)} s · seed ${seed}`;
+    $('stale').classList.remove('on');
+    renderStats(); renderCharts(); renderAccuracy();
+    $('browse').hidden = false;
+    if ($('animOn').checked && r.N < 10000) playAnimation(Math.min(r.N, 10));
+    else showCasting(0);
+  };
+  if (N <= 2000) { E.step(r, N); r.done = N; tick(); } else setTimeout(tick, 0);
+}
+$('go').addEventListener('click', () => {
+  const s = $('seed').value.trim();
+  startRun($('fixedSeed').checked && s ? E.parseSeed(s) : newSeed());
+});
+$('rerun').addEventListener('click', () => { if (lastSeed !== null) startRun(lastSeed); });
+$('reset').addEventListener('click', () => {
+  runToken++; animToken++;
+  cfg = { ...DEFAULT }; N = 1000; run = sum = runEx = null; lastSeed = null;
+  $('seed').value = ''; $('fixedSeed').checked = false; $('bar').style.width = '0'; $('runTxt').textContent = ''; $('go').disabled = false;
+  ['rerun', 'csvRes', 'csvSum', 'saveA', 'saveB'].forEach(id => { $(id).disabled = true; });
+  $('browse').hidden = true; $('beamlog').innerHTML = '';
+  view.thr = 40; $('thr').value = 40;
+  syncControls(); onConfigChange(); renderAccuracy(); renderCharts();
+});
+
+/* ======================================================================
+   COMBAT STAGE
+   ====================================================================== */
+const SV = 'http://www.w3.org/2000/svg';
+const ORB = [150, 150], ENEMY_X = 672;
+const laneY = (B, i) => 160 + (i - (B - 1) / 2) * (B > 3 ? 54 : 62);
+function qpt(p0, c, p1, t) { const m = 1 - t; return [m * m * p0[0] + 2 * m * t * c[0] + t * t * p1[0], m * m * p0[1] + 2 * m * t * c[1] + t * t * p1[1]]; }
+function beamGeom(B, i, out) {
+  const ly = laneY(B, i), ty = 165 + (i - (B - 1) / 2) * 16;
+  const c = [420, ly + (ly - 160) * 0.35], hitEnd = [ENEMY_X - 18, ty];
+  const end = out ? hitEnd : [795, ty + (i < (B - 1) / 2 || B === 1 ? -95 : 95)];
+  return { p0: ORB, c, p1: end, dice: qpt(ORB, c, hitEnd, 0.4), dmg: qpt(ORB, c, hitEnd, 0.72) };
+}
+function stageBase() {
+  const d = run ? run.p : E.derive(cfg), hp = d.HP;
+  return `
+  <defs>
+    <radialGradient id="orbG"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#c9b6ff"/><stop offset="1" stop-color="#8b6fe0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="robe" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3a2a6e"/><stop offset="1" stop-color="#140f2b"/></linearGradient>
+    <linearGradient id="stone" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#4b5a73"/><stop offset="1" stop-color="#232c3e"/></linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="400" cy="300" rx="380" ry="22" fill="#121a30"/>
+  <!-- warlock -->
+  <g aria-hidden="true">
+    <ellipse cx="88" cy="292" rx="46" ry="8" fill="#000" opacity=".35"/>
+    <path d="M88 64 C64 70 56 104 58 128 L40 290 L136 290 L118 128 C120 104 112 70 88 64 Z" fill="url(#robe)" stroke="#6b55c4" stroke-width="1.5"/>
+    <path d="M70 110 C74 88 102 88 106 110 C102 124 74 124 70 110 Z" fill="#0a0716"/>
+    <circle cx="81" cy="110" r="2.6" fill="#c9b6ff" filter="url(#glow)"/><circle cx="96" cy="110" r="2.6" fill="#c9b6ff" filter="url(#glow)"/>
+    <path d="M110 150 Q130 150 142 150" stroke="#3a2a6e" stroke-width="12" stroke-linecap="round"/>
+    <path d="M58 200 L118 200" stroke="#6b55c4" stroke-width="1" opacity=".6"/>
+    <text x="88" y="318" text-anchor="middle" font-size="12" fill="${COL.dim}">Vaelis · ${sgn(d.A)} to hit</text>
+  </g>
+  <circle id="orb" cx="${ORB[0]}" cy="${ORB[1]}" r="18" fill="url(#orbG)" filter="url(#glow)"/>
+  <!-- enemy -->
+  <g id="enemy" aria-hidden="true">
+    <ellipse cx="712" cy="292" rx="52" ry="8" fill="#000" opacity=".35"/>
+    <path d="M672 120 L690 84 L734 84 L752 120 L756 230 L740 290 L684 290 L668 230 Z" fill="url(#stone)" stroke="#6d7d99" stroke-width="1.5"/>
+    <rect x="694" y="98" width="36" height="20" rx="4" fill="#111826"/>
+    <circle cx="704" cy="108" r="3" fill="#6fd6ec" filter="url(#glow)"/><circle cx="720" cy="108" r="3" fill="#6fd6ec" filter="url(#glow)"/>
+    <path d="M684 150 L740 150 M680 200 L744 200" stroke="#6d7d99" stroke-width="1" opacity=".6"/>
+    <path d="M760 150 l18 6 v16 c0 14 -8 22 -18 26 c-10 -4 -18 -12 -18 -26 v-16 z" fill="#1c2540" stroke="${COL.dim}"/>
+    <text x="760" y="180" text-anchor="middle" font-size="12" font-weight="700" fill="${COL.ink}">${d.AC}</text>
+    <text x="712" y="318" text-anchor="middle" font-size="12" fill="${COL.dim}">Stone sentinel · AC ${d.AC}</text>
+  </g>
+  <g aria-hidden="true">
+    <rect x="652" y="48" width="120" height="10" rx="5" fill="#1c2540" stroke="${COL.grid}"/>
+    <rect id="hpBar" x="652" y="48" width="120" height="10" rx="5" fill="#83c167" style="transition: width .45s ease-out"/>
+    <text id="hpTxt" x="712" y="40" text-anchor="middle" font-size="12.5" fill="${COL.ink}">${hp} / ${hp} HP</text>
+  </g>
+  <text id="castTitle" x="400" y="296" text-anchor="middle" font-size="15" font-weight="700" fill="${COL.ink}"></text>
+  <text id="castTotal" x="400" y="316" text-anchor="middle" font-size="13" fill="${COL.dim}"></text>
+  <g id="beams"></g>`;
+}
+function renderStageIdle() {
+  const st = $('stage'); st.innerHTML = stageBase();
+  const B = E.derive(cfg).B; let g = '';
+  for (let i = 0; i < B; i++) {
+    const geo = beamGeom(B, i, 1);
+    g += `<path d="M${geo.p0} Q${geo.c} ${geo.p1}" class="beam-path" stroke="${COL.violet}" stroke-width="2" opacity=".18" stroke-dasharray="4 6"/>` + d20Svg(geo.dice, '?', 'idle');
+  }
+  st.querySelector('#beams').innerHTML = g;
+  st.querySelector('#castTitle').textContent = `Ready: ${B} beam${B > 1 ? 's' : ''} per casting`;
+  st.querySelector('#castTotal').textContent = 'Press “Run simulation”';
+}
+function d20Svg([x, y], label, state, sub = '') {
+  const fill = { idle: '#1c2540', roll: '#2a2150', miss: '#2a3245', hit: '#4b3a9a', crit: '#8a6512' }[state];
+  const stroke = { idle: '#4b5a78', roll: '#b9a3ff', miss: '#5f6b80', hit: '#b9a3ff', crit: '#f4c95d' }[state];
+  const pts = [0, 1, 2, 3, 4, 5].map(k => { const a = Math.PI / 3 * k - Math.PI / 2; return `${(x + 19 * Math.cos(a)).toFixed(1)},${(y + 19 * Math.sin(a)).toFixed(1)}`; }).join(' ');
+  return `<g class="d20"><polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="1.6"/>
+    <text x="${x}" y="${y + 5}" text-anchor="middle" font-size="14" font-weight="800" fill="${state === 'miss' ? '#aab3c8' : '#fff'}">${label}</text>
+    ${sub ? `<text x="${x - 25}" y="${y + 4}" text-anchor="end" font-size="11" fill="${COL.dim}">${sub}</text>` : ''}</g>`;
+}
+const outName = o => ['MISS', 'HIT', 'CRIT!'][o], outCls = o => ['miss', 'hit', 'crit'][o];
+function beamSvg(B, i, bm, p, drawn) {
+  const geo = beamGeom(B, i, bm.out), col = bm.out === 2 ? COL.goldUi : bm.out ? '#a58cff' : COL.miss;
+  const len = 900, dash = drawn ? 0 : len;
+  const rollsTxt = bm.r2 ? `${bm.r1} · ${bm.r2}` : '';
+  let s = `<path d="M${geo.p0} Q${geo.c} ${geo.p1}" class="beam-path" stroke="${col}" stroke-width="${bm.out === 2 ? 5 : bm.out ? 3.5 : 2}"
+      opacity="${bm.out ? 0.95 : 0.45}" ${bm.out ? 'filter="url(#glow)"' : 'stroke-dasharray="5 7"'} ${bm.out ? `stroke-dasharray="${len}" stroke-dashoffset="${dash}"` : ''} data-beam="${i}"/>`;
+  s += d20Svg(geo.dice, bm.face, outCls(bm.out), rollsTxt ? `rolled ${rollsTxt} →` : '');
+  const [dx, dy] = geo.dmg;
+  const dmgTxt = bm.out ? (bm.d2 ? `${bm.d1}+${bm.d2}${p.C ? '+' + p.C : ''} = ${bm.dmg}` : `${bm.d1}${p.C ? '+' + p.C : ''} = ${bm.dmg}`) : '0';
+  s += `<g class="dmg" data-dmg="${i}" opacity="${drawn ? 1 : 0}" style="transition:opacity .3s">
+      <text x="${dx}" y="${dy - 12}" text-anchor="middle" font-size="12" font-weight="800" fill="${bm.out === 2 ? COL.goldUi : bm.out ? COL.violetUi : COL.dim}">${outName(bm.out)}</text>
+      <text x="${dx}" y="${dy + 4}" text-anchor="middle" font-size="12" fill="${COL.ink}">${bm.out ? (bm.d2 ? '2d10' : '1d10') + ': ' + dmgTxt : 'no damage'}</text></g>`;
+  if (bm.out === 2 && drawn) s += `<circle cx="${geo.p1[0]}" cy="${geo.p1[1]}" r="14" fill="${COL.goldUi}" opacity=".35" filter="url(#glow)"/>`;
+  return s;
+}
+function setHp(total, p) {
+  const left = Math.max(0, p.HP - total), st = $('stage');
+  st.querySelector('#hpBar').setAttribute('width', (120 * left / p.HP).toFixed(1));
+  st.querySelector('#hpBar').setAttribute('fill', left === 0 ? '#ff8a7a' : left / p.HP < 0.5 ? '#f4c95d' : '#83c167');
+  st.querySelector('#hpTxt').textContent = left === 0 ? `Defeated! (${total} ≥ ${p.HP} HP)` : `${left} / ${p.HP} HP`;
+}
+function beamLog(rec, p) {
+  $('beamlog').innerHTML = rec.map((bm, i) => {
+    const roll = bm.r2 ? `d20 ${bm.r1} & ${bm.r2} → keep ${bm.face}` : `d20 = ${bm.face}`;
+    const why = bm.face === 1 ? 'natural 1 always misses' : bm.face === 20 ? 'natural 20 – critical hit' : `${bm.face} ${sgn(p.A)} = ${bm.face + p.A} ${bm.out ? '≥' : '<'} AC ${p.AC}`;
+    const dmg = bm.out ? ` · ${bm.d2 ? `2d10 (${bm.d1}+${bm.d2})` : `1d10 (${bm.d1})`}${p.C ? ` + ${p.C}` : ''} = <b>${bm.dmg}</b>` : '';
+    return `<li class="${outCls(bm.out)}"><span class="tag ${outCls(bm.out)}">${outName(bm.out)}</span>Beam ${i + 1}: ${roll} (${why})${dmg}</li>`;
+  }).join('');
+}
+function showCasting(k) {
+  if (!run) return;
+  castIdx = Math.max(0, Math.min(run.detail.length - 1, k));
+  const rec = run.detail[castIdx], p = run.p, st = $('stage');
+  st.innerHTML = stageBase();
+  st.querySelector('#beams').innerHTML = rec.map((bm, i) => beamSvg(run.B, i, bm, p, true)).join('');
+  const tot = run.total[castIdx];
+  st.querySelector('#castTitle').textContent = `Casting #${castIdx + 1}`;
+  st.querySelector('#castTotal').textContent = `Total damage ${tot} · ${run.hits[castIdx]} of ${run.B} beams hit`;
+  setHp(tot, p); beamLog(rec, p);
+  $('castLbl').textContent = `Casting ${castIdx + 1} of ${fint(run.N)}${run.N > run.detail.length ? ` (first ${fint(run.detail.length)} browsable)` : ''}`;
+  $('prevCast').disabled = castIdx === 0; $('nextCast').disabled = castIdx >= run.detail.length - 1;
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function animateCasting(k, my) {
+  const R = run, rec = R.detail[k], p = R.p, st = $('stage'), B = R.B;
+  castIdx = k; st.innerHTML = stageBase();
+  st.querySelector('#castTitle').textContent = `Casting #${k + 1}`;
+  st.querySelector('#castTotal').textContent = 'Rolling d20 attack rolls…';
+  $('castLbl').textContent = `Animating casting ${k + 1}`;
+  const beams = st.querySelector('#beams');
+  // phase 1: rolling dice
+  const t0 = performance.now();
+  while (performance.now() - t0 < 520) {
+    if (my !== animToken) return false;
+    beams.innerHTML = rec.map((bm, i) => d20Svg(beamGeom(B, i, 1).dice, 1 + Math.floor(Math.random() * 20), 'roll')).join('');
+    await wait(60);
+  }
+  // phase 2: beams fire one after another
+  beams.innerHTML = rec.map((bm, i) => beamSvg(B, i, bm, p, false)).join('');
+  await wait(30);
+  if (my !== animToken) return false;
+  let running = 0;
+  for (let i = 0; i < B; i++) {
+    if (my !== animToken) return false;
+    const path = beams.querySelector(`[data-beam="${i}"]`); if (path && rec[i].out) path.setAttribute('stroke-dashoffset', '0');
+    await wait(260);
+    if (my !== animToken) return false;
+    beams.querySelector(`[data-dmg="${i}"]`).setAttribute('opacity', 1);
+    running += rec[i].dmg; setHp(running, p);
+    st.querySelector('#castTotal').textContent = `Damage so far ${running}`;
+    if (rec[i].out) {
+      const geo = beamGeom(B, i, 1);
+      const c = document.createElementNS(SV, 'circle');
+      c.setAttribute('cx', geo.p1[0]); c.setAttribute('cy', geo.p1[1]); c.setAttribute('r', rec[i].out === 2 ? 22 : 12);
+      c.setAttribute('fill', rec[i].out === 2 ? COL.goldUi : '#b9a3ff'); c.setAttribute('class', 'burst');
+      c.style.animation = `burst ${rec[i].out === 2 ? 0.7 : 0.45}s ease-out forwards`; beams.appendChild(c);
+      const en = st.querySelector('#enemy'); en.classList.remove('shake'); void en.getBBox(); en.classList.add('shake');
+    }
+    await wait(140);
+  }
+  if (my !== animToken) return false;
+  st.querySelector('#castTotal').textContent = `Total damage ${R.total[k]} · ${R.hits[k]} of ${B} beams hit`;
+  beamLog(rec, p);
+  await wait(650);
+  return my === animToken;
+}
+async function playAnimation(count, from = 0) {
+  const my = ++animToken;
+  $('skipAnim').hidden = false; $('replay').disabled = true; $('prevCast').disabled = $('nextCast').disabled = true;
+  for (let k = from; k < from + count; k++) { if (!(await animateCasting(k, my))) break; }
+  if (my === animToken) { $('skipAnim').hidden = true; $('replay').disabled = false; showCasting(from + count - 1); }
+}
+$('prevCast').addEventListener('click', () => showCasting(castIdx - 1));
+$('nextCast').addEventListener('click', () => showCasting(castIdx + 1));
+$('replay').addEventListener('click', () => { if (run) playAnimation(1, castIdx); });
+$('skipAnim').addEventListener('click', () => { animToken++; $('skipAnim').hidden = true; $('replay').disabled = false; showCasting(castIdx); });
+
+/* ======================================================================
+   STATISTICS PANEL
+   ====================================================================== */
+const STAT_TIPS = {
+  N: 'Number of simulated castings (sample size N).',
+  mean: 'Sample mean: the average total damage over all castings. Its exact counterpart is the expected value E[D] = Σ d · P(D = d).',
+  median: 'The middle value: half of the castings dealt less, half dealt more. For a skewed distribution it differs from the mean.',
+  sd: 'Standard deviation: the typical distance of one casting from the mean. Square root of the variance. Simulated uses the sample formula with N − 1.',
+  min: 'Smallest total damage seen in the sample. Exact column: smallest possible value.',
+  max: 'Largest total damage seen in the sample. Exact column: largest possible value (all beams crit with maximum dice).',
+  p0: 'Share of castings in which every beam missed (zero damage).',
+  hits: 'Average number of beams that hit (normal or critical) per casting. Exact: B · P(hit).',
+  crit: 'Critical-hit frequency: share of all beams that rolled a natural 20 (kept die).',
+  def: 'Probability that one casting deals at least the enemy\'s HP, so the enemy is defeated by a single Eldritch Blast.'
+};
+function renderStats() {
+  const ex = run && sum ? runEx : E.exact(cfg), s = run ? sum : null;
+  const d = ex.p;
+  const rows = [
+    ['N', 'Simulations', s ? fint(s.N) : '—', '∞'],
+    ['mean', 'Mean damage', s ? fmt(s.mean) : '—', fmt(ex.mean, 3)],
+    ['median', 'Median damage', s ? fmt(s.median, 1) : '—', ex.median],
+    ['sd', 'Standard deviation', s ? fmt(s.sd) : '—', fmt(ex.sd)],
+    ['min', 'Minimum', s ? s.min : '—', ex.min],
+    ['max', 'Maximum', s ? s.max : '—', ex.max],
+    ['p0', 'P(zero damage)', s ? pct(s.p0) : '—', pct(ex.p0)],
+    ['hits', 'Avg successful beams', s ? fmt(s.avgHits, 3) : '—', fmt(ex.avgHits, 3)],
+    ['crit', 'Crit frequency / beam', s ? pct(s.critRate) : '—', pct(ex.pr.crit)],
+    ['def', `P(defeat, HP ${d.HP})`, s ? pct(s.pDefeat) : '—', pct(ex.pDefeat)]
+  ];
+  $('statTable').innerHTML = `<thead><tr><th>Statistic</th><th>Simulated</th><th>Exact</th></tr></thead><tbody>` +
+    rows.map(([k, l, a, b]) => `<tr><td>${l}<i class="info" tabindex="0" data-tip="${esc(STAT_TIPS[k])}">i</i></td><td>${a}</td><td>${b}</td></tr>`).join('') + '</tbody>';
+  $('kMean').textContent = s ? fmt(s.mean) : fmt(ex.mean, 2);
+  $('kMeanX').textContent = s ? `exact ${fmt(ex.mean, 3)}` : 'exact (not yet simulated)';
+  $('kDef').textContent = s ? pct(s.pDefeat, 1) : pct(ex.pDefeat, 1);
+  $('kDefX').textContent = s ? `exact ${pct(ex.pDefeat)}` : 'exact';
+  $('kHit').textContent = s ? pct(s.hitRate, 1) : pct(ex.pHitAny, 1);
+  $('kHitX').textContent = s ? `exact ${pct(ex.pHitAny)}` : 'exact';
+  $('kZero').textContent = s ? pct(s.p0, 2) : pct(ex.p0, 2);
+  $('kZeroX').textContent = s ? `exact ${pct(ex.p0)}` : 'exact';
+  $('ciBox').innerHTML = s ? `<b>95 % CI for the mean</b> (approx.): ${fmt(s.ci[0])} – ${fmt(s.ci[1])}<br>
+    ${s.ci[0] <= ex.mean && ex.mean <= s.ci[1] ? '<span class="pass">✓ contains</span>' : '<span class="fail">✗ misses</span>'} the exact value ${fmt(ex.mean, 3)}`
+    : '<span class="muted">Run a simulation – the simulated column fills in. The exact column already shows the theory for the current settings.</span>';
+}
+function renderAccuracy() {
+  if (!run) { $('accBox').innerHTML = 'Run a simulation to see the confidence interval and the error.'; return; }
+  const s = sum, ex = runEx, abs = Math.abs(s.mean - ex.mean);
+  const rel = ex.mean === 0 ? 'not applicable (E[D] = 0)' : pct(abs / ex.mean, 3);
+  const inside = s.ci[0] <= ex.mean && ex.mean <= s.ci[1];
+  $('accBox').innerHTML = `<div class="kpi" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+    <div><div class="l">Sample mean x̄ (N = ${fint(s.N)})</div><div class="n">${fmt(s.mean, 3)}</div><div class="s">s = ${fmt(s.sd, 3)}, SE = ${fmt(s.se, 3)}</div></div>
+    <div><div class="l">Approx. 95 % CI</div><div class="n" style="font-size:18px">${fmt(s.ci[0])} – ${fmt(s.ci[1])}</div><div class="s">${inside ? '<span class="pass">✓ contains E[D]</span>' : '<span class="fail">✗ misses E[D] – happens ~1 in 20 runs</span>'}</div></div>
+    <div><div class="l">Exact E[D]</div><div class="n">${fmt(ex.mean, 3)}</div><div class="s">${cfgLabel(run.cfg)}</div></div>
+    <div><div class="l">Absolute error</div><div class="n">${fmt(abs, 3)}</div><div class="s">relative error ${rel}</div></div></div>
+    ${s.N <= 100 ? '<p class="note">With N ≤ 100 the interval is only a rough guide: the damage distribution is lumpy and skewed, so the normal approximation behind 1.96 is not yet accurate.</p>' : ''}`;
+}
+
+/* ======================================================================
+   CHARTS
+   ====================================================================== */
+function niceTicks(lo, hi, n = 5) {
+  if (hi <= lo) hi = lo + 1;
+  const raw = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(raw)), f = raw / mag;
+  const st = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = [];
+  for (let v = Math.ceil(lo / st) * st; v <= hi + st * 1e-9; v += st) out.push(+v.toFixed(10));
+  return out;
+}
+const legendItem = (kind, color, label) => {
+  const sw = kind === 'bar' ? `<svg width="14" height="12"><rect x="1" y="1" width="12" height="10" rx="2" fill="${color}"/></svg>`
+    : kind === 'hollow' ? `<svg width="14" height="12"><rect x="1.5" y="1.5" width="11" height="9" rx="2" fill="none" stroke="${color}" stroke-width="1.6"/></svg>`
+    : kind === 'dot' ? `<svg width="14" height="12"><circle cx="7" cy="6" r="3.5" fill="${color}"/></svg>`
+    : kind === 'dash' ? `<svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="${color}" stroke-width="2" stroke-dasharray="5 3"/></svg>`
+    : kind === 'band' ? `<svg width="22" height="12"><rect x="1" y="2" width="20" height="8" fill="${color}" opacity=".25"/></svg>`
+    : `<svg width="22" height="12"><line x1="1" y1="6" x2="21" y2="6" stroke="${color}" stroke-width="2"/></svg>`;
+  return `<span>${sw}${label}</span>`;
+};
+function axes(W, H, m, xs, ys, xt, yt, xl, yl, xf = v => v, yf = v => v) {
+  let s = '';
+  for (const v of yt) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${ys(v)}" y2="${ys(v)}" stroke="${COL.grid}" stroke-width="1"/>
+    <text x="${m.l - 7}" y="${ys(v) + 4}" text-anchor="end" font-size="12" fill="${COL.dim}">${yf(v)}</text>`;
+  for (const v of xt) s += `<text x="${xs(v)}" y="${H - m.b + 17}" text-anchor="middle" font-size="12" fill="${COL.dim}">${xf(v)}</text>`;
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="${COL.dim}" stroke-width="1"/>`;
+  s += `<text x="${(m.l + W - m.r) / 2}" y="${H - 6}" text-anchor="middle" font-size="12.5" fill="${COL.dim}">${xl}</text>`;
+  s += `<text transform="translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" font-size="12.5" fill="${COL.dim}">${yl}</text>`;
+  return s;
+}
+function renderCharts() { renderHist(); renderConv(); renderHits(); renderCrit(); }
+
+function renderHist() {
+  const svg = $('hist'), W = 900, H = 330, m = { l: 62, r: 16, t: 26, b: 44 };
+  const ex = run ? runEx : E.exact(cfg), s = run ? sum : null, prob = view.hist === 'prob';
+  const maxX = ex.max, scale = prob ? 1 : (s ? s.N : 1);
+  const thr = Math.min(view.thr, maxX);
+  $('thrOut').textContent = `${thr}`;
+  $('thrTxt').innerHTML = `P(D ≥ ${thr}): simulated <b>${s ? pct(s.pAtLeast(thr)) : '—'}</b> · exact <b>${pct(ex.pAtLeast(thr))}</b>`;
+  if (!s && !prob) { /* theory only: show probability scale */ }
+  const useProb = prob || !s, k = useProb ? 1 : s.N;
+  let yMax = 0;
+  for (let x = 0; x <= maxX; x++) yMax = Math.max(yMax, ex.pmf[x] || 0, s ? s.counts[x] / s.N : 0);
+  yMax *= 1.08;
+  const xs = x => m.l + (x + 0.5) / (maxX + 1) * (W - m.l - m.r), bw = (W - m.l - m.r) / (maxX + 1);
+  const ys = v => H - m.b - v / (yMax * k) * (H - m.t - m.b);
+  const yt = niceTicks(0, yMax * k, 5);
+  const xt = niceTicks(0, maxX, Math.min(10, maxX)).filter(v => Number.isInteger(v));
+  let g = axes(W, H, m, xs, ys, xt, yt, 'Total damage per casting', useProb ? 'Probability' : 'Frequency (castings)',
+    v => v, v => useProb ? (yMax < 0.1 ? (v * 100).toFixed(1) + '%' : (v * 100).toFixed(0) + '%') : fint(v));
+  if (s) for (let x = 0; x <= maxX; x++) {
+    const v = s.counts[x] / s.N * k; if (!v) continue;
+    const y = ys(v), h = H - m.b - y, w = Math.max(1, bw - 2);
+    g += `<path d="M${xs(x) - w / 2} ${H - m.b} V${y + Math.min(3, h)} q0 -${Math.min(3, h)} ${Math.min(3, w / 2)} -${Math.min(3, h)} H${xs(x) + w / 2 - Math.min(3, w / 2)} q${Math.min(3, w / 2)} 0 ${Math.min(3, w / 2)} ${Math.min(3, h)} V${H - m.b} Z"
+      fill="${COL.violet}" opacity="${x >= thr ? 1 : 0.7}"/>`;
+  }
+  // exact pmf as dots joined by a faint line
+  let line = '';
+  for (let x = 0; x <= maxX; x++) { const v = (ex.pmf[x] || 0) * k; line += `${x ? 'L' : 'M'}${xs(x).toFixed(1)} ${ys(v).toFixed(1)}`; }
+  g += `<path d="${line}" fill="none" stroke="${COL.theory}" stroke-width="1" opacity=".45"/>`;
+  for (let x = 0; x <= maxX; x++) { const v = (ex.pmf[x] || 0); if (v > 1e-6) g += `<circle cx="${xs(x)}" cy="${ys(v * k)}" r="${bw > 8 ? 3 : 2.2}" fill="${COL.theory}" stroke="#141b2d" stroke-width="1.5"/>`; }
+  // expected value & threshold
+  const xe = m.l + (ex.mean + 0.5) / (maxX + 1) * (W - m.l - m.r);
+  const xthr = xs(thr) - bw / 2;
+  g += `<line x1="${xthr}" x2="${xthr}" y1="${m.t}" y2="${H - m.b}" stroke="${COL.cyan}" stroke-width="2"/>`;
+  const meanRight = !s || s.mean <= ex.mean;     // put the two mean labels on opposite sides
+  g += `<line x1="${xe}" x2="${xe}" y1="${m.t}" y2="${H - m.b}" stroke="${COL.goldUi}" stroke-width="2" stroke-dasharray="6 4"/>
+        <text x="${xe + (meanRight ? 6 : -6)}" y="${m.t + 4}" text-anchor="${meanRight ? 'start' : 'end'}" font-size="12.5" font-weight="700" fill="${COL.ink}">E[D] = ${fmt(ex.mean, 2)}</text>`;
+  if (s) { const xm = m.l + (s.mean + 0.5) / (maxX + 1) * (W - m.l - m.r);
+    g += `<line x1="${xm}" x2="${xm}" y1="${m.t + 8}" y2="${H - m.b}" stroke="${COL.violetUi}" stroke-width="2"/>
+          <text x="${xm + (meanRight ? -6 : 6)}" y="${m.t + 4}" text-anchor="${meanRight ? 'end' : 'start'}" font-size="12" fill="${COL.dim}">x̄ = ${fmt(s.mean, 2)}</text>`; }
+  // hover targets
+  for (let x = 0; x <= maxX; x++) g += `<rect x="${xs(x) - bw / 2}" y="${m.t}" width="${bw}" height="${H - m.t - m.b}" fill="transparent" data-x="${x}"/>`;
+  svg.innerHTML = g;
+  $('histSub').textContent = run ? `– ${fint(run.N)} castings` : '– exact distribution (no simulation yet)';
+  $('histLegend').innerHTML = (s ? legendItem('bar', COL.violet, 'Simulated') : '') + legendItem('dot', COL.theory, 'Exact (convolution)') +
+    legendItem('dash', COL.goldUi, 'Exact expected damage') + (s ? legendItem('line', COL.violetUi, 'Sample mean') : '') + legendItem('line', COL.cyan, 'Threshold t');
+  svg.onmousemove = e => {
+    const x = e.target.dataset && e.target.dataset.x; if (x === undefined) { hideTip(); return; }
+    const q = ex.pmf[+x] || 0;
+    showTip(`<b>${x} damage</b><br>${s ? `Simulated: ${fint(s.counts[x])} castings (${pct(s.counts[x] / s.N, 3)})<br>` : ''}Exact: ${pct(q, 3)}${s ? ` (expected ${fmt(q * s.N, 1)} castings)` : ''}`, e.clientX, e.clientY);
+  };
+  svg.onmouseleave = hideTip;
+}
+
+function renderConv() {
+  const svg = $('conv'), W = 600, H = 320, m = { l: 56, r: 30, t: 18, b: 44 };
+  if (!run) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" font-size="14" fill="${COL.dim}">Run a simulation to watch the running mean converge.</text>`; $('convLegend').innerHTML = ''; $('convNote').textContent = ''; return; }
+  const pts = sum.conv, ex = runEx, log = view.conv === 'log', band = $('convBand').checked;
+  const nMax = run.N, x0 = 1;
+  const xs = n => m.l + (log ? Math.log10(n) / Math.log10(Math.max(10, nMax)) : (n - x0) / Math.max(1, nMax - x0)) * (W - m.l - m.r);
+  const show = pts.filter(q => q[0] >= (band ? 2 : 1));
+  let lo = ex.mean, hi = ex.mean;
+  for (const [n, mu, sd] of pts) { const h = band && n > 1 ? 1.96 * sd / Math.sqrt(n) : 0; lo = Math.min(lo, mu - (n >= 5 ? h : 0)); hi = Math.max(hi, mu + (n >= 5 ? h : 0)); }
+  const pad = (hi - lo) * 0.08 || 1; lo = Math.max(0, lo - pad); hi += pad;
+  const ys = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
+  const yt = niceTicks(lo, hi, 5);
+  const xt = log ? Array.from({ length: Math.floor(Math.log10(nMax)) + 1 }, (_, i) => 10 ** i) : niceTicks(0, nMax, 5).filter(v => v >= 1 || v === 0);
+  let g = `<defs><clipPath id="convClip"><rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}"/></clipPath></defs>`;
+  g += axes(W, H, m, v => xs(Math.max(1, v)), ys, xt, yt, 'Number of simulations' + (log ? ' (log scale)' : ''), 'Running mean damage', v => fint(v), v => fmt(v, 1));
+  g += `<g clip-path="url(#convClip)">`;
+  if (band) {
+    const bp = pts.filter(q => q[0] >= 2);
+    if (bp.length > 1) {
+      const up = bp.map(([n, mu, sd]) => `${xs(n).toFixed(1)} ${ys(mu + 1.96 * sd / Math.sqrt(n)).toFixed(1)}`);
+      const dn = bp.slice().reverse().map(([n, mu, sd]) => `${xs(n).toFixed(1)} ${ys(mu - 1.96 * sd / Math.sqrt(n)).toFixed(1)}`);
+      g += `<path d="M${up.join('L')}L${dn.join('L')}Z" fill="${COL.violet}" opacity=".2"/>`;
+    }
+  }
+  g += `<line x1="${m.l}" x2="${W - m.r}" y1="${ys(ex.mean)}" y2="${ys(ex.mean)}" stroke="${COL.goldUi}" stroke-width="2" stroke-dasharray="6 4"/>`;
+  g += `<path d="M${pts.map(([n, mu]) => `${xs(n).toFixed(1)} ${ys(mu).toFixed(1)}`).join('L')}" fill="none" stroke="${COL.violetUi}" stroke-width="2" stroke-linejoin="round"/>`;
+  g += `</g><text x="${W - m.r - 4}" y="${ys(ex.mean) - 7}" text-anchor="end" font-size="12.5" font-weight="700" fill="${COL.ink}">E[D] = ${fmt(ex.mean, 2)}</text>`;
+  g += `<line id="convX" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="${COL.dim}" stroke-width="1" opacity="0"/><circle id="convDot" r="4.5" fill="${COL.violetUi}" stroke="#141b2d" stroke-width="2" opacity="0"/>`;
+  g += `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent" id="convHit"/>`;
+  svg.innerHTML = g;
+  $('convLegend').innerHTML = legendItem('line', COL.violetUi, 'Running mean of simulated damage') + legendItem('dash', COL.goldUi, 'Exact expected damage') + (band ? legendItem('band', COL.violet, '95 % confidence band') : '');
+  $('convNote').textContent = pts.length < run.N ? `Displayed: ${fint(pts.length)} of ${fint(run.N)} points (downsampled for drawing; all statistics use every casting).` : '';
+  svg.onmousemove = e => {
+    const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * W;
+    if (px < m.l || px > W - m.r) { hideTip(); return; }
+    let best = pts[0]; for (const q of pts) if (Math.abs(xs(q[0]) - px) < Math.abs(xs(best[0]) - px)) best = q;
+    const [n, mu, sd] = best, h = n > 1 ? 1.96 * sd / Math.sqrt(n) : NaN;
+    svg.querySelector('#convX').setAttribute('x1', xs(n)); svg.querySelector('#convX').setAttribute('x2', xs(n)); svg.querySelector('#convX').setAttribute('opacity', 0.6);
+    const dot = svg.querySelector('#convDot'); dot.setAttribute('cx', xs(n)); dot.setAttribute('cy', ys(mu)); dot.setAttribute('opacity', 1);
+    showTip(`<b>After ${fint(n)} castings</b><br>Running mean: ${fmt(mu, 3)}<br>${n > 1 ? `95 % CI: ${fmt(mu - h)} – ${fmt(mu + h)}<br>` : ''}Exact: ${fmt(ex.mean, 3)} (error ${fmt(mu - ex.mean, 3)})`, e.clientX, e.clientY);
+  };
+  svg.onmouseleave = () => { hideTip(); ['convX', 'convDot'].forEach(id => svg.querySelector('#' + id) && svg.querySelector('#' + id).setAttribute('opacity', 0)); };
+}
+
+function renderHits() {
+  const svg = $('hits'), W = 600, H = 320, m = { l: 56, r: 16, t: 22, b: 44 };
+  const ex = run ? runEx : E.exact(cfg), s = run ? sum : null, B = ex.p.B;
+  const emp = s ? Array.from(s.hitCounts, c => c / s.N) : null;
+  const yMax = Math.max(...ex.hitsPmf, ...(emp || [0])) * 1.12;
+  const band = (W - m.l - m.r) / (B + 1), xs = k => m.l + band * (k + 0.5);
+  const ys = v => H - m.b - v / yMax * (H - m.t - m.b);
+  let g = axes(W, H, m, xs, ys, Array.from({ length: B + 1 }, (_, k) => k), niceTicks(0, yMax, 5), 'Successful beams in one casting', 'Probability', v => v, v => (v * 100).toFixed(0) + '%');
+  const bw = Math.min(46, band * 0.34);
+  for (let k = 0; k <= B; k++) {
+    const q = ex.hitsPmf[k];
+    if (emp) { const y = ys(emp[k]), h = H - m.b - y;
+      g += `<path d="M${xs(k) - bw - 1} ${H - m.b} V${y + Math.min(4, h)} q0 -${Math.min(4, h)} 4 -${Math.min(4, h)} H${xs(k) - 5} q4 0 4 ${Math.min(4, h)} V${H - m.b} Z" fill="${COL.violet}"/>`;
+      g += `<text x="${xs(k) - bw / 2 - 1}" y="${y - 6}" text-anchor="middle" font-size="11.5" fill="${COL.dim}">${(emp[k] * 100).toFixed(1)}</text>`; }
+    const y2 = ys(q), x2 = emp ? xs(k) + 1 : xs(k) - bw / 2;
+    g += `<rect x="${x2}" y="${y2}" width="${bw}" height="${H - m.b - y2}" rx="3" fill="none" stroke="${COL.theory}" stroke-width="1.6"/>`;
+    g += `<text x="${x2 + bw / 2}" y="${y2 - 6}" text-anchor="middle" font-size="11.5" fill="${COL.ink}">${(q * 100).toFixed(1)}</text>`;
+    g += `<rect x="${xs(k) - band / 2}" y="${m.t}" width="${band}" height="${H - m.t - m.b}" fill="transparent" data-k="${k}"/>`;
+  }
+  svg.innerHTML = g;
+  $('hitsLegend').innerHTML = (s ? legendItem('bar', COL.violet, 'Simulated') : '') + legendItem('hollow', COL.theory, `Exact Binomial(${B}, ${fmt(ex.pHitAny, 4)})`) + '<span>labels in %</span>';
+  $('hitsNote').innerHTML = `Each beam is a Bernoulli trial: hit with p = P(normal) + P(critical) = ${fmt(ex.pr.hit, 4)} + ${fmt(ex.pr.crit, 4)} = <b>${fmt(ex.pHitAny, 4)}</b>.
+    The ${B} beams are independent, so the number of hits is binomial: P(K = k) = C(${B}, k) p<sup>k</sup> (1 − p)<sup>${B} − k</sup>.`;
+  svg.onmousemove = e => {
+    const k = e.target.dataset && e.target.dataset.k; if (k === undefined) { hideTip(); return; }
+    showTip(`<b>${k} of ${B} beams hit</b><br>${emp ? `Simulated: ${pct(emp[k])} (${fint(s.hitCounts[k])} castings)<br>` : ''}Binomial: ${pct(ex.hitsPmf[k])}`, e.clientX, e.clientY);
+  };
+  svg.onmouseleave = hideTip;
+}
+
+function renderCrit() {
+  const ex = run ? runEx : E.exact(cfg), s = run ? sum : null, d = ex.p;
+  const tile = (l, a, b, note = '') => `<div class="tile"><div class="l">${l}</div><div class="n">${a}</div><div class="s">${b}${note}</div></div>`;
+  const share = ex.mean ? ex.critContribution / ex.mean : 0;
+  $('critTiles').innerHTML =
+    tile('P(at least one critical hit per casting)', s ? pct(s.pAnyCrit) : pct(ex.pAnyCrit), `exact 1 − (1 − ${fmt(ex.pr.crit, 4)})<sup>${d.B}</sup> = ${pct(ex.pAnyCrit)}`) +
+    tile('Critical-hit frequency per beam', s ? pct(s.critRate, 3) : pct(ex.pr.crit, 3), `exact ${pct(ex.pr.crit, 3)}${d.mode !== 'normal' ? ` (${MODE_NAME[d.mode].toLowerCase()})` : ''}`) +
+    tile('Average damage of a critical beam', s ? fmt(s.avgCritDmg, 2) : fmt(ex.eCrit, 2), `exact E = ${d.critDice === 2 ? '11' : '5.5'}${d.C ? ' + ' + d.C : ''} = ${fmt(ex.eCrit, 2)} · normal hit ${fmt(ex.eNormal, 2)}`) +
+    tile('Share of total damage from critical beams', s ? pct(s.critShare, 1) : pct(share, 1), `exact ${fmt(ex.critContribution, 3)} of ${fmt(ex.mean, 3)} per casting = ${pct(share, 1)}`);
+  $('critNote').innerHTML = d.critDice === 2
+    ? `Doubling the dice adds on average ${d.B} × ${fmt(ex.pr.crit, 4)} × 5.5 = <b>${fmt(ex.critExtra, 3)}</b> damage per casting (${pct(ex.mean ? ex.critExtra / ex.mean : 0, 1)} of the expectation). The modifier (+${d.C}) is never doubled.`
+    : `<b>Educational modification active:</b> natural 20s still always hit, but deal only 1d10${d.C ? ' + ' + d.C : ''}. Compare with the standard rule in Experiment D.`;
+}
+
+/* chart controls */
+document.querySelectorAll('[data-hist]').forEach(b => b.addEventListener('click', () => { view.hist = b.dataset.hist; document.querySelectorAll('[data-hist]').forEach(x => x.setAttribute('aria-pressed', x === b)); renderHist(); }));
+document.querySelectorAll('[data-conv]').forEach(b => b.addEventListener('click', () => { view.conv = b.dataset.conv; document.querySelectorAll('[data-conv]').forEach(x => x.setAttribute('aria-pressed', x === b)); renderConv(); }));
+$('convBand').addEventListener('change', renderConv);
+$('thr').addEventListener('input', e => { view.thr = +e.target.value; renderHist(); });
+
+/* ======================================================================
+   EXACT MODEL STEP BY STEP
+   ====================================================================== */
+function renderExactSteps() {
+  const ex = E.exact(cfg), d = ex.p, pr = ex.pr, F = pr.faces, mx = Math.max(...F.slice(1));
+  $('exactSub').textContent = `– ${cfgLabel(cfg)}`;
+  let bars = '', nums = '';
+  for (let f = 1; f <= 20; f++) {
+    const o = E.outcomeOf(f, d.A, d.AC), c = o === 2 ? COL.goldUi : o ? COL.violet : COL.miss;
+    bars += `<div style="height:${(F[f] / mx * 100).toFixed(1)}%;background:${c}" title="face ${f}: ${pct(F[f], 2)}"></div>`;
+    nums += `<span>${f}</span>`;
+  }
+  $('faces').innerHTML = bars; $('facesN').innerHTML = nums;
+  $('facesLegend').innerHTML = legendItem('bar', COL.miss, `Miss ${pct(pr.miss)}`) + legendItem('bar', COL.violet, `Normal hit ${pct(pr.hit)}`) + legendItem('bar', COL.goldUi, `Critical (natural 20) ${pct(pr.crit)}`) +
+    `<span>${d.mode === 'normal' ? 'Normal: each face 1/20.' : d.mode === 'adv' ? 'Advantage: P(max = k) = (2k − 1)/400.' : 'Disadvantage: P(min = k) = (41 − 2k)/400.'}</span>`;
+  const need = Math.max(2, Math.min(20, d.AC - d.A));
+  const Cx = d.C ? ` + ${d.C}` : '';
+  $('exactSteps').innerHTML = `
+    <p class="muted" style="margin:14px 0 0">A beam hits if d20 ${sgn(d.A)} ≥ ${d.AC}, i.e. on a kept roll of <b>${need >= 20 ? '20 only' : need + ' or more'}</b>; 1 always misses, 20 always crits.</p>
+    <p class="muted" style="margin:12px 0 0">2 · Expected damage of one beam</p>
+    <div class="formula">E[D<sub>normal</sub>] = 5.5${Cx} = ${fmt(ex.eNormal, 1)} &nbsp;&nbsp; E[D<sub>critical</sub>] = ${d.critDice === 2 ? '11' : '5.5'}${Cx} = ${fmt(ex.eCrit, 1)}<br>
+      E[D<sub>beam</sub>] = P(normal) · ${fmt(ex.eNormal, 1)} + P(critical) · ${fmt(ex.eCrit, 1)} = ${fmt(pr.hit, 4)} · ${fmt(ex.eNormal, 1)} + ${fmt(pr.crit, 4)} · ${fmt(ex.eCrit, 1)} = <b>${fmt(ex.eBeam, 4)}</b></div>
+    <p class="muted" style="margin:12px 0 0">3 · Expected damage of one casting (linearity of expectation)</p>
+    <div class="formula">E[D<sub>total</sub>] = B · E[D<sub>beam</sub>] = ${d.B} · ${fmt(ex.eBeam, 4)} = <b>${fmt(ex.eTotal, 4)}</b></div>
+    <p class="muted" style="margin:12px 0 0">4 · The full distribution by discrete convolution of the ${d.B} independent beam distributions (no normal approximation)</p>
+    <div class="formula">P(D<sub>total</sub> = d) = Σ<sub>j</sub> P(D<sub>1..B−1</sub> = j) · P(D<sub>beam</sub> = d − j)
+      <br><span class="v">Var = ${fmt(ex.variance, 3)}, SD = ${fmt(ex.sd, 3)}, P(0) = P(miss)<sup>B</sup> = ${fmt(pr.miss, 4)}<sup>${d.B}</sup> = ${pct(ex.p0, 4)}, median = ${ex.median}, P(D ≥ ${d.HP} HP) = ${pct(ex.pDefeat, 3)}</span></div>`;
+}
+
+/* ======================================================================
+   EDUCATION CARDS
+   ====================================================================== */
+const EDU = [
+  ['Random variable', `A quantity whose value depends on chance. <b>D</b> = total damage of one casting is a random variable: each casting gives a different value.
+    A <b>discrete</b> random variable takes countable values (here whole numbers from 0 up to the maximum damage, 100 at level 20).`],
+  ['Discrete uniform distribution', `A fair die: every face is equally likely. A d20 gives each of 1…20 with probability 1/20; a d10 gives 1…10 with 1/10 each.
+    Its mean is (1 + n)/2 – so 1d10 averages 5.5. A random number generator turns uniform numbers in [0, 1) into die faces: face = 1 + ⌊u · n⌋.`],
+  ['Bernoulli trial', `An experiment with two outcomes: success (probability p) or failure (1 − p). Each beam is a Bernoulli trial – it hits or it misses.`],
+  ['Binomial distribution', `The number of successes in n independent Bernoulli trials with the same p. The number of beams that hit is Binomial(B, p):
+    P(K = k) = C(B, k) · p<sup>k</sup> · (1 − p)<sup>B − k</sup>. See the “successful beams” chart.`],
+  ['Expected value', `The long-run average: E[X] = Σ x · P(X = x). It need not be a possible value – E[1d10] = 5.5. Expectations add up:
+    E[beam 1 + … + beam B] = B · E[beam], even though the damage distribution itself is lumpy.`],
+  ['Variance & standard deviation', `Variance = E[(X − E[X])²], the average squared distance from the mean. The standard deviation (its square root) is in damage units –
+    the typical spread of one casting. In a sample: s² = Σ(x − x̄)² / (N − 1).`],
+  ['Law of Large Numbers', `As the number of independent repetitions N grows, the sample mean x̄ converges to the expected value E[X].
+    The convergence chart shows it: the violet running mean wanders early, then settles onto the dashed exact line.`],
+  ['Sampling error', `The difference x̄ − E[X] in one particular run. It is random: another seed gives another error. Its typical size is the
+    <b>standard error</b> SE = s / √N, so it shrinks as N grows – but only with the square root.`],
+  ['Confidence interval', `A range computed from the sample that captures the true value in about 95 % of runs: x̄ ± 1.96 · s/√N. The 1.96 comes from the normal
+    distribution (central limit theorem), so the interval is approximate, especially for small N.`],
+  ['Why simulate if we know the answer?', `Here the exact answer exists, so we can check the simulation. In real LCA or engineering models – many uncertain
+    inputs, non-linear equations – no exact formula exists, and Monte Carlo is often the only practical way to get the distribution.`]
+];
+$('eduCards').innerHTML = EDU.map(([h, p]) => `<div class="card"><h3>${h}</h3><p>${p}</p></div>`).join('');
+
+/* ======================================================================
+   COMPARISON
+   ====================================================================== */
+const cmp = { A: null, B: null };
+function snapshot() {
+  return { cfg: { ...run.cfg }, N: run.N, seed: run.seed, ex: runEx,
+    s: { mean: sum.mean, sd: sum.sd, p0: sum.p0, pDefeat: sum.pDefeat, hitRate: sum.hitRate, pAnyCrit: sum.pAnyCrit, ci: sum.ci, median: sum.median } };
+}
+function renderCmp() {
+  const { A, B } = cmp;
+  if (!A && !B) { $('cmpTable').innerHTML = '<tbody><tr><td class="muted" style="white-space:normal">Nothing saved yet.</td></tr></tbody>'; $('cmpChart').innerHTML = ''; $('cmpLegend').innerHTML = ''; return; }
+  const v = (x, f) => x ? f(x) : '—';
+  const diff = (f, fm) => A && B ? fm(f(B) - f(A)) : '';
+  const signed = (x, d) => (x >= 0 ? '+' : '−') + fmt(Math.abs(x), d), spp = x => (x >= 0 ? '+' : '−') + (Math.abs(x) * 100).toFixed(2) + ' pp';
+  const rows = [
+    ['Level / CHA', x => `${x.cfg.level} / ${x.cfg.cha}`], ['Attack bonus vs AC', x => `${sgn(x.ex.p.A)} vs ${x.cfg.ac}`], ['Beams', x => x.ex.p.B],
+    ['Attack condition', x => MODE_NAME[x.cfg.mode]], ['Agonizing Blast', x => x.ex.p.agon ? 'yes' : 'no'], ['Critical rule', x => x.cfg.critRule === 'none' ? 'modified' : 'standard'],
+    ['Enemy HP', x => x.cfg.hp], ['N / seed', x => `${fint(x.N)} / ${x.seed}`]
+  ];
+  const nums = [
+    ['P(hit) per beam – exact', x => x.ex.pHitAny, p => pct(p), spp], ['Mean damage – simulated', x => x.s.mean, p => fmt(p), x => signed(x, 2)],
+    ['Mean damage – exact', x => x.ex.mean, p => fmt(p, 3), x => signed(x, 3)], ['SD – simulated', x => x.s.sd, p => fmt(p), x => signed(x, 2)],
+    ['Median – simulated', x => x.s.median, p => fmt(p, 1), x => signed(x, 1)],
+    ['P(zero damage) – simulated', x => x.s.p0, p => pct(p), spp], ['P(≥1 crit) – simulated', x => x.s.pAnyCrit, p => pct(p), spp],
+    ['P(defeat) – simulated', x => x.s.pDefeat, p => pct(p), spp], ['P(defeat) – exact', x => x.ex.pDefeat, p => pct(p), spp]
+  ];
+  $('cmpTable').innerHTML = `<thead><tr><th></th><th>A</th><th>B</th><th>B − A</th></tr></thead><tbody>` +
+    rows.map(([l, f]) => `<tr><td>${l}</td><td>${v(A, f)}</td><td>${v(B, f)}</td><td></td></tr>`).join('') +
+    nums.map(([l, f, fm, fd]) => `<tr><td>${l}</td><td>${v(A, x => fm(f(x)))}</td><td>${v(B, x => fm(f(x)))}</td><td>${diff(f, fd)}</td></tr>`).join('') + '</tbody>';
+  const series = []; if (A) series.push({ name: 'A', pmf: A.ex.pmf, mean: A.ex.mean, c: COL.violet }); if (B) series.push({ name: 'B', pmf: B.ex.pmf, mean: B.ex.mean, c: COL.cyan });
+  pmfLines($('cmpChart'), series, 600, 280);
+  $('cmpLegend').innerHTML = series.map(sr => legendItem('line', sr.c, `${sr.name} – exact distribution (mean ${fmt(sr.mean, 2)})`)).join('');
+}
+function pmfLines(svg, series, W, H) {
+  const m = { l: 54, r: 14, t: 16, b: 42 };
+  const maxX = Math.max(...series.map(s => s.pmf.length - 1)), yMax = Math.max(...series.flatMap(s => s.pmf)) * 1.1;
+  const xs = x => m.l + x / maxX * (W - m.l - m.r), ys = v => H - m.b - v / yMax * (H - m.t - m.b);
+  let g = axes(W, H, m, xs, ys, niceTicks(0, maxX, 8), niceTicks(0, yMax, 4), 'Total damage per casting', 'Probability', v => v, v => (v * 100).toFixed(1) + '%');
+  for (const s of series) {
+    g += `<path d="M${s.pmf.map((q, x) => `${xs(x).toFixed(1)} ${ys(q).toFixed(1)}`).join('L')}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round"/>`;
+    g += `<line x1="${xs(s.mean)}" x2="${xs(s.mean)}" y1="${m.t}" y2="${H - m.b}" stroke="${s.c}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+    let peak = 0; s.pmf.forEach((q, x) => { if (q > s.pmf[peak]) peak = x; });
+    g += `<text x="${xs(peak)}" y="${ys(s.pmf[peak]) - 7}" text-anchor="middle" font-size="12" font-weight="700" fill="${COL.ink}">${s.name}</text>`;
+  }
+  g += `<rect x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent" class="hov"/>`;
+  svg.innerHTML = g;
+  svg.onmousemove = e => {
+    const r = svg.getBoundingClientRect(), x = Math.round(((e.clientX - r.left) / r.width * W - m.l) / (W - m.l - m.r) * maxX);
+    if (x < 0 || x > maxX) { hideTip(); return; }
+    showTip(`<b>${x} damage</b><br>` + series.map(s => `${s.name}: ${pct(s.pmf[x] || 0, 3)}`).join('<br>'), e.clientX, e.clientY);
+  };
+  svg.onmouseleave = hideTip;
+}
+$('saveA').addEventListener('click', () => { if (run) { cmp.A = snapshot(); renderCmp(); } });
+$('saveB').addEventListener('click', () => { if (run) { cmp.B = snapshot(); renderCmp(); } });
+$('clearCmp').addEventListener('click', () => { cmp.A = cmp.B = null; renderCmp(); });
+
+/* ======================================================================
+   CSV EXPORT
+   ====================================================================== */
+function download(name, parts) {
+  const url = URL.createObjectURL(new Blob(parts, { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+$('csvRes').addEventListener('click', () => {
+  if (!run) return;
+  const B = run.B, parts = ['casting,total_damage,hits,misses,critical_hits,enemy_defeated,' + Array.from({ length: B }, (_, b) => `beam_${b + 1}_damage`).join(',') + '\n'];
+  let buf = [];
+  for (let i = 0; i < run.N; i++) {
+    let row = `${i + 1},${run.total[i]},${run.hits[i]},${B - run.hits[i]},${run.crits[i]},${run.total[i] >= run.p.HP ? 1 : 0}`;
+    for (let b = 0; b < B; b++) row += ',' + run.beamDmg[i * B + b];
+    buf.push(row);
+    if (buf.length === 20000) { parts.push(buf.join('\n') + '\n'); buf = []; }
+  }
+  if (buf.length) parts.push(buf.join('\n') + '\n');
+  download(`eldritch-results-N${run.N}-seed${run.seed}.csv`, parts);
+});
+$('csvSum').addEventListener('click', () => {
+  if (!run) return;
+  const s = sum, ex = runEx, c = run.cfg, d = run.p;
+  const rows = [['statistic', 'simulated', 'exact'],
+    ['level', c.level, ''], ['charisma', c.cha, ''], ['spell_attack_bonus', d.A, ''], ['beams', d.B, ''], ['agonizing_blast', d.agon ? 1 : 0, ''],
+    ['enemy_ac', c.ac, ''], ['enemy_hp', c.hp, ''], ['attack_condition', c.mode, ''], ['critical_rule', c.critRule === 'none' ? 'modified_no_crit_dice' : 'standard', ''], ['seed', run.seed, ''],
+    ['simulations', s.N, ''], ['mean_damage', s.mean, ex.mean], ['median_damage', s.median, ex.median], ['sd_damage', s.sd, ex.sd],
+    ['min_damage', s.min, ex.min], ['max_damage', s.max, ex.max], ['p_zero_damage', s.p0, ex.p0], ['avg_successful_beams', s.avgHits, ex.avgHits],
+    ['p_hit_per_beam', s.hitRate, ex.pHitAny], ['crit_frequency_per_beam', s.critRate, ex.pr.crit], ['p_at_least_one_crit', s.pAnyCrit, ex.pAnyCrit],
+    ['avg_crit_beam_damage', s.avgCritDmg, ex.eCrit], ['p_defeat_enemy', s.pDefeat, ex.pDefeat], ['ci95_low', s.ci[0], ''], ['ci95_high', s.ci[1], ''],
+    ['abs_error_mean', Math.abs(s.mean - ex.mean), ''], ['rel_error_mean', ex.mean ? Math.abs(s.mean - ex.mean) / ex.mean : 'n/a', '']];
+  download(`eldritch-summary-N${run.N}-seed${run.seed}.csv`, [rows.map(r => r.join(',')).join('\n') + '\n']);
+});
+
+/* ======================================================================
+   CLASSROOM EXPERIMENTS
+   ====================================================================== */
+const EXP_SEED = 20261112;
+const quick = (c, n, seed) => { const r = E.simulate(c, n, seed); return { s: E.summarize(r), ex: E.exact(c) }; };
+const table = (head, rows) => `<div class="table-wrap"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const EXPS = [
+  { id: 'A', title: 'Sample size', q: 'Run 10, 100, 1 000 and 100 000 castings. How does the estimated mean approach the exact expectation?',
+    run: () => { const rows = [10, 100, 1000, 100000].map(n => { const { s, ex } = quick(cfg, n, EXP_SEED);
+        return [fint(n), fmt(s.mean), fmt(ex.mean, 3), fmt(Math.abs(s.mean - ex.mean), 3), `${fmt(s.ci[0])} – ${fmt(s.ci[1])}`, fmt(s.se, 3)]; });
+      return table(['N', 'x̄', 'E[D]', '|error|', '95 % CI', 'SE'], rows) + '<p class="note">The CI narrows roughly 10× from N = 1 000 to 100 000 (√100 = 10). Individual errors still fluctuate.</p>'; } },
+  { id: 'B', title: 'Armor Class', q: 'Keep the Warlock unchanged. Compare enemy AC 12, 16, 20 and 24. How do hit probability and average damage change?',
+    run: () => { const rows = [12, 16, 20, 24].map(ac => { const c = { ...cfg, ac }, { s, ex } = quick(c, 10000, EXP_SEED);
+        return [ac, pct(ex.pHitAny, 1), fmt(s.mean), fmt(ex.mean, 3), pct(ex.p0, 2), pct(ex.pDefeat, 1)]; });
+      return table(['AC', 'P(hit)', 'x̄ (N=10k)', 'E[D]', 'P(0)', `P(≥${cfg.hp})`], rows) + '<p class="note">Every +1 AC removes one d20 face (5 percentage points) – until only natural 20s hit. Damage falls linearly with P(hit).</p>'; } },
+  { id: 'C', title: 'Advantage', q: 'Compare normal attacks, advantage and disadvantage. How does the whole damage distribution change – not just the mean?',
+    run: () => { const modes = ['normal', 'adv', 'dis'], res = modes.map(mode => ({ mode, ...quick({ ...cfg, mode }, 10000, EXP_SEED) }));
+      const rows = res.map(({ mode, s, ex }) => [MODE_NAME[mode], pct(ex.pHitAny, 1), pct(ex.pr.crit, 2), fmt(s.mean), fmt(ex.mean, 3), fmt(ex.sd, 2), pct(ex.p0, 2)]);
+      const id = 'expCchart';
+      setTimeout(() => { const svg = $(id); if (svg) pmfLines(svg, res.map((r, i) => ({ name: MODE_NAME[r.mode], pmf: r.ex.pmf, mean: r.ex.mean, c: [COL.violet, COL.cyan, COL.gold][i] })), 600, 240); });
+      return table(['Condition', 'P(hit)', 'P(crit)', 'x̄', 'E[D]', 'SD', 'P(0)'], rows) +
+        `<svg class="chart" id="${id}" viewBox="0 0 600 240" role="img" aria-label="Exact damage distributions for normal, advantage and disadvantage" style="margin-top:8px"></svg>
+         <div class="legend">${legendItem('line', COL.violet, 'Normal')}${legendItem('line', COL.cyan, 'Advantage')}${legendItem('line', COL.gold, 'Disadvantage')}</div>
+         <p class="note">Advantage shifts the whole distribution right and almost doubles the crit chance (9.75 % vs 5 %).</p>`; } },
+  { id: 'D', title: 'Critical hits', q: 'Compare the standard rule with a hypothetical rule where a natural 20 deals normal damage. How much do critical hits contribute?',
+    run: () => { const st = quick({ ...cfg, critRule: 'standard' }, 10000, EXP_SEED), mo = quick({ ...cfg, critRule: 'none' }, 10000, EXP_SEED);
+      const row = (l, r) => [l, fmt(r.s.mean), fmt(r.ex.mean, 3), fmt(r.ex.sd, 2), r.ex.max, pct(r.ex.pDefeat, 2)];
+      return table(['Model', 'x̄', 'E[D]', 'SD', 'max', `P(≥${cfg.hp})`], [row('Standard (official)', st), row('Nat 20 = normal damage*', mo)]) +
+        `<p class="note">* Educational modification, not an official rule. Difference in E[D]: ${fmt(st.ex.mean - mo.ex.mean, 3)} = B · P(crit) · 5.5. Crits matter more for the upper tail (max, P(defeat)) than for the mean.</p>`; } },
+  { id: 'E', title: 'Enemy survival', q: 'With enemy HP 50, 75 and 100: what is the probability of defeating the enemy with one casting?',
+    run: () => { const rows = [50, 75, 100].map(hp => { const c = { ...cfg, hp }, { s, ex } = quick(c, 100000, EXP_SEED);
+        const se = Math.sqrt(s.pDefeat * (1 - s.pDefeat) / s.N);
+        return [hp, pct(s.pDefeat, 3), `± ${pct(1.96 * se, 3)}`, pct(ex.pDefeat, 3)]; });
+      return table(['HP', 'Simulated (N=100k)', '95 % margin', 'Exact'], rows) + '<p class="note">Rare events need many simulations: when the true probability is tiny, few castings reach the threshold and the relative error is large.</p>'; } },
+  { id: 'F', title: 'Theoretical vs empirical', q: 'Predict the expected damage for the current settings before you simulate. Then compare with 10 000 simulated castings and the exact result.',
+    input: true,
+    run: () => { const pred = parseFloat($('predF').value); const { s, ex } = quick(cfg, 10000, EXP_SEED);
+      return table(['', 'Damage', 'Error vs exact'], [
+        ['Your prediction', Number.isFinite(pred) ? fmt(pred) : '—', Number.isFinite(pred) ? fmt(pred - ex.mean, 3) : '—'],
+        ['Simulated x̄ (N = 10 000)', fmt(s.mean, 3), fmt(s.mean - ex.mean, 3)], ['Exact E[D]', fmt(ex.mean, 3), '0']]) +
+        `<p class="note">Exact: ${ex.p.B} beams × [${fmt(ex.pr.hit, 4)} × ${fmt(ex.eNormal, 1)} + ${fmt(ex.pr.crit, 4)} × ${fmt(ex.eCrit, 1)}] = ${fmt(ex.mean, 3)}.</p>`; } }
+];
+$('exps').innerHTML = EXPS.map(x => `<div class="card exp"><h3><span class="letter">${x.id}</span>${x.title}</h3><p class="q">${x.q}</p>
+  ${x.input ? `<div class="run-row" style="margin:0 0 8px"><label class="small" for="predF">My prediction</label><input type="number" id="predF" step="0.1" style="width:110px" placeholder="e.g. 25"></div>` : ''}
+  <div class="run-row" style="margin-top:auto"><button type="button" class="primary" data-exp="${x.id}">Run experiment ${x.id}</button><span class="small">uses current settings · seed ${EXP_SEED}</span></div>
+  <div class="out" id="exp${x.id}"></div></div>`).join('');
+document.querySelectorAll('[data-exp]').forEach(b => b.addEventListener('click', () => {
+  const x = EXPS.find(e => e.id === b.dataset.exp), out = $('exp' + x.id);
+  out.innerHTML = '<p class="small">Running…</p>'; b.disabled = true;
+  setTimeout(() => { out.innerHTML = `<p class="small" style="margin:0 0 4px">${cfgLabel(cfg)}</p>` + x.run(); b.disabled = false; }, 20);
+}));
+
+/* ======================================================================
+   GLOSSARY
+   ====================================================================== */
+const GLOSS = [
+  ['d20, d10 (dice notation)', 'NdX means: roll N dice with X sides and add them. 1d20 = one 20-sided die. 2d10 + 5 = two 10-sided dice plus 5.'],
+  ['Warlock', 'A spellcasting character class whose magic comes from a pact with a powerful being.'],
+  ['Level', 'How experienced a character is (1–20). Higher levels give more beams and a higher proficiency bonus.'],
+  ['Charisma & modifier', 'An ability score (here 10–20). The modifier is ⌊(score − 10)/2⌋, e.g. 20 → +5.'],
+  ['Proficiency bonus', 'A bonus that grows with level: +2 (levels 1–4), +3 (5–8), +4 (9–12), +5 (13–16), +6 (17–20).'],
+  ['Spell attack bonus', 'Proficiency bonus + Charisma modifier. Added to the d20 attack roll.'],
+  ['Eldritch Blast', 'A cantrip (a spell that can be cast without limit): 1 to 4 beams of force, each with its own attack roll and 1d10 damage.'],
+  ['Agonizing Blast', 'An eldritch invocation that adds the Charisma modifier to the damage of every Eldritch Blast beam that hits.'],
+  ['Attack roll', 'd20 + attack bonus. If the total is at least the target\'s Armor Class, the attack hits.'],
+  ['Armor Class (AC)', 'The number an attack roll must reach to hit. Higher AC = harder to hit.'],
+  ['Hit points (HP)', 'How much damage a creature can take before it is defeated.'],
+  ['Natural 1 / natural 20', 'The number shown on the d20 itself, before bonuses. A natural 1 always misses; a natural 20 always hits and is a critical hit.'],
+  ['Critical hit', 'On a natural 20, the damage dice are rolled twice (2d10 instead of 1d10). Flat bonuses such as +5 are not doubled.'],
+  ['Advantage / disadvantage', 'Roll two d20s and keep the higher (advantage) or the lower (disadvantage).'],
+  ['Force damage', 'A damage type – pure magical energy. The type does not matter in this model.']
+];
+$('gloss').innerHTML = GLOSS.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('');
+
+/* ======================================================================
+   TESTS PANEL
+   ====================================================================== */
+function showTests() {
+  const t0 = performance.now(), res = runEldritchTests(E), ok = res.filter(r => r.pass).length;
+  $('testSum').innerHTML = `Validation tests: <span class="${ok === res.length ? 'pass' : 'fail'}">${ok} / ${res.length} passed</span> <span class="small">(${fmt(performance.now() - t0, 0)} ms)</span>`;
+  $('testTable').innerHTML = '<thead><tr><th>Test</th><th>Result</th><th>Detail</th></tr></thead><tbody>' +
+    res.map(r => `<tr><td>${esc(r.name)}</td><td class="${r.pass ? 'pass' : 'fail'}">${r.pass ? 'PASS' : 'FAIL'}</td><td class="small">${esc(r.detail)}</td></tr>`).join('') + '</tbody>';
+  if (ok !== res.length) $('testDetails').open = true;
+}
+$('rerunTests').addEventListener('click', showTests);
+
+/* ---------- init ---------- */
+syncControls(); onConfigChange(); renderCmp(); renderAccuracy();
+setTimeout(showTests, 300);
+</script>
+</body>
+</html>

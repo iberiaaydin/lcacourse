@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monte Carlo revenue paths</title>
+<style>
+  :root {
+    --ink: #f1eee6;
+    --dim: #adc0c9;
+    --line: #304650;
+    --panel: #172a33;
+    --panel-2: #20343e;
+    --accent: #58c4dd;
+    --mean: #f4d35e;
+    --det: #ff9a6b;
+    --ok: #83c167;
+    --bad: #ff8a7a;
+  }
+  * { box-sizing: border-box; }
+  .intro h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+  .intro p { margin: 0 0 12px; color: var(--dim); max-width: 100ch; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+  .card h2 { margin: 0 0 10px; font-size: 1.05rem; font-weight: 600; }
+  .muted { color: var(--dim); font-size: 14px; }
+  .lbl { font-size: 13px; color: var(--dim); margin: 0 0 6px; }
+  button {
+    font: inherit; font-size: 13.5px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); color: #0d1a20; border-color: var(--accent); font-weight: 700; }
+  button.primary:hover { filter: brightness(1.1); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+  .eq { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin: 4px 0 14px; }
+  .eq .op { display: grid; place-items: center; font-size: 26px; color: var(--dim); padding: 0 2px; }
+  .term { flex: 1 1 220px; background: var(--panel-2); border-radius: 10px; padding: 10px 12px; border-top: 3px solid var(--c); }
+  .term.out { flex: 0 1 190px; border-top-color: var(--mean); }
+  .term .nm { font-weight: 700; font-size: 15px; }
+  .term .nm small { font-weight: 400; color: var(--dim); font-size: 12.5px; }
+  .term .dist { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--dim); margin: 4px 0; }
+  .term .ps { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 12.5px; color: var(--dim); }
+  .term .ps label { display: inline-flex; align-items: center; gap: 4px; }
+  .term .ps input { width: 70px; font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; font-variant-numeric: tabular-nums; }
+  .term select { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 3px 4px; margin-top: 6px; }
+  .term .best { font-size: 12.5px; color: var(--dim); margin-top: 6px; }
+  .term .best b { color: var(--ink); }
+  .term.out .big { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 4px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+  .slider { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--dim); }
+  .slider input[type=range] { width: 160px; accent-color: var(--accent); }
+  .slider output { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 66px; }
+  .chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--dim); }
+  .chk input { accent-color: var(--accent); }
+
+  .chart-wrap { position: relative; }
+  #chart { display: block; width: 100%; height: auto; touch-action: none; }
+  #tip { position: absolute; pointer-events: none; background: #0d1a20; border: 1px solid var(--line); border-radius: 8px;
+         padding: 8px 10px; font-size: 13px; line-height: 1.5; display: none; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.35); font-variant-numeric: tabular-nums; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--dim); margin-top: 6px; }
+  .legend svg { vertical-align: middle; margin-right: 5px; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 600; font-size: 12.5px; }
+  .target { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .target .big { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .lesson { border-left: 3px solid var(--mean); padding: 8px 12px; background: var(--panel-2); border-radius: 0 8px 8px 0; font-size: 14px; margin-top: 12px; }
+  .note { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
+  .runlog td:nth-child(n+2) { color: var(--dim); }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<section class="intro">
+  <h1>Monte Carlo over time: simulated revenue paths</h1>
+  <p>An online shop in Türkiye wants to know how much revenue the next month may bring. Nobody knows the shop's true average visitors,
+  conversion rate (share of visitors who buy) and order value exactly – each is described by a distribution. A simulation run draws one
+  possible set of these averages and then simulates every day with some day-to-day noise on top. One run gives one possible path of
+  cumulative revenue; many runs show every possible outcome – and how likely each is. The same idea applies to an LCA over a product's lifetime.
+  <strong>Illustrative numbers.</strong></p>
+</section>
+
+<div class="card">
+  <h2>The model</h2>
+  <div class="eq" id="eq"></div>
+  <div class="controls">
+    <div class="slider"><label for="days">Days</label><input type="range" id="days" min="5" max="90" step="1" value="30"><output id="daysOut" for="days"></output></div>
+    <div class="slider"><span>Simulation runs</span>
+      <div class="seg" role="group" aria-label="Number of runs">
+        <button type="button" data-n="20">20</button>
+        <button type="button" data-n="50" aria-pressed="true">50</button>
+        <button type="button" data-n="200">200</button>
+        <button type="button" data-n="1000">1 000</button>
+      </div></div>
+    <div class="slider"><label for="noise">Day-to-day noise</label><input type="range" id="noise" min="0" max="40" step="1" value="15"><output id="noiseOut" for="noise"></output></div>
+    <button type="button" class="primary" id="go">Run simulation</button>
+  </div>
+  <p class="note">The distributions describe how uncertain each <em>average</em> is – one value is drawn per run. Day-to-day noise then lets every day vary
+  around that average (± the chosen % as one standard deviation) – it makes the lines wiggle.</p>
+</div>
+
+<div class="card">
+  <h2 id="chartTitle"></h2>
+  <div class="controls" style="margin-bottom:8px">
+    <div class="seg" role="group" aria-label="What to plot">
+      <button type="button" data-view="cum" aria-pressed="true">Cumulative revenue</button>
+      <button type="button" data-view="day">Daily revenue</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="band"> median and 90 % band</label>
+    <label class="chk"><input type="checkbox" id="color" checked> colour each run</label>
+  </div>
+  <div class="chart-wrap">
+    <svg id="chart" viewBox="0 0 980 470" role="img" aria-label="Simulated revenue paths, one line per simulation run, with a histogram of the final values on the right."></svg>
+    <div id="tip" role="status"></div>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <h2>What could the result be? <span class="muted" id="statsSub"></span></h2>
+    <div class="target">
+      <div class="controls">
+        <div class="slider"><label for="tgt">Revenue target</label><input type="range" id="tgt" min="0" max="1" step="0.001" value="0.5"><output id="tgtOut" for="tgt"></output></div>
+      </div>
+      <div class="lbl" style="margin-top:6px">Probability of reaching the target</div>
+      <div class="big" id="pTgt"></div>
+    </div>
+    <div class="table-wrap"><table id="stats"></table></div>
+    <h2 style="margin-top:16px">Which input drives the spread?</h2>
+    <div id="contrib" style="display:grid;gap:8px"></div>
+    <p class="note">Share of the variance of the final revenue, estimated with ρ² (rank correlation between each run's drawn average and its final revenue, see 4-2). The rest comes from day-to-day noise.</p>
+    <div class="lesson" id="lesson"></div>
+  </div>
+  <div class="card">
+    <h2>Inside one run <span class="muted" id="runSub"></span></h2>
+    <p class="muted" style="margin:0 0 8px">Hover a line in the chart (or tap it) to inspect that run. Each row is one day: three random draws multiplied together.</p>
+    <div class="table-wrap" style="max-height:420px;overflow-y:auto"><table class="runlog" id="runlog"></table></div>
+  </div>
+</div>
+
+<script>
+/* ---------- random numbers ---------- */
+function rng(seed) {
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+const DIST = {
+  normal: { label: 'Normal', keys: [['mu', 'mean'], ['sd', 'SD']], sample: (r, p) => p.mu + p.sd * gauss(r), best: p => p.mu,
+    mean: p => p.mu, pdf: (x, p) => Math.exp(-((x - p.mu) ** 2) / (2 * p.sd * p.sd)), range: p => [p.mu - 3.5 * p.sd, p.mu + 3.5 * p.sd], valid: p => p.sd > 0 },
+  triangular: { label: 'Triangular', keys: [['a', 'min'], ['c', 'mode'], ['b', 'max']],
+    sample: (r, p) => { const u = r(), F = (p.c - p.a) / (p.b - p.a); return u < F ? p.a + Math.sqrt(u * (p.b - p.a) * (p.c - p.a)) : p.b - Math.sqrt((1 - u) * (p.b - p.a) * (p.b - p.c)); },
+    best: p => p.c, mean: p => (p.a + p.b + p.c) / 3,
+    pdf: (x, p) => x < p.a || x > p.b ? 0 : x < p.c ? (x - p.a) / (p.c - p.a || 1e-9) : (p.b - x) / (p.b - p.c || 1e-9),
+    range: p => [p.a - 0.1 * (p.b - p.a), p.b + 0.1 * (p.b - p.a)], valid: p => p.a <= p.c && p.c <= p.b && p.a < p.b },
+  lognormal: { label: 'Lognormal', keys: [['gm', 'median'], ['gsd2', 'GSD²']],
+    sample: (r, p) => Math.exp(Math.log(p.gm) + Math.log(p.gsd2) / 2 * gauss(r)), best: p => p.gm,
+    mean: p => p.gm * Math.exp((Math.log(p.gsd2) / 2) ** 2 / 2),
+    pdf: (x, p) => { if (x <= 0) return 0; const m = Math.log(p.gm), s = Math.log(p.gsd2) / 2; return Math.exp(-((Math.log(x) - m) ** 2) / (2 * s * s)) / x; },
+    range: p => [0, p.gm * p.gsd2 * 1.4], valid: p => p.gm > 0 && p.gsd2 > 1 }
+};
+
+/* ---------- model ---------- */
+const INPUTS = [
+  { id: 'v', name: 'Visitors', unit: 'average per day', type: 'normal', p: { mu: 1000, sd: 150 }, c: '#3987e5',
+    fmt: v => Math.round(v).toLocaleString('en-US'), clamp: v => Math.max(0, v),
+    why: 'How many visitors the shop really gets on average is a forecast.' },
+  { id: 'c', name: 'Conversion rate', unit: 'average, %', type: 'triangular', p: { a: 1.5, c: 2.5, b: 4 }, c: '#d95926',
+    fmt: v => v.toFixed(2) + ' %', clamp: v => Math.max(0, v),
+    why: 'Expert guess: at least 1.5 %, most likely 2.5 %, at most 4 %.' },
+  { id: 'o', name: 'Order value', unit: 'average, ₺', type: 'lognormal', p: { gm: 1500, gsd2: 1.5 }, c: '#199e70',
+    fmt: v => '₺' + Math.round(v).toLocaleString('en-US'), clamp: v => Math.max(0, v),
+    why: 'Average basket – a few big spenders make it skewed.' }
+];
+const P = Object.fromEntries(INPUTS.map(i => [i.id, { ...i.p }]));
+let NOISE = 0.15;
+const revenue = (v, c, o) => v * (c / 100) * o;
+
+/* ---------- state ---------- */
+let DAYS = 30, RUNS = 50, seed = 4, runs = [], shown = 0, VIEW = 'cum', hover = null, pinned = null, anim = null;
+const $ = id => document.getElementById(id);
+const tl = v => '₺' + Math.round(v).toLocaleString('en-US');
+const tlShort = v => '₺' + (v >= 1e6 ? fmt(v / 1e6, v % 1e6 ? 2 : 0).replace(/\.?0+$/, '') + 'M' : v >= 1e3 ? fmt(v / 1e3, v % 1e3 ? 1 : 0) + 'k' : Math.round(v));
+const fmt = (v, d = 1) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+/* ---------- model card ---------- */
+function shape(inp) {
+  const d = DIST[inp.type], p = P[inp.id];
+  if (!d.valid(p)) return '<svg width="80" height="26"></svg>';
+  const [lo, hi] = d.range(p); const ys = []; let m = 0;
+  for (let i = 0; i <= 40; i++) { const y = d.pdf(lo + (hi - lo) * i / 40, p); ys.push(y); m = Math.max(m, y); }
+  return `<svg width="80" height="26" aria-hidden="true"><polyline points="${ys.map((y, i) => `${(i / 40 * 76 + 2).toFixed(1)},${(23 - y / (m || 1) * 19).toFixed(1)}`).join(' ')}" fill="none" stroke="${inp.c}" stroke-width="2"/><line x1="2" y1="23.5" x2="78" y2="23.5" stroke="#607b88"/></svg>`;
+}
+function buildEq() {
+  const eq = $('eq'); eq.innerHTML = '';
+  INPUTS.forEach((inp, k) => {
+    const d = DIST[inp.type];
+    const t = document.createElement('div');
+    t.className = 'term'; t.style.setProperty('--c', inp.c);
+    t.innerHTML = `<div class="nm">${inp.name} <small>(${inp.unit})</small></div>
+      <div class="dist"><span class="shp">${shape(inp)}</span>${d.label}</div>
+      <div class="ps">${d.keys.map(([key, l]) => `<label>${l} <input type="number" step="any" data-k="${key}" value="${P[inp.id][key]}" aria-label="${inp.name} ${l}"></label>`).join('')}</div>
+      <div class="best" style="margin-top:4px">uncertain average – drawn once per run</div>
+      <div class="best">best guess <b>${inp.fmt(d.best(P[inp.id]))}</b> · ${inp.why}</div>`;
+    t.querySelectorAll('.ps input').forEach(el => el.addEventListener('input', () => {
+      const np = { ...P[inp.id], [el.dataset.k]: +el.value };
+      el.style.borderColor = d.valid(np) ? '' : '#ff8a7a';
+      if (!d.valid(np)) return;
+      P[inp.id] = np;
+      t.querySelector('.shp').innerHTML = shape(inp);
+      t.querySelector('.best b').textContent = inp.fmt(d.best(np));
+      simulate(true);
+    }));
+    eq.appendChild(t);
+    const op = document.createElement('div'); op.className = 'op'; op.textContent = k < INPUTS.length - 1 ? '×' : '=';
+    eq.appendChild(op);
+  });
+  const out = document.createElement('div');
+  out.className = 'term out';
+  out.innerHTML = `<div class="nm">Revenue <small>(₺ per day)</small></div><div class="best" style="margin-top:2px">best guess, one calculation:</div><div class="big" id="detDay"></div><div class="best" id="detTot"></div>`;
+  eq.appendChild(out);
+}
+const bestDay = () => revenue(...INPUTS.map(i => DIST[i.type].best(P[i.id])));
+const meanDay = () => {   // expected daily revenue (inputs independent)
+  return INPUTS.reduce((a, i) => a * DIST[i.type].mean(P[i.id]), 1) / 100;
+};
+
+/* ---------- simulation ---------- */
+function simulate(instant) {
+  const R = rng(seed);
+  runs = [];
+  for (let r = 0; r < RUNS; r++) {
+    const once = {};
+    INPUTS.forEach(i => { once[i.id] = i.clamp(DIST[i.type].sample(R, P[i.id])); });
+    const days = []; let cum = 0;
+    for (let d = 0; d < DAYS; d++) {
+      const x = {};
+      INPUTS.forEach(i => { x[i.id] = Math.max(0, once[i.id] * (1 + NOISE * gauss(R))); });   // daily noise around this run's average
+      const rev = revenue(x.v, x.c, x.o);
+      cum += rev;
+      days.push({ ...x, rev, cum });
+    }
+    runs.push({ days, final: cum, once });
+  }
+  if (pinned !== null && pinned >= RUNS) pinned = null;
+  $('detDay').textContent = tl(bestDay());
+  $('detTot').innerHTML = `× ${DAYS} days = <b>${tl(bestDay() * DAYS)}</b>`;
+  setTargetRange();
+  if (anim) cancelAnimationFrame(anim);
+  if (instant) { shown = DAYS; draw(); return; }
+  shown = 0;
+  const t0 = performance.now(), dur = Math.min(2200, 600 + DAYS * 35);
+  const step = t => { shown = Math.min(DAYS, Math.ceil((t - t0) / dur * DAYS)); draw(); if (shown < DAYS) anim = requestAnimationFrame(step); else anim = null; };
+  anim = requestAnimationFrame(step);
+}
+
+/* ---------- chart ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const svg = $('chart');
+const CW = 980, CH = 470, M = { l: 78, r: 170, t: 16, b: 46 }, PW = CW - M.l - M.r, PH = CH - M.t - M.b;
+const HX = M.l + PW + 14, HW = CW - HX - 10;            // histogram strip at the right
+const PALETTE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#9085e9', '#5ab0c7', '#a3b14a', '#e07a5f', '#7d8f98'];
+let geom = null;
+function el(tag, a, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  parent.appendChild(e);
+  return e;
+}
+function niceStep(range, target = 6) {
+  const raw = range / target, e = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * e >= raw) return m * e;
+  return 10 * e;
+}
+const val = (run, d) => VIEW === 'cum' ? run.days[d].cum : run.days[d].rev;
+const quant = (s, p) => s[Math.min(s.length - 1, Math.max(0, Math.round(p * (s.length - 1))))];
+
+function draw() {
+  svg.innerHTML = '';
+  const cum = VIEW === 'cum';
+  /* scales: x from day 0 (cum = 0) to DAYS */
+  let ymax = 0;
+  runs.forEach(r => r.days.forEach(d => { ymax = Math.max(ymax, cum ? d.cum : d.rev); }));
+  ymax = ymax * 1.05 || 1;
+  const x0 = cum ? 0 : 1;
+  const X = d => M.l + (d - x0) / (DAYS - x0 || 1) * PW, Y = v => M.t + PH - v / ymax * PH;
+  geom = { X, Y, x0 };
+  /* grid */
+  const ys = niceStep(ymax);
+  for (let v = 0; v <= ymax + 1e-9; v += ys) {
+    el('line', { x1: M.l, x2: M.l + PW, y1: Y(v), y2: Y(v), stroke: v ? '#263b45' : '#607b88' });
+    el('text', { x: M.l - 8, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12.5, fill: '#adc0c9' }).textContent = tlShort(v);
+  }
+  const xs = niceStep(DAYS - x0, 8);
+  for (let d = Math.ceil(x0 / xs) * xs; d <= DAYS; d += xs) {
+    el('line', { x1: X(d), x2: X(d), y1: M.t + PH, y2: M.t + PH + 5, stroke: '#607b88' });
+    el('text', { x: X(d), y: M.t + PH + 20, 'text-anchor': 'middle', 'font-size': 12.5, fill: '#adc0c9' }).textContent = d;
+  }
+  el('text', { x: M.l + PW / 2, y: CH - 6, 'text-anchor': 'middle', 'font-size': 13.5, fill: '#adc0c9' }).textContent = 'day';
+  el('text', { x: 16, y: M.t + PH / 2, 'text-anchor': 'middle', 'font-size': 13.5, fill: '#adc0c9', transform: `rotate(-90 16 ${M.t + PH / 2})` })
+    .textContent = cum ? 'cumulative revenue' : 'revenue on that day';
+
+  const n = Math.max(0, shown);
+
+  /* paths */
+  const colourful = $('color').checked;
+  const gPaths = el('g', {});
+  runs.forEach((r, i) => {
+    if (n < 1) return;
+    let d = cum ? `M${X(0)} ${Y(0)}` : '';
+    for (let k = 0; k < n; k++) d += `${d ? ' L' : 'M'}${X(k + 1).toFixed(1)} ${Y(val(r, k)).toFixed(1)}`;
+    const active = hover === i || pinned === i;
+    el('path', { d, fill: 'none', stroke: active ? '#f1eee6' : colourful ? PALETTE[i % PALETTE.length] : '#7fb0d0',
+      'stroke-width': active ? 3 : runs.length > 300 ? 0.8 : 1.4, 'stroke-opacity': active ? 1 : runs.length > 300 ? 0.25 : colourful ? 0.7 : 0.4,
+      'stroke-linejoin': 'round', 'data-i': i }, gPaths);
+  });
+  /* bring the hovered path to the front */
+  const act = hover ?? pinned;
+  if (act !== null && n > 0) {
+    const p = gPaths.querySelector(`[data-i="${act}"]`);
+    if (p) gPaths.appendChild(p);
+  }
+
+  /* best-guess line and median */
+  const bd = bestDay();
+  const detPts = [];
+  for (let d = cum ? 0 : 1; d <= DAYS; d++) detPts.push(`${X(d).toFixed(1)} ${Y(cum ? bd * d : bd).toFixed(1)}`);
+  const detPath = el('path', { d: 'M' + detPts.join(' L'), fill: 'none', stroke: '#ff9a6b', 'stroke-width': 2.5, 'stroke-dasharray': '8 5' });
+  /* percentile band, drawn on top of the paths so it stays visible with many runs */
+  if ($('band').checked && n > 0 && runs.length >= 10) {
+    const lo = [], hi = [], med = [];
+    for (let d = 0; d < n; d++) {
+      const s = runs.map(r => val(r, d)).sort((a, b) => a - b);
+      lo.push(quant(s, 0.05)); hi.push(quant(s, 0.95)); med.push(quant(s, 0.5));
+    }
+    const pre = cum ? [[X(0), Y(0)]] : [];
+    const line = arr => pre.concat(arr.map((v, d) => [X(d + 1), Y(v)]));
+    const top = line(hi), bot = line(lo), mid = line(med);
+    el('path', { d: 'M' + top.map(p => p.join(' ')).join(' L') + ' L' + bot.slice().reverse().map(p => p.join(' ')).join(' L') + ' Z', fill: '#0d1a20', 'fill-opacity': 0.35 });
+    [top, bot].forEach(l => el('path', { d: 'M' + l.map(p => p.join(' ')).join(' L'), fill: 'none', stroke: '#f1eee6', 'stroke-width': 1.8, 'stroke-dasharray': '5 4' }));
+    el('path', { d: 'M' + mid.map(p => p.join(' ')).join(' L'), fill: 'none', stroke: '#f1eee6', 'stroke-width': 3 });
+    const lx = X(n);
+    [[hi[n - 1], '95 %'], [med[n - 1], 'median'], [lo[n - 1], '5 %']].forEach(([v, t]) =>
+      el('text', { x: lx - 4, y: Y(v) - 6, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 700, fill: '#f1eee6', stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' }).textContent = t);
+  }
+  svg.appendChild(detPath);   // keep the best-guess line on top of the band
+
+  /* histogram of the values on the last shown day, along the y-axis */
+  el('line', { x1: HX - 6, x2: HX - 6, y1: M.t, y2: M.t + PH, stroke: '#304650' });
+  if (n > 0) {
+    const vals = runs.map(r => val(r, n - 1));
+    const bins = 40, bh = ymax / bins, cnt = new Array(bins).fill(0);
+    vals.forEach(v => { const b = Math.min(bins - 1, Math.floor(v / bh)); if (b >= 0) cnt[b]++; });
+    const cm = Math.max(...cnt);
+    cnt.forEach((c, b) => {
+      if (!c) return;
+      el('rect', { x: HX, y: Y((b + 1) * bh) + 0.5, width: c / cm * HW, height: Math.max(0.5, Y(b * bh) - Y((b + 1) * bh) - 1), fill: '#5ab0c7', 'fill-opacity': 0.75 });
+    });
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    el('line', { x1: HX - 6, x2: HX + HW, y1: Y(mean), y2: Y(mean), stroke: '#f4d35e', 'stroke-width': 2 });
+    el('text', { x: HX + HW, y: Y(mean) - 5, 'text-anchor': 'end', 'font-size': 12, 'font-weight': 700, fill: '#f4d35e', stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' })
+      .textContent = `mean ${tl(mean)}`;
+    el('text', { x: HX + HW / 2, y: M.t + PH + 20, 'text-anchor': 'middle', 'font-size': 12, fill: '#adc0c9' }).textContent = `day ${n}: ${runs.length.toLocaleString('en-US')} results`;
+  }
+  /* target line (cumulative only) */
+  if (cum) {
+    const tg = target();
+    el('line', { x1: M.l, x2: HX + HW, y1: Y(tg), y2: Y(tg), stroke: '#83c167', 'stroke-width': 1.5, 'stroke-dasharray': '3 4' });
+    el('text', { x: M.l + 6, y: Y(tg) - 6, 'font-size': 12, 'font-weight': 700, fill: '#83c167', stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' })
+      .textContent = `target ${tl(tg)}`;
+  }
+
+  $('chartTitle').innerHTML = `${runs.length.toLocaleString('en-US')} simulated ${cum ? 'revenue paths' : 'daily revenues'} over ${DAYS} days <span class="muted">(each line = one simulation run)</span>`;
+  $('legend').innerHTML = `
+    <span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#3987e5" stroke-width="2"/></svg>one simulation run</span>
+    <span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#ff9a6b" stroke-width="2.5" stroke-dasharray="8 5"/></svg>best guess (one calculation)</span>
+    ${$('band').checked ? '<span><svg width="26" height="14"><line x1="0" y1="2" x2="26" y2="2" stroke="#f1eee6" stroke-width="1.8" stroke-dasharray="5 4"/><line x1="0" y1="7" x2="26" y2="7" stroke="#f1eee6" stroke-width="3"/><line x1="0" y1="12" x2="26" y2="12" stroke="#f1eee6" stroke-width="1.8" stroke-dasharray="5 4"/></svg>median, 5 % and 95 % of runs</span>' : ''}
+    <span><svg width="16" height="12"><rect width="16" height="12" fill="#5ab0c7" fill-opacity=".75"/></svg>histogram of the last day</span>
+    ${cum ? '<span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#83c167" stroke-width="1.5" stroke-dasharray="3 4"/></svg>revenue target</span>' : ''}`;
+  stats(); runLog();
+}
+
+/* ---------- hover: nearest run at the pointer's day ---------- */
+const tip = $('tip');
+function pick(e) {
+  if (!geom || !runs.length || shown < 1) return null;
+  const r = svg.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * CW, y = (e.clientY - r.top) / r.height * CH;
+  if (x < M.l || x > M.l + PW) return null;
+  const d = Math.min(shown, Math.max(1, Math.round(geom.x0 + (x - M.l) / PW * (DAYS - geom.x0))));
+  let best = null, bd = Infinity;
+  runs.forEach((run, i) => { const dy = Math.abs(geom.Y(val(run, d - 1)) - y); if (dy < bd) { bd = dy; best = i; } });
+  return bd < 22 ? { i: best, d } : null;
+}
+function onMove(e) {
+  const p = pick(e);
+  const nh = p ? p.i : null;
+  if (nh !== hover) { hover = nh; draw(); }
+  if (!p) { tip.style.display = 'none'; return; }
+  const day = runs[p.i].days[p.d - 1];
+  tip.innerHTML = `<b>Run ${p.i + 1}</b>, day ${p.d}<br>
+    ${Math.round(day.v).toLocaleString('en-US')} visitors × ${day.c.toFixed(2)} % × ₺${Math.round(day.o).toLocaleString('en-US')} = <b>${tl(day.rev)}</b><br>
+    cumulative: <b>${tl(day.cum)}</b> · final (day ${DAYS}): <b>${tl(runs[p.i].final)}</b>`;
+  tip.style.display = 'block';
+  const wrap = svg.parentElement.getBoundingClientRect();
+  let left = e.clientX - wrap.left + 14;
+  if (left + tip.offsetWidth > wrap.width) left = e.clientX - wrap.left - tip.offsetWidth - 14;
+  tip.style.left = Math.max(0, left) + 'px';
+  tip.style.top = Math.max(0, e.clientY - wrap.top - tip.offsetHeight - 12) + 'px';
+}
+svg.addEventListener('pointermove', onMove);
+svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; if (hover !== null) { hover = null; draw(); } });
+svg.addEventListener('click', e => { const p = pick(e); pinned = p ? p.i : null; draw(); });
+
+/* ---------- target & statistics ---------- */
+let tMin = 0, tMax = 1;
+function setTargetRange() {
+  const m = meanDay() * DAYS;
+  tMin = m * 0.4; tMax = m * 1.6;
+}
+const target = () => { const t = tMin + (+$('tgt').value) * (tMax - tMin), step = 5 * Math.pow(10, Math.floor(Math.log10(tMax)) - 3); return Math.round(t / step) * step; };
+function stats() {
+  const finals = runs.map(r => r.final).sort((a, b) => a - b), n = finals.length;
+  const tg = target();
+  $('tgtOut').textContent = tl(tg);
+  $('statsSub').textContent = `· total after ${DAYS} days, ${n.toLocaleString('en-US')} runs`;
+  if (!n || shown < DAYS) { $('pTgt').textContent = '…'; $('stats').innerHTML = ''; $('lesson').textContent = ''; return; }
+  const mean = finals.reduce((a, b) => a + b, 0) / n;
+  const sd = Math.sqrt(finals.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1));
+  const p = finals.filter(v => v >= tg).length / n;
+  $('pTgt').innerHTML = `<span style="color:${p >= 0.5 ? '#83c167' : '#ff8a7a'}">${fmt(p * 100, 1)} %</span> <span class="muted">of runs reach ${tl(tg)}</span>`;
+  const det = bestDay() * DAYS;
+  const rows = [
+    ['Best guess (one calculation)', tl(det)],
+    ['Monte Carlo mean', tl(mean)],
+    ['Median', tl(quant(finals, 0.5))],
+    ['Standard deviation', tl(sd)],
+    ['5 % of runs below', tl(quant(finals, 0.05))],
+    ['95 % of runs below', tl(quant(finals, 0.95))],
+    ['Worst / best run', `${tl(finals[0])} / ${tl(finals[n - 1])}`],
+    ['Coefficient of variation', `${fmt(sd / mean * 100, 1)} %`]
+  ];
+  $('stats').innerHTML = '<tbody>' + rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('') + '</tbody>';
+  contrib(finals.length ? runs : []);
+  $('lesson').innerHTML = `The best guess (${tl(det)}) uses the most likely conversion rate (${P.c.c} %) and the median order value. Both distributions are skewed to the right,
+    so the Monte Carlo mean is ${fmt((mean / det - 1) * 100, 0)} % higher.
+    Change an SD, GSD² or the triangle above: the fan widens or narrows, because an uncertain <em>average</em> does not cancel out over the days.
+    Raise the day-to-day noise instead: the lines wiggle more, but the 30-day total hardly spreads – good and bad days average out.`;
+}
+function runLog() {
+  const i = hover ?? pinned ?? 0;
+  if (!runs.length) return;
+  const r = runs[i];
+  $('runSub').textContent = `– run ${i + 1} of ${runs.length.toLocaleString('en-US')}${pinned === i ? ' (pinned)' : ''}`;
+  const rows = r.days.slice(0, Math.max(1, shown)).map((d, k) => `<tr><td>${k + 1}</td><td>${Math.round(d.v).toLocaleString('en-US')}</td><td>${d.c.toFixed(2)} %</td><td>₺${Math.round(d.o).toLocaleString('en-US')}</td><td style="color:var(--ink)">${tl(d.rev)}</td><td style="color:var(--ink)">${tl(d.cum)}</td></tr>`).join('');
+  $('runlog').innerHTML = `<thead><tr><th>Day</th><th>Visitors</th><th>Conversion</th><th>Order value</th><th>Revenue</th><th>Cumulative</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+/* contribution of each uncertain average to the spread of the final revenue */
+function ranks(a) { const idx = a.map((v, i) => [v, i]).sort((x, y) => x[0] - y[0]); const r = new Array(a.length); idx.forEach(([, i], k) => { r[i] = k; }); return r; }
+function corr(x, y) {
+  const n = x.length, mx = x.reduce((a, b) => a + b, 0) / n, my = y.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { const dx = x[i] - mx, dy = y[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+  return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0;
+}
+function contrib(rs) {
+  if (rs.length < 20) { $('contrib').innerHTML = '<p class="muted" style="margin:0">Use at least 20 runs.</p>'; return; }
+  const ry = ranks(rs.map(r => r.final));
+  const items = INPUTS.map(i => { const r = corr(ranks(rs.map(x => x.once[i.id])), ry); return { name: i.name, c: i.c, share: r * r }; });
+  const sum = items.reduce((a, x) => a + x.share, 0);
+  if (sum > 1) items.forEach(x => { x.share /= sum; });
+  items.push({ name: 'Day-to-day noise (rest)', c: '#7d8f98', share: Math.max(0, 1 - Math.min(1, sum)) });
+  $('contrib').innerHTML = items.map(x => `<div><div style="display:flex;justify-content:space-between;font-size:13.5px"><span>${x.name}</span><span class="muted">${fmt(x.share * 100, 0)} %</span></div>
+    <div style="height:10px;background:var(--panel-2);border-radius:4px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${(x.share * 100).toFixed(1)}%;background:${x.c};border-radius:0 4px 4px 0"></div></div></div>`).join('');
+}
+
+/* ---------- controls ---------- */
+$('noise').addEventListener('input', e => { NOISE = +e.target.value / 100; $('noiseOut').textContent = `± ${e.target.value} %`; simulate(true); });
+$('noiseOut').textContent = '± 15 %';
+$('days').addEventListener('input', e => { DAYS = +e.target.value; $('daysOut').textContent = `${DAYS} days`; simulate(true); });
+document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
+  RUNS = +b.dataset.n;
+  document.querySelectorAll('[data-n]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  simulate(false);
+}));
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+  VIEW = b.dataset.view;
+  document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  draw();
+}));
+$('band').addEventListener('change', draw);
+$('color').addEventListener('change', draw);
+$('tgt').addEventListener('input', draw);
+$('go').addEventListener('click', () => { seed = (seed * 48271 + 11) % 2147483647; simulate(false); });
+
+buildEq();
+$('daysOut').textContent = `${DAYS} days`;
+simulate(false);
+</script>
+</div>
+</body>
+</html>

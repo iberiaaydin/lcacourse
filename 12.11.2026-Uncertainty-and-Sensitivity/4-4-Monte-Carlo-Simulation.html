@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monte Carlo simulation</title>
+<style>
+  :root {
+    --ink: #f1eee6;
+    --dim: #adc0c9;
+    --line: #304650;
+    --panel: #172a33;
+    --panel-2: #20343e;
+    --accent: #58c4dd;
+    --mean: #f4d35e;
+    --det: #ff9a6b;
+    --hist: #3d6b7d;
+    --better: #3987e5;
+    --worse: #d95926;
+    --ok: #83c167;
+    --bad: #ff8a7a;
+  }
+  * { box-sizing: border-box; }
+  .intro h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+  .intro p { margin: 0 0 12px; color: var(--dim); max-width: 100ch; }
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; padding: 0; list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--line); border-radius: 100px; padding: 5px 12px 5px 6px; font-size: 13.5px; }
+  .steps li::before { content: counter(s); display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 7px; border-radius: 50%; background: var(--accent); color: #0d1a20; font-weight: 700; font-size: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+  .card h2 { margin: 0 0 10px; font-size: 1.05rem; font-weight: 600; }
+  .muted { color: var(--dim); font-size: 14px; }
+  .lbl { font-size: 13px; color: var(--dim); margin: 0 0 6px; }
+  button {
+    font: inherit; font-size: 13.5px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); color: #0d1a20; border-color: var(--accent); font-weight: 700; }
+  button.primary:hover { filter: brightness(1.1); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+  .exs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 900px) { .exs { grid-template-columns: minmax(0, 1fr); } }
+  .exb { text-align: left; padding: 12px 14px; border-radius: 10px; background: var(--panel); }
+  .exb b { display: block; font-size: 15px; }
+  .exb span { font-size: 12.5px; color: var(--dim); }
+  .exb[aria-pressed="true"] { background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--accent); color: var(--ink); }
+
+  .formula { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; background: var(--panel-2); padding: 8px 12px; border-radius: 8px; overflow-x: auto; white-space: pre; margin: 0 0 8px; }
+  .inputs { display: grid; gap: 10px; }
+  .inp { display: grid; grid-template-columns: minmax(0, 1.2fr) 96px minmax(0, 1.4fr) auto; gap: 6px 14px; align-items: center;
+         background: var(--panel-2); border-radius: 10px; padding: 10px 12px; border: 1px solid transparent; }
+  .inp.off { opacity: 0.55; }
+  .inp .nm { font-size: 14.5px; font-weight: 600; }
+  .inp .nm small { display: block; font-weight: 400; color: var(--dim); font-size: 12.5px; }
+  .inp .ps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12.5px; color: var(--dim); }
+  .inp .ps label { display: inline-flex; align-items: center; gap: 4px; }
+  .inp .ps input { width: 76px; font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; font-variant-numeric: tabular-nums; }
+  .inp .tog { font-size: 12.5px; color: var(--dim); display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+  .inp .tog input { accent-color: var(--accent); }
+  .inp .drawn { grid-column: 1 / -1; font-size: 12.5px; color: var(--dim); font-variant-numeric: tabular-nums; min-height: 1.2em; }
+  .inp .drawn b { color: var(--mean); }
+  .tbadge { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); }
+  @media (max-width: 760px) {
+    .inp { grid-template-columns: minmax(0, 1fr) 90px; }
+    .inp .ps, .inp .tog { grid-column: 1 / -1; }
+  }
+
+  .run { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .progress { flex: 1; min-width: 160px; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .progress div { height: 100%; width: 0; background: var(--accent); }
+  #iterTxt { font-size: 13.5px; color: var(--dim); font-variant-numeric: tabular-nums; min-width: 150px; }
+  .last { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; font-variant-numeric: tabular-nums; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  svg.chart { display: block; width: 100%; height: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--dim); margin-top: 6px; }
+  .legend svg { vertical-align: middle; margin-right: 5px; }
+  .big { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .verdict { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 600; font-size: 12.5px; }
+  .contrib { display: grid; gap: 8px; }
+  .crow .top { display: flex; justify-content: space-between; font-size: 13.5px; gap: 8px; }
+  .crow .top span:last-child { font-variant-numeric: tabular-nums; color: var(--dim); }
+  .track { height: 10px; background: var(--panel-2); border-radius: 4px; overflow: hidden; margin-top: 3px; }
+  .fill { height: 100%; border-radius: 0 4px 4px 0; background: var(--accent); }
+  .note { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
+  .lesson { border-left: 3px solid var(--mean); padding: 8px 12px; background: var(--panel-2); border-radius: 0 8px 8px 0; font-size: 14px; margin-top: 12px; }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<section class="intro">
+  <h1>Monte Carlo simulation</h1>
+  <p>A Monte Carlo simulation propagates the uncertainty of the inputs through the model. Instead of calculating the result once with
+  best-guess values, it calculates it thousands of times, each time with input values drawn at random from their probability distributions.
+  The spread of the results is the uncertainty of the result. <strong>Illustrative data – do not use for studies.</strong></p>
+  <ol class="steps">
+    <li>Give every uncertain input a distribution</li>
+    <li>Draw one random value per input</li>
+    <li>Calculate the model result</li>
+    <li>Repeat many times</li>
+    <li>Analyse the distribution of results</li>
+  </ol>
+</section>
+
+<div class="exs" role="group" aria-label="Example" id="exs"></div>
+
+<div class="card">
+  <h2 id="exTitle"></h2>
+  <p class="muted" id="exDesc" style="margin:0 0 10px"></p>
+  <div class="formula" id="exFormula"></div>
+  <p class="lbl" style="margin-top:12px">Uncertain inputs – edit the parameters, or untick “uncertain” to fix an input at its best estimate</p>
+  <div class="inputs" id="inputs"></div>
+  <div class="run" style="margin-top:14px">
+    <button type="button" id="step">Draw 1 iteration</button>
+    <span class="lbl" style="margin:0">Iterations:</span>
+    <div class="seg" role="group" aria-label="Number of iterations">
+      <button type="button" data-n="100">100</button>
+      <button type="button" data-n="1000" aria-pressed="true">1 000</button>
+      <button type="button" data-n="10000">10 000</button>
+    </div>
+    <button type="button" class="primary" id="go">Run simulation</button>
+    <button type="button" id="clear">Clear</button>
+    <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+    <span id="iterTxt" aria-live="polite"></span>
+  </div>
+  <div class="last" id="last"></div>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <h2 id="histTitle">Distribution of the results</h2>
+    <svg class="chart" id="hist" viewBox="0 0 760 360" role="img" aria-label="Histogram of the simulated results"></svg>
+    <div class="legend" id="histLegend"></div>
+    <h2 style="margin-top:18px">Convergence <span class="muted">– the running mean settles as iterations add up</span></h2>
+    <svg class="chart" id="conv" viewBox="0 0 760 200" role="img" aria-label="Running mean of the results against the number of iterations"></svg>
+  </div>
+  <div>
+    <div class="card">
+      <h2>Result statistics</h2>
+      <div id="verdict"></div>
+      <div class="table-wrap"><table id="stats"></table></div>
+      <div class="lesson" id="lesson"></div>
+    </div>
+    <div class="card">
+      <h2>Which input drives the uncertainty?</h2>
+      <div class="contrib" id="contrib"><p class="muted" style="margin:0">Run the simulation to see the contributions.</p></div>
+      <p class="note">Contribution to variance: squared rank correlation between each input and the result, scaled to 100 %. Untick an input above and run again – its uncertainty disappears from the result.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- random numbers ---------- */
+function rng(seed) {
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+
+/* ---------- distributions: sampler, best estimate, pdf (for the little shape icon) ---------- */
+const DIST = {
+  lognormal: { label: 'Lognormal', keys: [['gm', 'median'], ['gsd2', 'GSD²']],
+    sample: (r, p) => Math.exp(Math.log(p.gm) + Math.log(p.gsd2) / 2 * gauss(r)), best: p => p.gm,
+    pdf: (x, p) => { if (x <= 0) return 0; const m = Math.log(p.gm), s = Math.log(p.gsd2) / 2; return Math.exp(-((Math.log(x) - m) ** 2) / (2 * s * s)) / x; },
+    range: p => [0, p.gm * p.gsd2 * 1.5], valid: p => p.gm > 0 && p.gsd2 > 1 },
+  normal: { label: 'Normal', keys: [['mu', 'mean'], ['sd', 'SD']],
+    sample: (r, p) => p.mu + p.sd * gauss(r), best: p => p.mu,
+    pdf: (x, p) => Math.exp(-((x - p.mu) ** 2) / (2 * p.sd * p.sd)), range: p => [p.mu - 3.5 * p.sd, p.mu + 3.5 * p.sd], valid: p => p.sd > 0 },
+  triangular: { label: 'Triangular', keys: [['a', 'min'], ['c', 'mode'], ['b', 'max']],
+    sample: (r, p) => { const u = r(), F = (p.c - p.a) / (p.b - p.a); return u < F ? p.a + Math.sqrt(u * (p.b - p.a) * (p.c - p.a)) : p.b - Math.sqrt((1 - u) * (p.b - p.a) * (p.b - p.c)); },
+    best: p => p.c,
+    pdf: (x, p) => x < p.a || x > p.b ? 0 : x < p.c ? (x - p.a) / (p.c - p.a || 1e-9) : (p.b - x) / (p.b - p.c || 1e-9),
+    range: p => [p.a - 0.1 * (p.b - p.a), p.b + 0.1 * (p.b - p.a)], valid: p => p.a <= p.c && p.c <= p.b && p.a < p.b },
+  uniform: { label: 'Uniform', keys: [['a', 'min'], ['b', 'max']],
+    sample: (r, p) => p.a + r() * (p.b - p.a), best: p => (p.a + p.b) / 2,
+    pdf: (x, p) => (x >= p.a && x <= p.b ? 1 : 0), range: p => [p.a - 0.2 * (p.b - p.a), p.b + 0.2 * (p.b - p.a)], valid: p => p.a < p.b }
+};
+
+/* ---------- the three examples ---------- */
+const EXAMPLES = [
+  {
+    id: 'truck', name: 'Truck delivery', tag: '2 uncertain inputs · a simple product',
+    title: 'CO₂ of one truck delivery',
+    desc: 'A truck delivers goods from a supplier. The distance depends on which warehouse ships the order; the fuel use varies with traffic and driver. Diesel emits 3.2 kg CO₂-eq per litre (well-to-wheel, fixed).',
+    formula: 'CO₂ (kg) = distance (km) × fuel use (L/100 km) ÷ 100 × 3.2 kg CO₂-eq/L',
+    out: { name: 'CO₂ per delivery', unit: 'kg CO₂-eq' },
+    inputs: [
+      { id: 'd', name: 'Distance', note: 'nearest 200 km, usual 350 km, farthest 900 km', unit: 'km', type: 'triangular', p: { a: 200, c: 350, b: 900 } },
+      { id: 'f', name: 'Fuel use', note: 'measured fleet average with spread', unit: 'L/100 km', type: 'normal', p: { mu: 30, sd: 3 } }
+    ],
+    f: v => v.d * v.f / 100 * 3.2,
+    lesson: 'The best-guess calculation uses the most likely distance (350 km), but the distance distribution is skewed to the right. Long trips pull the Monte Carlo mean well above the deterministic result – a single “best guess” calculation underestimates the expected emissions.'
+  },
+  {
+    id: 'tomato', name: 'Greenhouse tomatoes', tag: '4 inputs · one of each distribution type',
+    title: 'Carbon footprint of 1 kg greenhouse tomatoes',
+    desc: 'The model from 4-1 Sensitivity, now with uncertainty. Each uncertain input uses a different distribution type from 4-3. Fixed: 8 g N fertilizer (6.4 g CO₂-eq/g N to produce), natural gas 0.066 kg CO₂-eq/MJ, transport + packaging 0.19 kg.',
+    formula: 'CF = gas × 0.066 + electricity × grid EF + 8 g N × (0.0064 + N₂O-EF × 44/28 × 273 / 1000) + 0.19',
+    out: { name: 'Carbon footprint', unit: 'kg CO₂-eq/kg' },
+    inputs: [
+      { id: 'gas', name: 'Natural gas for heating', note: 'expert range: 10–25 MJ, most likely 15', unit: 'MJ/kg', type: 'triangular', p: { a: 10, c: 15, b: 25 } },
+      { id: 'el', name: 'Electricity use', note: 'metered, small measurement spread', unit: 'kWh/kg', type: 'normal', p: { mu: 0.5, sd: 0.05 } },
+      { id: 'grid', name: 'Grid emission factor', note: 'supplier mix unknown: 0.30–0.50', unit: 'kg CO₂-eq/kWh', type: 'uniform', p: { a: 0.30, b: 0.50 } },
+      { id: 'n2o', name: 'N₂O field emission factor', note: 'IPCC: 0.01, range 0.003–0.03', unit: 'kg N₂O-N/kg N', type: 'lognormal', p: { gm: 0.01, gsd2: 3 } }
+    ],
+    f: v => v.gas * 0.066 + v.el * v.grid + 8 * (0.0064 + v.n2o * 44 / 28 * 273 / 1000) + 0.19,
+    lesson: 'Heating gas dominates the result (see 4-1) and has a skewed, wide range, so it also dominates the uncertainty. The N₂O factor has the largest relative spread (a factor of 3) but a small share of the result, so it matters little. Uncertainty contribution = sensitivity × input uncertainty.'
+  },
+  {
+    id: 'cup', name: 'Ceramic mug vs paper cup', tag: '4 inputs · comparing two products', compare: true,
+    title: 'Hand-washed ceramic mug vs paper cup – 750 coffees',
+    desc: 'From 3-4: the mug is washed by hand with hot water. Mug: 0.416 kg CO₂-eq per mug, washing 0.048 kg CO₂-eq per wash at 0.5 L hot water and 0.45 kg CO₂-eq/kWh (90 % of washing is heating the water). The question: which is better, and how sure are we?',
+    formula: 'mug   = 750 / uses × 0.416 + 750 × 0.048 × (water / 0.5) × (0.1 + 0.9 × grid / 0.45)\npaper = 750 × paper cup footprint\ndifference = mug − paper        (negative: the mug is better)',
+    out: { name: 'Mug − paper cup', unit: 'kg CO₂-eq' },
+    inputs: [
+      { id: 'n', name: 'Uses before the mug breaks', note: 'median 200 uses, very uncertain', unit: 'uses', type: 'lognormal', p: { gm: 200, gsd2: 4 } },
+      { id: 'w', name: 'Hot water per wash', note: 'how people wash: 0.3–1.0 L, usually 0.5 L', unit: 'L', type: 'triangular', p: { a: 0.3, c: 0.5, b: 1.0 } },
+      { id: 'g', name: 'Grid emission factor', note: 'electric water heating', unit: 'kg CO₂-eq/kWh', type: 'uniform', p: { a: 0.35, b: 0.55 } },
+      { id: 'pc', name: 'Paper cup footprint', note: 'incl. lid, packaging, incineration', unit: 'kg CO₂-eq/cup', type: 'lognormal', p: { gm: 0.0529, gsd2: 1.5 } }
+    ],
+    parts: v => {
+      const mug = 750 / Math.max(1, v.n) * 0.4158 + 750 * 0.04825 * (v.w / 0.5) * (0.1 + 0.9 * v.g / 0.45);
+      return { mug, paper: 750 * v.pc };
+    },
+    f: v => { const p = EXAMPLES[2].parts(v); return p.mug - p.paper; },
+    lesson: 'With best-guess values the mug looks slightly better. But the hot-water use is skewed towards more water, and the paper cup footprint is uncertain too, so in many iterations the mug loses. Monte Carlo turns “the mug is better” into “the mug is better with a probability of only …” – a much more honest answer.'
+  }
+];
+
+/* ---------- state ---------- */
+let EX = EXAMPLES[0], P = {}, ON = {}, N = 1000, seed = 1;
+let results = [], drawn = [], parts = [], running = false;
+const $ = id => document.getElementById(id);
+function fmt(v, sig) {
+  if (!isFinite(v)) return '–';
+  const a = Math.abs(v), d = sig !== undefined ? sig : a >= 1000 ? 0 : a >= 100 ? 1 : a >= 10 ? 2 : a >= 1 ? 2 : a >= 0.1 ? 3 : 4;
+  return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+/* ---------- example buttons ---------- */
+EXAMPLES.forEach((e, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'exb';
+  b.innerHTML = `<b>${i + 1}. ${e.name}</b><span>${e.tag}</span>`;
+  b.addEventListener('click', () => setExample(i));
+  $('exs').appendChild(b);
+});
+
+function shape(inp) {
+  const d = DIST[inp.type], p = P[inp.id];
+  if (!d.valid(p)) return '<svg width="96" height="30"></svg>';
+  const [lo, hi] = d.range(p);
+  const ys = []; let m = 0;
+  for (let i = 0; i <= 48; i++) { const y = d.pdf(lo + (hi - lo) * i / 48, p); ys.push(y); m = Math.max(m, y); }
+  const pts = ys.map((y, i) => `${(i / 48 * 92 + 2).toFixed(1)},${(27 - y / (m || 1) * 22).toFixed(1)}`).join(' ');
+  return `<svg width="96" height="30" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#58c4dd" stroke-width="2"/><line x1="2" y1="27.5" x2="94" y2="27.5" stroke="#607b88"/></svg>`;
+}
+
+function setExample(i) {
+  if (running) return;
+  EX = EXAMPLES[i];
+  document.querySelectorAll('.exb').forEach((b, j) => b.setAttribute('aria-pressed', j === i));
+  P = {}; ON = {};
+  EX.inputs.forEach(inp => { P[inp.id] = { ...inp.p }; ON[inp.id] = true; });
+  $('exTitle').textContent = EX.title;
+  $('exDesc').textContent = EX.desc;
+  $('exFormula').textContent = EX.formula;
+  $('inputs').innerHTML = '';
+  EX.inputs.forEach(inp => {
+    const d = DIST[inp.type];
+    const row = document.createElement('div');
+    row.className = 'inp'; row.id = 'row_' + inp.id;
+    row.innerHTML = `<div class="nm">${inp.name} <span class="muted" style="font-size:12.5px">(${inp.unit})</span><small>${inp.note}</small></div>
+      <div><div class="tbadge">${d.label}</div><div class="shape">${shape(inp)}</div></div>
+      <div class="ps">${d.keys.map(([k, l]) => `<label>${l} <input type="number" step="any" data-k="${k}" value="${inp.p[k]}" aria-label="${inp.name} ${l}"></label>`).join('')}</div>
+      <label class="tog"><input type="checkbox" checked> uncertain</label>
+      <div class="drawn"></div>`;
+    row.querySelectorAll('.ps input').forEach(el => el.addEventListener('input', () => {
+      const np = { ...P[inp.id], [el.dataset.k]: +el.value };
+      el.style.borderColor = d.valid(np) ? '' : '#ff8a7a';
+      if (d.valid(np)) { P[inp.id] = np; row.querySelector('.shape').innerHTML = shape(inp); clearRun(); }
+    }));
+    row.querySelector('.tog input').addEventListener('change', e => { ON[inp.id] = e.target.checked; row.classList.toggle('off', !e.target.checked); clearRun(); });
+    $('inputs').appendChild(row);
+  });
+  clearRun();
+}
+
+/* ---------- simulation ---------- */
+const bestValues = () => Object.fromEntries(EX.inputs.map(inp => [inp.id, DIST[inp.type].best(P[inp.id])]));
+const detResult = () => EX.f(bestValues());
+let R = rng(seed);
+function drawOne() {
+  const v = {};
+  EX.inputs.forEach(inp => { v[inp.id] = ON[inp.id] ? DIST[inp.type].sample(R, P[inp.id]) : DIST[inp.type].best(P[inp.id]); });
+  const y = EX.f(v);
+  results.push(y); drawn.push(v);
+  if (EX.compare) parts.push(EX.parts(v));
+  return { v, y };
+}
+function clearRun() {
+  results = []; drawn = []; parts = []; seed = (seed * 48271 + 7) % 2147483647; R = rng(seed);
+  $('bar').style.width = '0';
+  EX.inputs.forEach(inp => { const el = document.querySelector(`#row_${inp.id} .drawn`); if (el) el.textContent = ''; });
+  $('last').innerHTML = `Best-guess (deterministic) result: <b>${fmt(detResult())} ${EX.out.unit}</b> – calculated once with the most likely value of every input. Now let the simulation draw random values.`;
+  render();
+}
+function showLast(v, y) {
+  EX.inputs.forEach(inp => {
+    document.querySelector(`#row_${inp.id} .drawn`).innerHTML = ON[inp.id]
+      ? `iteration ${results.length.toLocaleString('en-US')}: drawn <b>${fmt(v[inp.id])}</b> ${inp.unit}`
+      : `fixed at best estimate ${fmt(v[inp.id])} ${inp.unit}`;
+  });
+  const extra = EX.compare ? ` (mug ${fmt(parts[parts.length - 1].mug)} − paper ${fmt(parts[parts.length - 1].paper)})` : '';
+  $('last').innerHTML = `Iteration ${results.length.toLocaleString('en-US')}: ${EX.inputs.map(i => `${i.name.toLowerCase()} ${fmt(v[i.id])}`).join(', ')}
+    → <b style="color:var(--mean)">${fmt(y)} ${EX.out.unit}</b>${extra}`;
+}
+$('step').addEventListener('click', () => {
+  if (running) return;
+  const { v, y } = drawOne();
+  showLast(v, y);
+  render(y);
+});
+$('go').addEventListener('click', () => {
+  if (running) return;
+  results = []; drawn = []; parts = []; R = rng(seed);
+  running = true;
+  const total = N, perFrame = Math.max(1, Math.ceil(total / 90));
+  const tick = () => {
+    let last;
+    for (let k = 0; k < perFrame && results.length < total; k++) last = drawOne();
+    $('bar').style.width = (results.length / total * 100) + '%';
+    showLast(last.v, last.y);
+    render(last.y);
+    if (results.length < total) requestAnimationFrame(tick);
+    else { running = false; seed = (seed * 48271 + 7) % 2147483647; }
+  };
+  requestAnimationFrame(tick);
+});
+$('clear').addEventListener('click', () => { if (!running) clearRun(); });
+document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
+  N = +b.dataset.n;
+  document.querySelectorAll('[data-n]').forEach(x => x.setAttribute('aria-pressed', x === b));
+}));
+
+/* ---------- charts ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, a, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  parent.appendChild(e);
+  return e;
+}
+function niceStep(range, target = 7) {
+  const raw = range / target, e = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * e >= raw) return m * e;
+  return 10 * e;
+}
+function tickLabel(v, st) {
+  const mant = +(st / Math.pow(10, Math.floor(Math.log10(st) + 1e-9))).toFixed(3);
+  const dec = Math.max(0, -Math.floor(Math.log10(st) + 1e-9) + (mant === 2.5 ? 1 : 0));
+  return (+v.toPrecision(12)).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+const quant = (s, p) => s[Math.min(s.length - 1, Math.max(0, Math.round(p * (s.length - 1))))];
+
+/* fixed x-range per example, so the histogram does not jump while it fills */
+function xRange() {
+  const r = rng(99), tmp = [];
+  const saveR = R; R = r;
+  for (let i = 0; i < 4000; i++) {
+    const v = {};
+    EX.inputs.forEach(inp => { v[inp.id] = ON[inp.id] ? DIST[inp.type].sample(r, P[inp.id]) : DIST[inp.type].best(P[inp.id]); });
+    tmp.push(EX.f(v));
+  }
+  R = saveR;
+  tmp.sort((a, b) => a - b);
+  let lo = quant(tmp, 0.002), hi = quant(tmp, 0.995);
+  const det = detResult();
+  lo = Math.min(lo, det); hi = Math.max(hi, det);
+  if (EX.compare) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  const pad = (hi - lo) * 0.06 || Math.abs(det) * 0.1 || 1;
+  return [lo - pad, hi + pad];
+}
+let XR = null, XRkey = '';
+
+function render(lastY) {
+  const key = JSON.stringify([EX.id, P, ON]);
+  if (key !== XRkey) { XR = xRange(); XRkey = key; }
+  hist(lastY); conv(); stats(); contrib();
+  $('iterTxt').textContent = results.length ? `${results.length.toLocaleString('en-US')} iterations` : 'no iterations yet';
+}
+
+function hist(lastY) {
+  const svg = $('hist'); svg.innerHTML = '';
+  const W = 760, H = 360, L = 20, Rr = 20, T = 30, B = 46, PW = W - L - Rr, PH = H - T - B;
+  const [lo, hi] = XR, X = x => L + (x - lo) / (hi - lo) * PW;
+  const bins = 50, bw = (hi - lo) / bins, counts = new Array(bins).fill(0);
+  let out = 0;
+  results.forEach(y => { const i = Math.floor((y - lo) / bw); if (i >= 0 && i < bins) counts[i]++; else out++; });
+  const cmax = Math.max(...counts, 1);
+  const Y = c => T + PH - c / cmax * PH * 0.92;
+  /* axis */
+  el('line', { x1: L, x2: L + PW, y1: T + PH, y2: T + PH, stroke: '#607b88', 'stroke-width': 1.5 }, svg);
+  const st = niceStep(hi - lo);
+  for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-12; v += st) {
+    el('line', { x1: X(v), x2: X(v), y1: T + PH, y2: T + PH + 5, stroke: '#607b88' }, svg);
+    el('text', { x: X(v), y: T + PH + 20, 'text-anchor': 'middle', 'font-size': 12.5, fill: '#adc0c9' }, svg).textContent = tickLabel(v, st);
+  }
+  el('text', { x: L + PW / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 13.5, fill: '#adc0c9' }, svg).textContent = `${EX.out.name} (${EX.out.unit})`;
+
+  if (results.length > 1) {
+    const s = results.slice().sort((a, b) => a - b);
+    const q1 = quant(s, 0.025), q2 = quant(s, 0.975);
+    el('rect', { x: X(q1), y: T, width: Math.max(0, X(q2) - X(q1)), height: PH, fill: '#58c4dd', 'fill-opacity': 0.1 }, svg);
+    el('text', { x: (X(q1) + X(q2)) / 2, y: T - 8, 'text-anchor': 'middle', 'font-size': 12, fill: '#58c4dd' }, svg).textContent = `95 % of results: ${fmt(q1)} – ${fmt(q2)}`;
+  }
+  counts.forEach((c, i) => {
+    if (!c) return;
+    const xm = lo + (i + 0.5) * bw;
+    const fill = EX.compare ? (xm < 0 ? '#3987e5' : '#d95926') : '#3d6b7d';
+    el('rect', { x: X(lo + i * bw) + 0.5, y: Y(c), width: Math.max(0.5, X(lo + (i + 1) * bw) - X(lo + i * bw) - 1), height: T + PH - Y(c), fill }, svg);
+  });
+  if (EX.compare) {
+    el('line', { x1: X(0), x2: X(0), y1: T, y2: T + PH, stroke: '#f1eee6', 'stroke-width': 1.5 }, svg);
+    el('text', { x: X(0) - 6, y: T + 16, 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': 700, fill: '#7fb0f0' }, svg).textContent = '← mug better';
+    el('text', { x: X(0) + 6, y: T + 16, 'font-size': 12.5, 'font-weight': 700, fill: '#ff9a6b' }, svg).textContent = 'paper better →';
+  }
+  /* deterministic and mean markers */
+  const det = detResult();
+  const marks = [['best guess', det, '#ff9a6b', '6 4']];
+  if (results.length) marks.push(['MC mean', results.reduce((a, b) => a + b, 0) / results.length, '#f4d35e', 'none']);
+  const placed = [];
+  marks.forEach(([n, v, c, dash]) => {
+    el('line', { x1: X(v), x2: X(v), y1: T + 26, y2: T + PH, stroke: c, 'stroke-width': 2.5, 'stroke-dasharray': dash }, svg);
+    let ly = T + 40;
+    while (placed.some(p => Math.abs(p - X(v)) < 90 && Math.abs(ly - T - 40) < 40) && ly < T + 72) ly += 16;
+    placed.push(X(v));
+    el('text', { x: X(v) + 5, y: ly, 'font-size': 12.5, 'font-weight': 700, fill: c, stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' }, svg).textContent = n;
+  });
+  if (lastY !== undefined && isFinite(lastY)) el('circle', { cx: Math.min(L + PW, Math.max(L, X(lastY))), cy: T + PH, r: 6, fill: '#f4d35e', stroke: '#172a33', 'stroke-width': 2 }, svg);
+  if (!results.length) el('text', { x: L + PW / 2, y: T + PH / 2, 'text-anchor': 'middle', 'font-size': 15, fill: '#adc0c9' }, svg).textContent = 'Press “Run simulation” or “Draw 1 iteration”';
+  if (out) el('text', { x: L + PW, y: T - 8, 'text-anchor': 'end', 'font-size': 12, fill: '#adc0c9' }, svg).textContent = `${out} results beyond the chart`;
+
+  $('histLegend').innerHTML = `
+    ${EX.compare ? `<span><svg width="14" height="12"><rect width="14" height="12" fill="#3987e5"/></svg>mug better</span><span><svg width="14" height="12"><rect width="14" height="12" fill="#d95926"/></svg>paper cup better</span>`
+      : `<span><svg width="14" height="12"><rect width="14" height="12" fill="#3d6b7d"/></svg>simulated results</span>`}
+    <span><svg width="14" height="12"><rect width="14" height="12" fill="#58c4dd" fill-opacity=".2"/></svg>95 % interval</span>
+    <span><svg width="22" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#ff9a6b" stroke-width="2.5" stroke-dasharray="6 4"/></svg>best-guess result</span>
+    <span><svg width="22" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#f4d35e" stroke-width="2.5"/></svg>Monte Carlo mean</span>
+    <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="#f4d35e"/></svg>latest iteration</span>`;
+}
+
+function conv() {
+  const svg = $('conv'); svg.innerHTML = '';
+  const W = 760, H = 200, L = 70, Rr = 20, T = 12, B = 34, PW = W - L - Rr, PH = H - T - B;
+  const n = results.length;
+  el('line', { x1: L, x2: L + PW, y1: T + PH, y2: T + PH, stroke: '#607b88' }, svg);
+  el('text', { x: L + PW / 2, y: H - 4, 'text-anchor': 'middle', 'font-size': 12.5, fill: '#adc0c9' }, svg).textContent = 'iteration';
+  if (n < 2) return;
+  const run = []; let s = 0;
+  results.forEach((y, i) => { s += y; run.push(s / (i + 1)); });
+  const final = run[n - 1];
+  const tail = run.slice(Math.min(n - 1, Math.floor(n * 0.02)));
+  let lo = Math.min(...tail, detResult()), hi = Math.max(...tail, detResult());
+  const pad = (hi - lo) * 0.15 || Math.abs(final) * 0.05 || 1; lo -= pad; hi += pad;
+  const X = i => L + i / (n - 1) * PW, Y = v => T + PH - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * PH;
+  const st = niceStep(hi - lo, 4);
+  for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-12; v += st) {
+    el('line', { x1: L, x2: L + PW, y1: Y(v), y2: Y(v), stroke: '#263b45' }, svg);
+    el('text', { x: L - 6, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: '#adc0c9' }, svg).textContent = tickLabel(v, st);
+  }
+  const xs = niceStep(n, 5);
+  for (let i = 0; i <= n; i += xs) el('text', { x: X(Math.max(0, i - 1)), y: T + PH + 16, 'text-anchor': 'middle', 'font-size': 12, fill: '#adc0c9' }, svg).textContent = i.toLocaleString('en-US');
+  el('line', { x1: L, x2: L + PW, y1: Y(detResult()), y2: Y(detResult()), stroke: '#ff9a6b', 'stroke-width': 1.5, 'stroke-dasharray': '6 4' }, svg);
+  const step = Math.max(1, Math.floor(n / 600));
+  let d = '';
+  for (let i = 0; i < n; i += step) d += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(run[i]).toFixed(1);
+  d += 'L' + X(n - 1).toFixed(1) + ' ' + Y(final).toFixed(1);
+  el('path', { d, fill: 'none', stroke: '#f4d35e', 'stroke-width': 2 }, svg);
+  el('text', { x: L + PW, y: Y(final) - 8, 'text-anchor': 'end', 'font-size': 12.5, 'font-weight': 700, fill: '#f4d35e', stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' }, svg).textContent = `mean ${fmt(final)}`;
+}
+
+function stats() {
+  const n = results.length, det = detResult(), u = EX.out.unit;
+  if (!n) {
+    $('verdict').innerHTML = '';
+    $('stats').innerHTML = `<tbody><tr><td>Best-guess result</td><td>${fmt(det)} ${u}</td></tr></tbody>`;
+    $('lesson').textContent = EX.lesson;
+    return;
+  }
+  const s = results.slice().sort((a, b) => a - b);
+  const mean = results.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(results.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1)) : 0;
+  const rows = [
+    ['Best guess (deterministic)', det],
+    ['Monte Carlo mean', mean],
+    ['Median', quant(s, 0.5)],
+    ['Standard deviation', sd],
+    ['2.5 % percentile', quant(s, 0.025)],
+    ['97.5 % percentile', quant(s, 0.975)],
+    ['Minimum / maximum', null]
+  ];
+  let h = '<tbody>';
+  rows.forEach(([k, v]) => {
+    h += `<tr><td>${k}</td><td>${v === null ? `${fmt(s[0])} / ${fmt(s[n - 1])}` : fmt(v)} ${u}</td></tr>`;
+  });
+  if (!EX.compare && mean) h += `<tr><td>Coefficient of variation (SD ÷ mean)</td><td>${fmt(sd / Math.abs(mean) * 100, 1)} %</td></tr>`;
+  if (!EX.compare) h += `<tr><td>Mean vs best guess</td><td>${mean - det >= 0 ? '+' : ''}${fmt((mean - det) / Math.abs(det) * 100, 1)} %</td></tr>`;
+  if (EX.compare) {
+    const m = parts.reduce((a, p) => a + p.mug, 0) / n, pp = parts.reduce((a, p) => a + p.paper, 0) / n;
+    h += `<tr><td>Mean: mug / paper cup</td><td>${fmt(m)} / ${fmt(pp)} kg</td></tr>`;
+  }
+  $('stats').innerHTML = h + '</tbody>';
+  if (EX.compare) {
+    const pBetter = results.filter(y => y < 0).length / n;
+    $('verdict').innerHTML = `<div class="verdict"><div class="lbl">Probability that the mug is better</div>
+      <div class="big" style="color:${pBetter >= 0.5 ? '#7fb0f0' : '#ff9a6b'}">${fmt(pBetter * 100, 1)} %</div>
+      <div class="muted">in ${n.toLocaleString('en-US')} iterations. Best guess says: ${det < 0 ? 'mug better' : 'paper cup better'} by ${fmt(Math.abs(det))} kg.</div></div>`;
+  } else $('verdict').innerHTML = '';
+  $('lesson').textContent = EX.lesson;
+}
+
+/* contribution to variance: squared Spearman rank correlation, normalised */
+function ranks(a) {
+  const idx = a.map((v, i) => [v, i]).sort((x, y) => x[0] - y[0]);
+  const r = new Array(a.length);
+  idx.forEach(([, i], k) => { r[i] = k; });
+  return r;
+}
+function corr(x, y) {
+  const n = x.length, mx = x.reduce((a, b) => a + b, 0) / n, my = y.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { const dx = x[i] - mx, dy = y[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+  return sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0;
+}
+function contrib() {
+  const n = results.length;
+  if (n < 30) { $('contrib').innerHTML = `<p class="muted" style="margin:0">${n ? 'Need at least 30 iterations.' : 'Run the simulation to see the contributions.'}</p>`; return; }
+  const ry = ranks(results);
+  const c = EX.inputs.map(inp => {
+    if (!ON[inp.id]) return { inp, r: 0 };
+    return { inp, r: corr(ranks(drawn.map(v => v[inp.id])), ry) };
+  });
+  const tot = c.reduce((a, x) => a + x.r * x.r, 0) || 1;
+  $('contrib').innerHTML = c.sort((a, b) => b.r * b.r - a.r * a.r).map(({ inp, r }) => {
+    const share = r * r / tot;
+    return `<div class="crow"><div class="top"><span>${inp.name}${ON[inp.id] ? '' : ' <span class="muted">(fixed)</span>'}</span>
+      <span>${fmt(share * 100, 1)} % · ρ = ${r >= 0 ? '+' : ''}${fmt(r, 2)}</span></div>
+      <div class="track"><div class="fill" style="width:${(share * 100).toFixed(1)}%"></div></div></div>`;
+  }).join('');
+}
+
+setExample(0);
+</script>
+</div>
+</body>
+</html>

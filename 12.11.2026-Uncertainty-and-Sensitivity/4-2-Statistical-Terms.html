@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statistical terms</title>
+<style>
+  :root {
+    --ink: #f1eee6;
+    --dim: #adc0c9;
+    --line: #304650;
+    --panel: #172a33;
+    --panel-2: #20343e;
+    --accent: #58c4dd;
+    --mean: #f4d35e;
+    --median: #58c4dd;
+    --mode: #ff9a6b;
+    --dot: #9fb3bd;
+    --left: #3987e5;
+    --right: #d95926;
+  }
+  * { box-sizing: border-box; }
+  .intro h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+  .intro p { margin: 0 0 12px; color: var(--dim); max-width: 100ch; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+  .toc a { font-size: 13.5px; color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 100px; padding: 5px 12px; background: var(--panel); }
+  .toc a:hover { border-color: var(--accent); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; scroll-margin-top: 12px; }
+  .card h2 { margin: 0 0 4px; font-size: 1.2rem; font-weight: 600; }
+  .card h3 { margin: 16px 0 6px; font-size: 1rem; font-weight: 600; }
+  .lead { margin: 0 0 12px; color: var(--dim); max-width: 100ch; font-size: 14.5px; }
+  .muted { color: var(--dim); font-size: 14px; }
+  .lbl { font-size: 13px; color: var(--dim); margin: 0 0 6px; }
+  button {
+    font: inherit; font-size: 13.5px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  .two { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  svg.chart { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+  .defs { display: grid; gap: 10px; }
+  .def { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; font-size: 14px; border-left: 3px solid var(--c, var(--accent)); }
+  .def b.t { display: block; font-size: 15px; color: var(--c, var(--ink)); }
+  .def .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .calc { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--dim); margin-top: 4px; word-break: break-word; }
+  .strip { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .strip span { min-width: 34px; text-align: center; font-size: 13px; padding: 3px 6px; border-radius: 5px; background: var(--panel-2); font-variant-numeric: tabular-nums; }
+  .strip span.mid { background: var(--median); color: #0d1a20; font-weight: 700; }
+  .slider-row { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+  .slider-row output { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 70px; text-align: right; }
+  .slider-row label { font-size: 13.5px; color: var(--dim); min-width: 120px; }
+  .key { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 10px; }
+  .key b { color: var(--mean); }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 600; font-size: 12.5px; }
+  tfoot td { font-weight: 700; border-bottom: 0; }
+  table.wrap td, table.wrap th { white-space: normal; }
+  table.wrap td:nth-child(2), table.wrap th:nth-child(2) { white-space: nowrap; }
+  table.wrap td:last-child, table.wrap th:last-child { text-align: left; }
+  .where { font-size: 12.5px; color: var(--dim); margin-top: 10px; }
+  .where b { color: var(--ink); font-weight: 600; }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<section class="intro">
+  <h1>Statistical terms, visually</h1>
+  <p>The next two pages – probability distributions (4-3) and Monte Carlo simulation (4-4) – describe uncertain values with a few statistical terms.
+  Each section below lets you play with one group of terms.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#s1">1 · Mean, median, mode</a>
+    <a href="#s2">2 · Standard deviation &amp; CV</a>
+    <a href="#s3">3 · Percentiles &amp; 95 % interval</a>
+    <a href="#s4">4 · Geometric mean &amp; GSD²</a>
+    <a href="#s5">5 · Rank correlation ρ</a>
+  </nav>
+</section>
+
+<!-- 1 ------------------------------------------------------------------ -->
+<section class="card" id="s1" aria-labelledby="h1">
+  <h2 id="h1">1 · Mean, median and mode – three kinds of “typical value”</h2>
+  <p class="lead">Commute times of a group of students, in minutes. <strong>Drag the dots</strong> left and right (dots with the same value stack up), or add an extreme value.</p>
+  <div class="two">
+    <div>
+      <svg class="chart" id="dots" viewBox="0 0 760 215" role="img" aria-label="Dot plot of commute times with markers for the mean, median and mode. Drag dots to change values."></svg>
+      <div class="row">
+        <button type="button" id="outlier" aria-pressed="false">Add a 110-minute commute</button>
+        <button type="button" id="addOne">Add a random student</button>
+        <button type="button" id="remOne">Remove the last student</button>
+        <button type="button" id="reset1">Reset</button>
+      </div>
+      <p class="lbl" style="margin-top:8px">Values sorted from smallest to largest (the median is highlighted)</p>
+      <div class="strip" id="strip"></div>
+    </div>
+    <div class="defs">
+      <div class="def" style="--c:var(--mean)"><b class="t">Mean (arithmetic average)</b><span class="v" id="vMean"></span>
+        <div>Sum of all values ÷ number of values. It is the <em>balance point</em> – the ▲ under the axis where the dots would balance like a seesaw.</div><div class="calc" id="cMean"></div></div>
+      <div class="def" style="--c:var(--median)"><b class="t">Median</b><span class="v" id="vMedian"></span>
+        <div>The middle value: half of the values are below it, half above. With an even count it is the average of the two middle values.</div><div class="calc" id="cMedian"></div></div>
+      <div class="def" style="--c:var(--mode)"><b class="t">Mode (most likely value)</b><span class="v" id="vMode"></span>
+        <div>The value that occurs most often – the highest stack, or the peak of a distribution curve.</div></div>
+    </div>
+  </div>
+  <div class="key" id="key1"></div>
+  <p class="where">Used in <b>4-3</b>: the vertical lines on every distribution · in <b>4-4</b>: “Monte Carlo mean” vs “best guess” (the best guess of a triangle is its mode, of a lognormal its median).</p>
+</section>
+
+<!-- 2 ------------------------------------------------------------------ -->
+<section class="card" id="s2" aria-labelledby="h2">
+  <h2 id="h2">2 · Standard deviation (SD) and coefficient of variation (CV) – how spread out?</h2>
+  <p class="lead">The same commute times (change them in section 1). Each line shows how far a value lies from the mean – its <em>deviation</em>.
+  The SD is a typical size of these deviations.</p>
+  <div class="two">
+    <div>
+      <svg class="chart" id="devs" viewBox="0 0 760 330" role="img" aria-label="Each value drawn as a dot with a line to the mean; the band shows mean plus and minus one standard deviation."></svg>
+    </div>
+    <div>
+      <div class="table-wrap"><table id="devTbl"></table></div>
+      <div class="defs" style="margin-top:10px">
+        <div class="def"><b class="t">Standard deviation</b><span class="v" id="vSD"></span>
+          <div>Square every deviation, average them (divide by n − 1), take the square root. Large deviations count extra because they are squared.</div><div class="calc" id="cSD"></div></div>
+        <div class="def"><b class="t">Coefficient of variation (CV)</b><span class="v" id="vCV"></span>
+          <div>SD ÷ mean, in %. Compares spread across values of different size: ±5 g on a 310 g mug is small, ±5 g on a 9 g paper cup is large.</div></div>
+      </div>
+    </div>
+  </div>
+  <h3>The 68 – 95 rule for a normal (bell-shaped) distribution</h3>
+  <div class="two">
+    <svg class="chart" id="bell" viewBox="0 0 760 260" role="img" aria-label="Normal curve with shaded areas within one and two standard deviations of the mean."></svg>
+    <div>
+      <div class="slider-row"><label for="bellSd">Standard deviation</label><input type="range" id="bellSd" min="3" max="20" step="0.5" value="7"><output id="bellSdOut" for="bellSd"></output></div>
+      <div class="row" role="group" aria-label="Band to show">
+        <button type="button" data-k="1" aria-pressed="true">± 1 SD</button>
+        <button type="button" data-k="1.96">± 1.96 SD</button>
+        <button type="button" data-k="3">± 3 SD</button>
+      </div>
+      <div class="key" id="bellTxt"></div>
+    </div>
+  </div>
+  <p class="where">Used in <b>4-3</b>: the normal distribution's σ · in <b>4-4</b>: “Standard deviation” and “Coefficient of variation” in the result statistics.</p>
+</section>
+
+<!-- 3 ------------------------------------------------------------------ -->
+<section class="card" id="s3" aria-labelledby="h3">
+  <h2 id="h3">3 · Percentiles and the 95 % interval – where do most results fall?</h2>
+  <p class="lead">2 000 Monte Carlo results of the truck delivery from 4-4 (kg CO₂-eq). The <em>p-th percentile</em> is the value below which p % of the results lie.
+  Move the slider.</p>
+  <div class="two">
+    <svg class="chart" id="pct" viewBox="0 0 760 300" role="img" aria-label="Histogram of results with the part below the chosen percentile shaded."></svg>
+    <div>
+      <div class="slider-row"><label for="pSl">Percentile p</label><input type="range" id="pSl" min="1" max="99" step="0.5" value="50"><output id="pOut" for="pSl"></output></div>
+      <div class="row">
+        <button type="button" data-p="2.5">2.5 %</button>
+        <button type="button" data-p="50">50 % = median</button>
+        <button type="button" data-p="97.5">97.5 %</button>
+        <button type="button" id="ci95" aria-pressed="false">Show the 95 % interval</button>
+      </div>
+      <div class="key" id="pTxt"></div>
+      <div class="key" id="ciTxt"></div>
+    </div>
+  </div>
+  <p class="where">Used in <b>4-3</b>: the shaded “95 %” band and the 2.5 % / 97.5 % percentiles · in <b>4-4</b>: “95 % of results” on the histogram.
+  Also P(X ≤ value) in 4-3's hover: it is the percentile read the other way round.</p>
+</section>
+
+<!-- 4 ------------------------------------------------------------------ -->
+<section class="card" id="s4" aria-labelledby="h4">
+  <h2 id="h4">4 · Geometric mean and GSD² – spread as a <em>factor</em></h2>
+  <p class="lead">For lognormal values (most LCA inventory data in ecoinvent) the spread is not “± so many units” but “× or ÷ a factor”.
+  The geometric mean equals the median. GSD² is the factor: 95 % of the values lie between <strong>median ÷ GSD²</strong> and <strong>median × GSD²</strong>.</p>
+  <div class="two">
+    <div>
+      <svg class="chart" id="logn" viewBox="0 0 760 300" role="img" aria-label="Lognormal curve with the interval from median divided by GSD squared to median times GSD squared."></svg>
+      <div class="row" role="group" aria-label="Axis scale">
+        <span class="lbl" style="margin:0">x-axis:</span>
+        <button type="button" data-ax="lin" aria-pressed="true">linear</button>
+        <button type="button" data-ax="log">logarithmic</button>
+      </div>
+    </div>
+    <div>
+      <div class="slider-row"><label for="gm">Geometric mean</label><input type="range" id="gm" min="1" max="20" step="0.5" value="10"><output id="gmOut" for="gm"></output></div>
+      <div class="slider-row"><label for="gsd">GSD²</label><input type="range" id="gsd" min="1.05" max="10" step="0.05" value="3"><output id="gsdOut" for="gsd"></output></div>
+      <div class="key" id="lognTxt"></div>
+      <div class="table-wrap" style="margin-top:10px"><table class="wrap">
+        <thead><tr><th>GSD²</th><th>95 % range (median 100)</th><th>Typical for</th></tr></thead>
+        <tbody>
+          <tr><td>1.05</td><td>95 – 105</td><td>well-measured flows (basic uncertainty)</td></tr>
+          <tr><td>1.5</td><td>67 – 150</td><td>typical inventory data</td></tr>
+          <tr><td>3</td><td>33 – 300</td><td>field emissions, e.g. N₂O</td></tr>
+          <tr><td>10</td><td>10 – 1 000</td><td>toxic emissions, order of magnitude only</td></tr>
+        </tbody></table></div>
+    </div>
+  </div>
+  <p class="where">Used in <b>4-3</b>: the lognormal parameters (geometric mean, GSD²) · in <b>4-4</b>: uses per mug, N₂O factor, paper cup footprint.
+  Related: GSD = √GSD², σ = ln(GSD²) ÷ 2 is the SD of ln(value).</p>
+</section>
+
+<!-- 5 ------------------------------------------------------------------ -->
+<section class="card" id="s5" aria-labelledby="h5">
+  <h2 id="h5">5 · Rank correlation ρ – does a high input go with a high result?</h2>
+  <p class="lead">Each dot is one Monte Carlo iteration: the value drawn for an input (x) and the model result (y). The Spearman rank correlation ρ
+  runs from −1 to +1. 4-4 uses ρ² to estimate how much of the result's uncertainty comes from each input.</p>
+  <div class="two">
+    <svg class="chart" id="scat" viewBox="0 0 560 360" role="img" aria-label="Scatter plot of an input against the result with the rank correlation shown."></svg>
+    <div>
+      <div class="slider-row"><label for="rho">How strongly the result depends on this input</label><input type="range" id="rho" min="-1" max="1" step="0.05" value="0.7"><output id="rhoOut" for="rho"></output></div>
+      <div class="row">
+        <button type="button" data-r="0.98">like heating gas (4-4, tomatoes)</button>
+        <button type="button" data-r="0.1">like the N₂O factor</button>
+        <button type="button" data-r="-0.55">like the paper cup footprint (mug − paper)</button>
+      </div>
+      <div class="key" id="rhoTxt"></div>
+    </div>
+  </div>
+  <p class="where">Used in <b>4-4</b>: “Which input drives the uncertainty?” – contribution ≈ ρ² of each input, scaled to 100 %.</p>
+</section>
+
+<script>
+/* ---------- helpers ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+function el(tag, a, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  parent.appendChild(e);
+  return e;
+}
+const txt = (parent, x, y, s, a = {}) => { const t = el('text', Object.assign({ x, y, 'font-size': 13, fill: '#adc0c9' }, a), parent); t.textContent = s; return t; };
+const fmt = (v, d = 1) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+function rng(seed) {
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+function niceStep(range, target = 7) {
+  const raw = range / target, e = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * e >= raw) return m * e;
+  return 10 * e;
+}
+const halo = { stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' };
+
+/* ================= 1 · mean, median, mode ================= */
+const START = [12, 15, 15, 18, 20, 20, 20, 25, 30, 35, 45];
+let data = START.slice(), outlierOn = false, dragIdx = null;
+const R1 = rng(3);
+const XMAX1 = 120;
+const D = { W: 760, H: 215, L: 24, R: 24, base: 150 };
+const X1 = v => D.L + v / XMAX1 * (D.W - D.L - D.R);
+
+function stats1() {
+  const n = data.length, s = data.slice().sort((a, b) => a - b);
+  const sum = data.reduce((a, b) => a + b, 0), mean = sum / n;
+  const median = n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+  const cnt = {}; data.forEach(v => { cnt[v] = (cnt[v] || 0) + 1; });
+  const top = Math.max(...Object.values(cnt));
+  const modes = top > 1 ? Object.keys(cnt).filter(k => cnt[k] === top).map(Number).sort((a, b) => a - b) : [];
+  const sd = n > 1 ? Math.sqrt(data.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : 0;
+  return { n, s, sum, mean, median, modes, top, sd };
+}
+
+function drawDots() {
+  const svg = $('dots'); svg.innerHTML = '';
+  const st = stats1();
+  /* axis */
+  el('line', { x1: D.L, x2: D.W - D.R, y1: D.base + 10, y2: D.base + 10, stroke: '#607b88', 'stroke-width': 1.5 }, svg);
+  for (let v = 0; v <= XMAX1; v += 10) {
+    el('line', { x1: X1(v), x2: X1(v), y1: D.base + 10, y2: D.base + 15, stroke: '#607b88' }, svg);
+    txt(svg, X1(v), D.base + 30, v, { 'text-anchor': 'middle', 'font-size': 12.5 });
+  }
+  txt(svg, D.W / 2, D.H - 4, 'commute time (minutes)', { 'text-anchor': 'middle' });
+  /* markers */
+  st.modes.forEach(m => el('line', { x1: X1(m), x2: X1(m), y1: 26, y2: D.base + 10, stroke: '#ff9a6b', 'stroke-width': 2.5, 'stroke-dasharray': '2 4' }, svg));
+  el('line', { x1: X1(st.median), x2: X1(st.median), y1: 26, y2: D.base + 10, stroke: '#58c4dd', 'stroke-width': 2.5, 'stroke-dasharray': '7 4' }, svg);
+  el('line', { x1: X1(st.mean), x2: X1(st.mean), y1: 26, y2: D.base + 10, stroke: '#f4d35e', 'stroke-width': 2.5 }, svg);
+  el('polygon', { points: `${X1(st.mean)},${D.base + 11} ${X1(st.mean) - 9},${D.base + 26} ${X1(st.mean) + 9},${D.base + 26}`, fill: '#f4d35e' }, svg);
+  /* labels at the top, de-overlapped */
+  const labs = [['mean', st.mean, '#f4d35e'], ['median', st.median, '#58c4dd']].concat(st.modes.map(m => ['mode', m, '#ff9a6b']));
+  labs.sort((a, b) => a[1] - b[1]);
+  const placed = [];
+  labs.forEach(([n, v, c]) => {
+    let y = 18;
+    while (placed.some(p => Math.abs(p.x - X1(v)) < 58 && p.y === y)) y += 15;
+    placed.push({ x: X1(v), y });
+    txt(svg, X1(v) + 4, y, n, Object.assign({ fill: c, 'font-weight': 700, 'font-size': 12.5 }, halo));
+  });
+  /* stacked dots */
+  const seen = {};
+  data.forEach((v, i) => {
+    const k = seen[v] = (seen[v] || 0) + 1;
+    const c = el('circle', { cx: X1(v), cy: D.base - 2 - (k - 1) * 17, r: 7.5, fill: i === dragIdx ? '#f1eee6' : '#9fb3bd', stroke: '#172a33', 'stroke-width': 2, 'data-i': i,
+      style: 'cursor:grab', tabindex: 0, role: 'slider', 'aria-label': `student ${i + 1}: ${v} minutes`, 'aria-valuenow': v, 'aria-valuemin': 0, 'aria-valuemax': XMAX1 }, svg);
+    c.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); data[i] = Math.max(0, Math.min(XMAX1, v + (e.key === 'ArrowRight' ? 1 : -1))); update1(); svg.querySelector(`[data-i="${i}"]`).focus(); }
+    });
+  });
+
+  /* text */
+  $('vMean').textContent = `${fmt(st.mean)} min`;
+  $('vMedian').textContent = `${fmt(st.median, st.median % 1 ? 1 : 0)} min`;
+  $('vMode').textContent = st.modes.length ? `${st.modes.join(' and ')} min` : 'none';
+  $('cMean').textContent = `(${data.join(' + ')}) ÷ ${st.n} = ${fmt(st.sum, 0)} ÷ ${st.n} = ${fmt(st.mean, 2)}`;
+  $('cMedian').textContent = st.n % 2 ? `${st.n} values → the ${(st.n + 1) / 2}th value` : `${st.n} values → average of the ${st.n / 2}th and ${st.n / 2 + 1}th`;
+  const mid = st.n % 2 ? [(st.n - 1) / 2] : [st.n / 2 - 1, st.n / 2];
+  $('strip').innerHTML = st.s.map((v, i) => `<span class="${mid.includes(i) ? 'mid' : ''}">${v}</span>`).join('');
+  const gap = st.mean - st.median;
+  $('key1').innerHTML = Math.abs(gap) < 0.5
+    ? 'Mean and median are almost equal: the values are roughly symmetric.'
+    : gap > 0 ? `The mean is <b>${fmt(gap)} min above</b> the median: a few long commutes pull the balance point to the right, while the median only cares about the middle. This is a <b>right-skewed</b> data set – like a lognormal distribution. ${outlierOn ? 'One extreme value moved the mean a lot but the median hardly at all.' : 'Try the 110-minute commute.'}`
+      : `The mean is <b>${fmt(-gap)} min below</b> the median: a few short values pull the balance point to the left (left-skewed).`;
+  drawDevs(st);
+}
+function update1() { drawDots(); }
+/* dragging */
+const dotsSvg = $('dots');
+function svgX(e, svg, W) { const r = svg.getBoundingClientRect(); return (e.clientX - r.left) / r.width * W; }
+dotsSvg.addEventListener('pointerdown', e => {
+  const t = e.target.closest('circle[data-i]');
+  if (!t) return;
+  dragIdx = +t.dataset.i; dotsSvg.setPointerCapture(e.pointerId); update1();
+});
+dotsSvg.addEventListener('pointermove', e => {
+  if (dragIdx === null) return;
+  const v = Math.round((svgX(e, dotsSvg, D.W) - D.L) / (D.W - D.L - D.R) * XMAX1);
+  const nv = Math.max(0, Math.min(XMAX1, v));
+  if (nv !== data[dragIdx]) { data[dragIdx] = nv; update1(); }
+});
+const endDrag = () => { if (dragIdx !== null) { dragIdx = null; update1(); } };
+dotsSvg.addEventListener('pointerup', endDrag);
+dotsSvg.addEventListener('pointercancel', endDrag);
+$('outlier').addEventListener('click', () => {
+  outlierOn = !outlierOn;
+  if (outlierOn) data.push(110); else { const i = data.lastIndexOf(110); if (i >= 0) data.splice(i, 1); }
+  $('outlier').setAttribute('aria-pressed', outlierOn);
+  update1();
+});
+$('addOne').addEventListener('click', () => { if (data.length < 30) { data.push(Math.round(10 + R1() * 40)); update1(); } });
+$('remOne').addEventListener('click', () => { if (data.length > 2) { const v = data.pop(); if (v === 110 && outlierOn) { outlierOn = false; $('outlier').setAttribute('aria-pressed', false); } update1(); } });
+$('reset1').addEventListener('click', () => { data = START.slice(); outlierOn = false; $('outlier').setAttribute('aria-pressed', false); update1(); });
+
+/* ================= 2 · standard deviation ================= */
+function drawDevs(st) {
+  const svg = $('devs'); svg.innerHTML = '';
+  const W = 760, H = 330, L = 24, R = 24, T = 26, B = 40, PW = W - L - R;
+  const X = v => L + v / XMAX1 * PW;
+  const rows = st.s.map((v, i) => ({ v, i }));
+  const rh = Math.min(22, (H - T - B) / rows.length);
+  /* ±1 SD band */
+  el('rect', { x: X(Math.max(0, st.mean - st.sd)), y: T - 6, width: X(Math.min(XMAX1, st.mean + st.sd)) - X(Math.max(0, st.mean - st.sd)), height: rows.length * rh + 8, fill: '#58c4dd', 'fill-opacity': 0.12 }, svg);
+  txt(svg, X(st.mean), T - 12, `mean ± 1 SD = ${fmt(st.mean - st.sd)} … ${fmt(st.mean + st.sd)}`, { 'text-anchor': 'middle', fill: '#58c4dd', 'font-size': 12.5 });
+  el('line', { x1: X(st.mean), x2: X(st.mean), y1: T - 6, y2: T + rows.length * rh + 2, stroke: '#f4d35e', 'stroke-width': 2.5 }, svg);
+  rows.forEach((r, k) => {
+    const y = T + k * rh + rh / 2;
+    const dev = r.v - st.mean, c = dev < 0 ? '#3987e5' : '#d95926';
+    el('line', { x1: X(st.mean), x2: X(r.v), y1: y, y2: y, stroke: c, 'stroke-width': 3 }, svg);
+    el('circle', { cx: X(r.v), cy: y, r: 5.5, fill: '#9fb3bd', stroke: '#172a33', 'stroke-width': 1.5 }, svg);
+    const lx = dev < 0 ? X(r.v) - 9 : X(r.v) + 9;
+    txt(svg, lx, y + 4, `${dev >= 0 ? '+' : '−'}${fmt(Math.abs(dev))}`, Object.assign({ 'text-anchor': dev < 0 ? 'end' : 'start', 'font-size': 11.5, fill: c === '#3987e5' ? '#7fb0f0' : '#ff9a6b' }, halo));
+  });
+  const yAx = T + rows.length * rh + 8;
+  el('line', { x1: L, x2: W - R, y1: yAx, y2: yAx, stroke: '#607b88' }, svg);
+  for (let v = 0; v <= XMAX1; v += 20) txt(svg, X(v), yAx + 17, v, { 'text-anchor': 'middle', 'font-size': 12 });
+  txt(svg, W / 2, yAx + 34, 'commute time (minutes) · deviation = value − mean', { 'text-anchor': 'middle', 'font-size': 12.5 });
+  svg.setAttribute('viewBox', `0 0 ${W} ${yAx + 40}`);
+
+  /* table */
+  const ss = st.s.reduce((a, v) => a + (v - st.mean) ** 2, 0);
+  $('devTbl').innerHTML = `<thead><tr><th>Value</th><th>Deviation</th><th>Deviation²</th></tr></thead><tbody>` +
+    st.s.map(v => `<tr><td>${v}</td><td>${v - st.mean >= 0 ? '+' : '−'}${fmt(Math.abs(v - st.mean))}</td><td>${fmt((v - st.mean) ** 2)}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td>Sum</td><td>0.0</td><td>${fmt(ss)}</td></tr></tfoot>`;
+  $('vSD').textContent = `${fmt(st.sd)} min`;
+  $('cSD').textContent = `√( ${fmt(ss)} ÷ (${st.n} − 1) ) = √${fmt(ss / (st.n - 1))} = ${fmt(st.sd, 2)}`;
+  $('vCV').textContent = `${fmt(st.sd / st.mean * 100)} %`;
+}
+
+/* bell curve */
+let bellK = 1;
+function drawBell() {
+  const svg = $('bell'); svg.innerHTML = '';
+  const W = 760, H = 260, L = 24, R = 24, T = 20, B = 40, PW = W - L - R, PH = H - T - B;
+  const mu = 60, sd = +$('bellSd').value;
+  $('bellSdOut').textContent = `${fmt(sd)} min`;
+  const lo = 0, hi = 120, X = v => L + (v - lo) / (hi - lo) * PW;
+  const pdf = x => Math.exp(-((x - mu) ** 2) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI));
+  const peak = 1 / (3 * Math.sqrt(2 * Math.PI)), Y = v => T + PH - v / peak * PH;   // fixed y-scale (SD = 3 fills the plot)
+  const a = mu - bellK * sd, b = mu + bellK * sd;
+  let area = `M${X(Math.max(lo, a))} ${Y(0)}`;
+  for (let i = 0; i <= 200; i++) { const x = Math.max(lo, a) + (Math.min(hi, b) - Math.max(lo, a)) * i / 200; area += ` L${X(x).toFixed(1)} ${Y(pdf(x)).toFixed(1)}`; }
+  area += ` L${X(Math.min(hi, b))} ${Y(0)} Z`;
+  el('path', { d: area, fill: '#58c4dd', 'fill-opacity': 0.3 }, svg);
+  let d = '';
+  for (let i = 0; i <= 300; i++) { const x = lo + (hi - lo) * i / 300; d += (i ? 'L' : 'M') + X(x).toFixed(1) + ' ' + Y(pdf(x)).toFixed(1); }
+  el('path', { d, fill: 'none', stroke: '#f1eee6', 'stroke-width': 3 }, svg);
+  el('line', { x1: L, x2: W - R, y1: T + PH, y2: T + PH, stroke: '#607b88' }, svg);
+  for (let v = 0; v <= 120; v += 10) txt(svg, X(v), T + PH + 18, v, { 'text-anchor': 'middle', 'font-size': 12 });
+  el('line', { x1: X(mu), x2: X(mu), y1: T, y2: T + PH, stroke: '#f4d35e', 'stroke-width': 2 }, svg);
+  [a, b].forEach((v, i) => { if (v > lo && v < hi) {
+    el('line', { x1: X(v), x2: X(v), y1: T + 10, y2: T + PH, stroke: '#58c4dd', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }, svg);
+    txt(svg, X(v), T + 8, `${i ? '+' : '−'}${bellK} SD`, Object.assign({ 'text-anchor': 'middle', fill: '#58c4dd', 'font-size': 12.5, 'font-weight': 700 }, halo));
+  } });
+  const share = { 1: 68.3, 1.96: 95.0, 3: 99.7 }[bellK];
+  txt(svg, X(mu), T + PH - 12, `${share} %`, Object.assign({ 'text-anchor': 'middle', fill: '#f1eee6', 'font-size': 15, 'font-weight': 700 }, halo));
+  txt(svg, W / 2, H - 4, 'value (here: mean 60 min)', { 'text-anchor': 'middle', 'font-size': 12.5 });
+  $('bellTxt').innerHTML = `<b>${share} %</b> of all values lie within ± ${bellK} SD of the mean, i.e. between ${fmt(Math.max(0, a))} and ${fmt(b)} min.
+    This holds for <em>every</em> normal distribution – a larger SD just makes the curve wider and lower.`;
+}
+$('bellSd').addEventListener('input', drawBell);
+document.querySelectorAll('[data-k]').forEach(btn => btn.addEventListener('click', () => {
+  bellK = +btn.dataset.k;
+  document.querySelectorAll('[data-k]').forEach(x => x.setAttribute('aria-pressed', x === btn));
+  drawBell();
+}));
+
+/* ================= 3 · percentiles ================= */
+const R3 = rng(11), truck = [];
+for (let i = 0; i < 2000; i++) {
+  const u = R3(), a = 200, c = 350, b = 900, F = (c - a) / (b - a);
+  const d = u < F ? a + Math.sqrt(u * (b - a) * (c - a)) : b - Math.sqrt((1 - u) * (b - a) * (b - c));
+  truck.push(d * (30 + 3 * gauss(R3)) / 100 * 3.2);
+}
+const truckS = truck.slice().sort((a, b) => a - b);
+const qAt = p => truckS[Math.min(truckS.length - 1, Math.max(0, Math.round(p / 100 * (truckS.length - 1))))];
+let showCI = false;
+function drawPct() {
+  const svg = $('pct'); svg.innerHTML = '';
+  const W = 760, H = 300, L = 24, R = 24, T = 34, B = 42, PW = W - L - R, PH = H - T - B;
+  const p = +$('pSl').value, q = qAt(p);
+  $('pOut').textContent = `${fmt(p, p % 1 ? 1 : 0)} %`;
+  const lo = 100, hi = 1100, X = v => L + (v - lo) / (hi - lo) * PW;
+  const bins = 50, bw = (hi - lo) / bins, cnt = new Array(bins).fill(0);
+  truck.forEach(v => { const i = Math.floor((v - lo) / bw); if (i >= 0 && i < bins) cnt[i]++; });
+  const cm = Math.max(...cnt), Y = c => T + PH - c / cm * PH;
+  const q1 = qAt(2.5), q2 = qAt(97.5);
+  if (showCI) {
+    el('rect', { x: X(q1), y: T - 6, width: X(q2) - X(q1), height: PH + 6, fill: '#58c4dd', 'fill-opacity': 0.12 }, svg);
+    txt(svg, (X(q1) + X(q2)) / 2, T - 12, `95 % interval: ${fmt(q1, 0)} – ${fmt(q2, 0)} kg`, { 'text-anchor': 'middle', fill: '#58c4dd', 'font-size': 12.5, 'font-weight': 700 });
+  }
+  cnt.forEach((c, i) => {
+    if (!c) return;
+    const x0 = lo + i * bw, below = x0 + bw / 2 <= q;
+    el('rect', { x: X(x0) + 0.5, y: Y(c), width: X(x0 + bw) - X(x0) - 1, height: T + PH - Y(c), fill: below ? '#f4d35e' : '#3d6b7d', 'fill-opacity': below ? 0.75 : 1 }, svg);
+  });
+  el('line', { x1: L, x2: W - R, y1: T + PH, y2: T + PH, stroke: '#607b88' }, svg);
+  for (let v = 200; v <= 1100; v += 100) txt(svg, X(v), T + PH + 18, v, { 'text-anchor': 'middle', 'font-size': 12 });
+  txt(svg, W / 2, H - 4, 'CO₂ per delivery (kg CO₂-eq)', { 'text-anchor': 'middle', 'font-size': 12.5 });
+  el('line', { x1: X(q), x2: X(q), y1: T - 4, y2: T + PH, stroke: '#f1eee6', 'stroke-width': 2.5 }, svg);
+  const left = X(q) > W - 200;
+  txt(svg, X(q) + (left ? -8 : 8), T + 14, `${fmt(p, p % 1 ? 1 : 0)} % below ${fmt(q, 0)} kg`, Object.assign({ 'text-anchor': left ? 'end' : 'start', fill: '#f1eee6', 'font-weight': 700, 'font-size': 13.5 }, halo));
+  $('pTxt').innerHTML = `The <b>${fmt(p, p % 1 ? 1 : 0)}th percentile</b> is <b>${fmt(q, 0)} kg</b>: ${fmt(p, p % 1 ? 1 : 0)} % of the 2 000 results are below it (yellow), ${fmt(100 - p, (100 - p) % 1 ? 1 : 0)} % are above.
+    ${p === 50 ? 'The 50th percentile is the <b>median</b>.' : ''}`;
+  $('ciTxt').innerHTML = `The <b>95 % interval</b> runs from the 2.5th to the 97.5th percentile (${fmt(q1, 0)} – ${fmt(q2, 0)} kg): it cuts off the 2.5 % lowest and 2.5 % highest results.
+    “95 % of the deliveries emit between ${fmt(q1, 0)} and ${fmt(q2, 0)} kg.”`;
+}
+$('pSl').addEventListener('input', drawPct);
+document.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => { $('pSl').value = b.dataset.p; drawPct(); }));
+$('ci95').addEventListener('click', () => { showCI = !showCI; $('ci95').setAttribute('aria-pressed', showCI); drawPct(); });
+
+/* ================= 4 · geometric mean & GSD² ================= */
+let logAxis = false;
+function drawLogn() {
+  const svg = $('logn'); svg.innerHTML = '';
+  const W = 760, H = 300, L = 24, R = 24, T = 40, B = 42, PW = W - L - R, PH = H - T - B;
+  const gm = +$('gm').value, g2 = +$('gsd').value, mu = Math.log(gm), s = Math.log(g2) / 2;
+  $('gmOut').textContent = fmt(gm); $('gsdOut').textContent = fmt(g2, 2);
+  const lo95 = gm / g2, hi95 = gm * g2;
+  const mean = Math.exp(mu + s * s / 2), mode = Math.exp(mu - s * s);
+  const xmin = logAxis ? Math.min(lo95 / 3, gm / 4) : 0, xmax = logAxis ? Math.max(hi95 * 3, gm * 4) : Math.max(hi95 * 1.5, gm * 3);
+  const X = logAxis ? v => L + (Math.log(v) - Math.log(xmin)) / (Math.log(xmax) - Math.log(xmin)) * PW : v => L + (v - xmin) / (xmax - xmin) * PW;
+  /* on a log axis we plot the density of ln(x): a bell curve */
+  const f = x => x <= 0 ? 0 : logAxis ? Math.exp(-((Math.log(x) - mu) ** 2) / (2 * s * s)) : Math.exp(-((Math.log(x) - mu) ** 2) / (2 * s * s)) / x;
+  const pts = []; let ymax = 0;
+  for (let i = 0; i <= 400; i++) {
+    const x = logAxis ? Math.exp(Math.log(xmin) + (Math.log(xmax) - Math.log(xmin)) * i / 400) : xmin + (xmax - xmin) * i / 400 + 1e-9;
+    const y = f(x); pts.push([x, y]); ymax = Math.max(ymax, y);
+  }
+  const Y = v => T + PH - v / ymax * PH * 0.9;
+  el('rect', { x: X(lo95), y: T - 4, width: X(hi95) - X(lo95), height: PH + 4, fill: '#58c4dd', 'fill-opacity': 0.12 }, svg);
+  el('path', { d: pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' '), fill: 'none', stroke: '#f1eee6', 'stroke-width': 3 }, svg);
+  /* factor arrows */
+  const ay = T - 14;
+  [[gm, lo95, `÷ ${fmt(g2, 2)}`], [gm, hi95, `× ${fmt(g2, 2)}`]].forEach(([a, b, l]) => {
+    el('line', { x1: X(a), x2: X(b), y1: ay, y2: ay, stroke: '#58c4dd', 'stroke-width': 2 }, svg);
+    el('polygon', { points: `${X(b)},${ay} ${X(b) + (b > a ? -8 : 8)},${ay - 5} ${X(b) + (b > a ? -8 : 8)},${ay + 5}`, fill: '#58c4dd' }, svg);
+    txt(svg, (X(a) + X(b)) / 2, ay - 6, l, Object.assign({ 'text-anchor': 'middle', fill: '#58c4dd', 'font-size': 12.5, 'font-weight': 700 }, halo));
+  });
+  [['median = geometric mean', gm, '#58c4dd', '7 4'], ['mean', mean, '#f4d35e', 'none'], ['mode', mode, '#ff9a6b', '2 4']].forEach(([n, v, c, dash], i) => {
+    if (v < xmin || v > xmax) return;
+    el('line', { x1: X(v), x2: X(v), y1: T, y2: T + PH, stroke: c, 'stroke-width': 2.2, 'stroke-dasharray': dash }, svg);
+    txt(svg, X(v) + 4, T + 16 + i * 15, n, Object.assign({ fill: c, 'font-weight': 700, 'font-size': 12 }, halo));
+  });
+  el('line', { x1: L, x2: W - R, y1: T + PH, y2: T + PH, stroke: '#607b88' }, svg);
+  if (logAxis) {
+    for (let e = Math.floor(Math.log10(xmin)); e <= Math.ceil(Math.log10(xmax)); e++) [1, 2, 5].forEach(m => {
+      const v = m * Math.pow(10, e); if (v >= xmin && v <= xmax) txt(svg, X(v), T + PH + 18, v >= 1 ? fmt(v, 0) : String(+v.toPrecision(2)), { 'text-anchor': 'middle', 'font-size': 12 });
+    });
+  } else {
+    const st = niceStep(xmax - xmin);
+    for (let v = 0; v <= xmax + 1e-9; v += st) txt(svg, X(v), T + PH + 18, fmt(v, st < 1 ? 1 : 0), { 'text-anchor': 'middle', 'font-size': 12 });
+  }
+  txt(svg, W / 2, H - 4, logAxis ? 'value (logarithmic axis: ÷ and × the same factor look equally long)' : 'value (linear axis)', { 'text-anchor': 'middle', 'font-size': 12.5 });
+  $('lognTxt').innerHTML = `95 % of the values lie between <b>${fmt(gm, 1)} ÷ ${fmt(g2, 2)} = ${fmt(lo95, 2)}</b> and <b>${fmt(gm, 1)} × ${fmt(g2, 2)} = ${fmt(hi95, 2)}</b>
+    – that is ${fmt((1 - 1 / g2) * 100, 0)} % below to ${fmt((g2 - 1) * 100, 0)} % above the median: not symmetric in units, but symmetric as a factor.
+    The arithmetic mean (${fmt(mean, 2)}) is ${fmt((mean / gm - 1) * 100, 0)} % above the median.
+    ${logAxis ? 'On the log axis the curve is a symmetric bell.' : 'Switch to the logarithmic axis to see the symmetry.'}`;
+}
+$('gm').addEventListener('input', drawLogn);
+$('gsd').addEventListener('input', drawLogn);
+document.querySelectorAll('[data-ax]').forEach(b => b.addEventListener('click', () => {
+  logAxis = b.dataset.ax === 'log';
+  document.querySelectorAll('[data-ax]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  drawLogn();
+}));
+
+/* ================= 5 · rank correlation ================= */
+const R5 = rng(21), Z1 = [], Z2 = [];
+for (let i = 0; i < 300; i++) { Z1.push(gauss(R5)); Z2.push(gauss(R5)); }
+function ranks(a) { const idx = a.map((v, i) => [v, i]).sort((x, y) => x[0] - y[0]); const r = new Array(a.length); idx.forEach(([, i], k) => { r[i] = k; }); return r; }
+function corr(x, y) {
+  const n = x.length, mx = x.reduce((a, b) => a + b, 0) / n, my = y.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { const dx = x[i] - mx, dy = y[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+  return sxy / Math.sqrt(sxx * syy);
+}
+function drawScat() {
+  const svg = $('scat'); svg.innerHTML = '';
+  const W = 560, H = 360, L = 50, R = 16, T = 16, B = 44, PW = W - L - R, PH = H - T - B;
+  const r = +$('rho').value;
+  const xs = Z1, ys = Z1.map((z, i) => r * z + Math.sqrt(Math.max(0, 1 - r * r)) * Z2[i]);
+  const rho = corr(ranks(xs), ranks(ys));
+  $('rhoOut').textContent = (r >= 0 ? '+' : '') + fmt(r, 2);
+  const X = v => L + (v + 3.2) / 6.4 * PW, Y = v => T + PH - (v + 3.6) / 7.2 * PH;
+  el('rect', { x: L, y: T, width: PW, height: PH, fill: 'none', stroke: '#304650' }, svg);
+  xs.forEach((x, i) => el('circle', { cx: X(Math.max(-3.2, Math.min(3.2, x))), cy: Y(Math.max(-3.6, Math.min(3.6, ys[i]))), r: 3.5, fill: '#58c4dd', 'fill-opacity': 0.6 }, svg));
+  txt(svg, L + PW / 2, H - 12, 'input value drawn in each iteration  →  higher', { 'text-anchor': 'middle', 'font-size': 12.5 });
+  txt(svg, 16, T + PH / 2, 'model result  →  higher', { 'text-anchor': 'middle', 'font-size': 12.5, transform: `rotate(-90 16 ${T + PH / 2})` });
+  txt(svg, L + 10, T + 22, `ρ = ${rho >= 0 ? '+' : ''}${fmt(rho, 2)}`, Object.assign({ fill: '#f1eee6', 'font-size': 18, 'font-weight': 700 }, halo));
+  const strength = Math.abs(rho) > 0.8 ? 'strong' : Math.abs(rho) > 0.4 ? 'moderate' : Math.abs(rho) > 0.15 ? 'weak' : 'almost no';
+  $('rhoTxt').innerHTML = `ρ = <b>${rho >= 0 ? '+' : ''}${fmt(rho, 2)}</b>: ${strength} ${rho >= 0 ? 'positive' : 'negative'} relation.
+    ${rho >= 0.15 ? 'When this input is high, the result tends to be high.' : rho <= -0.15 ? 'When this input is high, the result tends to be <em>low</em> (in 4-4: a high paper cup footprint makes “mug − paper” smaller).' : 'The input value tells you little about the result.'}
+    ρ² = <b>${fmt(rho * rho * 100, 0)} %</b> – roughly the share of the result's variation that goes along with this input. 4-4 scales the ρ² of all inputs to 100 %.
+    <br><span class="muted">“Rank” means the values are replaced by their position in the sorted list first, so ρ also works for skewed (lognormal) inputs.</span>`;
+}
+$('rho').addEventListener('input', drawScat);
+document.querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => { $('rho').value = b.dataset.r; drawScat(); }));
+
+/* ---------- start ---------- */
+update1(); drawBell(); drawPct(); drawLogn(); drawScat();
+</script>
+</div>
+</body>
+</html>

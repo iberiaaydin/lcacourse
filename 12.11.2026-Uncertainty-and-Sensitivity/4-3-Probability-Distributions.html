@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-mode="dark" class="course-lesson">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y5EVK8P42"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-7Y5EVK8P42');
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probability distributions</title>
+<style>
+  :root {
+    --ink: #f1eee6;
+    --dim: #adc0c9;
+    --line: #304650;
+    --panel: #172a33;
+    --panel-2: #20343e;
+    --accent: #58c4dd;
+    --mean: #f4d35e;
+    --median: #58c4dd;
+    --mode: #ff9a6b;
+    --hist: #3d5b68;
+    --ok: #83c167;
+    --bad: #ff8a7a;
+  }
+  * { box-sizing: border-box; }
+  .intro h1 { margin: 0 0 6px; font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+  .intro p { margin: 0 0 16px; color: var(--dim); max-width: 100ch; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 20px; }
+  .card h2 { margin: 0 0 10px; font-size: 1.05rem; font-weight: 600; }
+  .muted { color: var(--dim); font-size: 14px; }
+  .lbl { font-size: 13px; color: var(--dim); margin: 0 0 6px; }
+  button {
+    font: inherit; font-size: 13.5px; color: var(--ink); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed="true"], button[aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .seg { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+  .tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 20px; }
+  @media (max-width: 760px) { .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tab { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px 14px; border-radius: 10px; background: var(--panel); text-align: left; }
+  .tab b { font-size: 15.5px; }
+  .tab span { font-size: 12.5px; color: var(--dim); }
+  .tab[aria-selected="true"] { background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--accent); }
+  .tab svg { display: block; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .desc { font-size: 14.5px; margin: 0 0 8px; }
+  .formula { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: var(--panel-2); padding: 2px 6px; border-radius: 4px; }
+  .chart-wrap { position: relative; }
+  #chart { display: block; width: 100%; height: auto; }
+  #tip { position: absolute; pointer-events: none; background: #0d1a20; border: 1px solid var(--line); border-radius: 8px;
+         padding: 7px 10px; font-size: 13px; line-height: 1.45; display: none; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--dim); margin-top: 6px; }
+  .legend svg { vertical-align: middle; margin-right: 5px; }
+
+  .examples { display: grid; gap: 8px; margin-bottom: 14px; }
+  .ex { text-align: left; padding: 8px 12px; border-radius: 8px; }
+  .ex b { display: block; font-size: 14px; }
+  .ex span { font-size: 12.5px; color: var(--dim); }
+  .ex[aria-pressed="true"] { background: var(--panel-2); }
+  .ex[aria-pressed="true"] span { color: var(--dim); }
+  .prm { margin-bottom: 10px; }
+  .prm .top { display: flex; justify-content: space-between; font-size: 13.5px; }
+  .prm .top b { font-variant-numeric: tabular-nums; }
+  .prm input[type=range] { width: 100%; accent-color: var(--accent); }
+  .why { background: var(--panel-2); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin: 6px 0 12px; }
+  .warn { color: var(--bad); font-weight: 600; }
+
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--dim); font-weight: 600; font-size: 12.5px; }
+  .summary td, .summary th { white-space: normal; text-align: left; vertical-align: top; }
+  .note { font-size: 13px; color: var(--dim); margin: 10px 0 0; }
+  .samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+</style>
+<link rel="stylesheet" href="../course.css">
+</head>
+<body>
+<header class="course-header">
+  <nav class="course-header-inner" aria-label="Course navigation">
+    <div>
+      <p class="course-institute">YTU / Clean Energy Technologies Institute</p>
+      <a class="course-title" href="../index.html">Life Cycle Assessment Course</a>
+    </div>
+    <a class="course-back" href="../index.html">&larr; Back to course</a>
+  </nav>
+</header>
+<div class="course-content">
+
+<section class="intro">
+  <h1>Probability distributions for uncertain LCA data</h1>
+  <p>An inventory value is rarely known exactly. Instead of one number we describe it with a probability distribution.
+  LCA software such as openLCA offers four types: <strong>lognormal</strong>, <strong>normal</strong>, <strong>triangular</strong> and <strong>uniform</strong>.
+  Pick a type, try its LCA examples, move the parameters, and draw random samples as a Monte Carlo simulation would.
+  <strong>Example values are illustrative.</strong></p>
+</section>
+
+<div class="tabs" role="tablist" aria-label="Distribution type" id="tabs"></div>
+
+<div class="layout">
+  <div class="card">
+    <h2 id="title"></h2>
+    <p class="desc" id="desc"></p>
+    <p class="muted" id="formula" style="margin:0 0 10px"></p>
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 760 400" role="img" aria-label="Probability density curve with a histogram of random samples"></svg>
+      <div id="tip" role="status"></div>
+    </div>
+    <div class="legend">
+      <span><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#f1eee6" stroke-width="3"/></svg>probability density</span>
+      <span><svg width="14" height="12"><rect width="14" height="12" fill="#3d5b68"/></svg>histogram of random samples</span>
+      <span><svg width="14" height="12"><rect width="14" height="12" fill="#58c4dd" fill-opacity=".18"/></svg>95 % interval</span>
+      <span><svg width="22" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#f4d35e" stroke-width="2.5"/></svg>mean</span>
+      <span><svg width="22" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#58c4dd" stroke-width="2.5" stroke-dasharray="6 4"/></svg>median</span>
+      <span><svg width="22" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="#ff9a6b" stroke-width="2.5" stroke-dasharray="2 4"/></svg>mode</span>
+    </div>
+    <div class="samples">
+      <span class="lbl" style="margin:0">Random samples:</span>
+      <div class="seg" role="group" aria-label="Number of samples">
+        <button type="button" data-n="100">100</button>
+        <button type="button" data-n="1000" aria-pressed="true">1 000</button>
+        <button type="button" data-n="10000">10 000</button>
+      </div>
+      <button type="button" id="redraw">Draw new samples</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Examples</h2>
+      <div class="examples" id="examples"></div>
+      <div class="why" id="why"></div>
+      <h2 style="margin-top:4px">Parameters</h2>
+      <div id="params"></div>
+    </div>
+    <div class="card">
+      <h2>Statistics</h2>
+      <div class="table-wrap"><table id="stats"></table></div>
+      <p class="note">“Exact” comes from the formula; “samples” from the random draws – the more samples, the closer they get.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>When to use which?</h2>
+  <div class="table-wrap">
+    <table class="summary">
+      <thead><tr><th>Type</th><th>Shape</th><th>Use it when …</th><th>LCA examples</th><th>Watch out</th></tr></thead>
+      <tbody>
+        <tr><td><b>Lognormal</b></td><td>Skewed to the right, never negative</td><td>Values are positive and the uncertainty is a factor (“within a factor of 3”). Default in ecoinvent (pedigree matrix).</td><td>Emission factors, field emissions (N₂O), toxic emissions, most inventory flows</td><td>Mean &gt; median; a large GSD² gives a long tail of rare high values.</td></tr>
+        <tr><td><b>Normal</b></td><td>Symmetric bell</td><td>Measured values with random, symmetric error around a known mean.</td><td>Product mass, meter readings, lab analyses, yields</td><td>Can produce negative values when the SD is large compared with the mean.</td></tr>
+        <tr><td><b>Triangular</b></td><td>Peak at the most likely value, hard limits</td><td>An expert gives a minimum, a most likely value and a maximum.</td><td>Transport distance, lifetime, loading of a machine</td><td>Limits are absolute – nothing outside [min, max].</td></tr>
+        <tr><td><b>Uniform</b></td><td>Flat between two limits</td><td>Only a range is known, no value is more likely than another.</td><td>Recycled content, supplier shares, loss rates</td><td>Gives the extremes as much weight as the middle – often too pessimistic.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+/* ---------- random numbers (seeded, so a redraw is reproducible) ---------- */
+function rng(seed) {
+  return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function gauss(r) { let u = 0; while (u === 0) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+
+/* standard normal CDF and inverse (for exact quantiles) */
+function erf(x) { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; }
+const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+function PhiInv(p) {   // Acklam's approximation
+  const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239];
+  const b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572];
+  const c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+  const d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+  const pl = 0.02425;
+  if (p < pl) { const q = Math.sqrt(-2 * Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  if (p > 1 - pl) { const q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  const q = p - 0.5, r = q * q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+
+/* ---------- the four distributions ---------- */
+const DISTS = {
+  lognormal: {
+    label: 'Lognormal', tag: 'skewed, positive',
+    desc: 'The logarithm of the value is normally distributed. The value can never be negative and has a long tail of high values. Its spread is given as a factor: the geometric standard deviation squared (GSD²) – 95 % of values lie between median ÷ GSD² and median × GSD².',
+    formula: 'Parameters: geometric mean (= median) and GSD². μ = ln(median), σ = ln(GSD²) / 2.',
+    params: ['gm', 'gsd2'],
+    pdf: (x, p) => { if (x <= 0) return 0; const m = Math.log(p.gm), s = Math.log(p.gsd2) / 2;
+      return Math.exp(-((Math.log(x) - m) ** 2) / (2 * s * s)) / (x * s * Math.sqrt(2 * Math.PI)); },
+    q: (u, p) => Math.exp(Math.log(p.gm) + Math.log(p.gsd2) / 2 * PhiInv(u)),
+    sample: (r, p) => Math.exp(Math.log(p.gm) + Math.log(p.gsd2) / 2 * gauss(r)),
+    stats: p => { const m = Math.log(p.gm), s = Math.log(p.gsd2) / 2, mean = Math.exp(m + s * s / 2);
+      return { mean, median: p.gm, mode: Math.exp(m - s * s), sd: mean * Math.sqrt(Math.exp(s * s) - 1) }; },
+    range: p => [0, Math.max(p.gm * p.gsd2 * 1.6, Math.exp(Math.log(p.gm) + Math.log(p.gsd2) / 2 * 2.7))],
+    examples: [
+      { group: 'everyday', name: 'Household income', note: 'most people near the median, a few very high earners', unit: '€/year',
+        p: { gm: 35000, gsd2: 3.3 }, lim: { gm: [10000, 80000], gsd2: [1.05, 8] },
+        why: 'Income is positively skewed: most households earn close to the median, a small number earn far more. Those high earners pull the mean well above the median – which is why statistics offices report the median income.' },
+      { group: 'everyday', name: 'Stock price in one year', note: 'today 100 €, about 20 % volatility', unit: '€',
+        p: { gm: 105, gsd2: 1.49 }, lim: { gm: [50, 200], gsd2: [1.05, 4] },
+        why: 'A price cannot fall below zero but can grow by a factor. Prices change by percentages, so the logarithm of the price is (roughly) normal and the price itself is lognormal. Raise GSD² to model a more volatile stock.' },
+      { group: 'everyday', name: 'Seed mass in a plant population', note: 'biological size: many small, a few large seeds', unit: 'mg',
+        p: { gm: 4, gsd2: 2.5 }, lim: { gm: [0.5, 20], gsd2: [1.05, 8] },
+        why: 'Biological sizes grow multiplicatively (cells divide, growth is a percentage per day), so organism and seed sizes, and many nutrient concentrations, tend to be lognormal.' },
+      { name: 'N₂O field emission factor', note: 'kg N₂O-N per kg N applied (IPCC range 0.003–0.03)', unit: 'kg N₂O-N/kg N',
+        p: { gm: 0.01, gsd2: 3 }, lim: { gm: [0.002, 0.03], gsd2: [1.05, 6] },
+        why: 'Field emissions vary by soil, weather and management. The uncertainty is “a factor of about 3” – the IPCC range 0.003–0.03 is almost exactly median ÷ 3 to median × 3.' },
+      { name: 'Electricity use of a process', note: 'measured, ecoinvent basic uncertainty only', unit: 'kWh',
+        p: { gm: 2.5, gsd2: 1.1 }, lim: { gm: [0.5, 5], gsd2: [1.02, 6] },
+        why: 'With a small GSD² (1.1) the lognormal looks almost like a normal distribution: mean, median and mode nearly coincide. Raise GSD² to see the skew appear.' },
+      { name: 'Cadmium emission to soil', note: 'heavy metal, poorly known – large spread', unit: 'mg/kg product',
+        p: { gm: 0.2, gsd2: 5 }, lim: { gm: [0.05, 1], gsd2: [1.05, 10] },
+        why: 'Toxic emissions are often known only to an order of magnitude. A GSD² of 5 gives a long tail: the mean lies well above the median, because a few samples are very high.' }
+    ]
+  },
+  normal: {
+    label: 'Normal', tag: 'symmetric bell',
+    desc: 'The familiar bell curve: values are spread symmetrically around the mean. About 68 % lie within ±1 SD and 95 % within ±1.96 SD. Mean, median and mode are the same.',
+    formula: 'Parameters: mean (μ) and standard deviation (σ).',
+    params: ['mu', 'sd'],
+    pdf: (x, p) => Math.exp(-((x - p.mu) ** 2) / (2 * p.sd * p.sd)) / (p.sd * Math.sqrt(2 * Math.PI)),
+    q: (u, p) => p.mu + p.sd * PhiInv(u),
+    sample: (r, p) => p.mu + p.sd * gauss(r),
+    stats: p => ({ mean: p.mu, median: p.mu, mode: p.mu, sd: p.sd }),
+    range: p => [p.mu - 4 * p.sd, p.mu + 4 * p.sd],
+    examples: [
+      { group: 'everyday', name: 'Adult height (men)', note: 'large population, mean 176 cm, SD 7 cm', unit: 'cm',
+        p: { mu: 176, sd: 7 }, lim: { mu: [150, 200], sd: [2, 20] },
+        why: 'Height is the result of many small genetic and environmental effects added together, so it follows the bell curve: most people are close to the average, very tall or very short people are rare.' },
+      { group: 'everyday', name: 'Measurement error of a lab scale', note: 'reading minus true value', unit: 'g',
+        p: { mu: 0, sd: 0.2 }, lim: { mu: [-1, 1], sd: [0.02, 1] }, negOk: true,
+        why: 'Small random errors of an instrument scatter symmetrically around zero: a reading is as likely to be a bit too high as a bit too low. Here negative values are meaningful – a negative error just means the scale read too low.' },
+      { group: 'everyday', name: 'IQ score', note: 'standardised: mean 100, SD 15', unit: 'points',
+        p: { mu: 100, sd: 15 }, lim: { mu: [70, 130], sd: [5, 30] },
+        why: 'IQ tests are scaled on purpose so that scores follow a normal distribution with mean 100 and SD 15: about 68 % of people score 85–115 and about 95 % score 70–130.' },
+      { name: 'Mass of a ceramic mug', note: 'weighed products, 310 g ± a few grams', unit: 'g',
+        p: { mu: 310, sd: 5 }, lim: { mu: [250, 370], sd: [1, 40] },
+        why: 'Manufacturing variation is random and symmetric: some mugs are a bit heavier, some a bit lighter. A classic case for the normal distribution.' },
+      { name: 'Annual electricity meter reading', note: 'site measurement with meter error', unit: 'MWh/year',
+        p: { mu: 1200, sd: 30 }, lim: { mu: [800, 1600], sd: [5, 200] },
+        why: 'Measurement error of a calibrated instrument is symmetric around the true value.' },
+      { name: 'Wheat yield', note: 'variation between fields and years', unit: 't/ha',
+        p: { mu: 7.5, sd: 1.2 }, lim: { mu: [3, 10], sd: [0.2, 4] },
+        why: 'Yields scatter around an average. Raise the SD: once it is large compared with the mean, the normal distribution starts to give impossible negative yields.' },
+      { name: 'Recycling rate (badly chosen)', note: '15 % ± 10 % – watch the left tail', unit: '%',
+        p: { mu: 15, sd: 10 }, lim: { mu: [0, 60], sd: [1, 30] },
+        why: 'A rate cannot be negative, but a normal distribution with a large SD does not know that. Lognormal, triangular or uniform are safer for bounded or small positive values.' }
+    ]
+  },
+  triangular: {
+    label: 'Triangular', tag: 'min, most likely, max',
+    desc: 'Defined by a minimum, a most likely value (mode) and a maximum. Typical when an expert can give a best guess and limits but no data. Nothing can fall outside the limits.',
+    formula: 'Parameters: minimum (a), mode (c), maximum (b). Mean = (a + b + c) / 3.',
+    params: ['a', 'c', 'b'],
+    pdf: (x, p) => { const { a, b, c } = p; if (x < a || x > b) return 0;
+      return x < c ? 2 * (x - a) / ((b - a) * (c - a) || 1e-12) : x === c ? 2 / (b - a) : 2 * (b - x) / ((b - a) * (b - c) || 1e-12); },
+    q: (u, p) => { const { a, b, c } = p, F = (c - a) / (b - a);
+      return u < F ? a + Math.sqrt(u * (b - a) * (c - a)) : b - Math.sqrt((1 - u) * (b - a) * (b - c)); },
+    sample: (r, p) => DISTS.triangular.q(r(), p),
+    stats: p => { const { a, b, c } = p;
+      return { mean: (a + b + c) / 3, median: DISTS.triangular.q(0.5, p), mode: c, sd: Math.sqrt((a * a + b * b + c * c - a * b - a * c - b * c) / 18) }; },
+    range: p => { const w = p.b - p.a; return [p.a - 0.12 * w, p.b + 0.12 * w]; },
+    examples: [
+      { group: 'everyday', name: 'Commute time', note: 'at best 20, usually 30, in heavy traffic up to 60 min', unit: 'min',
+        p: { a: 20, c: 30, b: 60 }, lim: { a: [0, 90], c: [0, 90], b: [0, 90] },
+        why: 'You know the best case, the usual time and the worst case from experience, but you have never measured a full distribution – a typical triangle.' },
+      { group: 'everyday', name: 'Duration of a project task', note: 'planner: optimistic 2, likely 4, pessimistic 9 days', unit: 'days',
+        p: { a: 2, c: 4, b: 9 }, lim: { a: [0, 15], c: [0, 15], b: [0, 15] },
+        why: 'Project planning (three-point / PERT estimates) uses exactly this: optimistic, most likely and pessimistic durations. Delays are longer than speed-ups, so the triangle leans to the right.' },
+      { name: 'Transport distance from a supplier', note: 'expert: at least 200, usually 350, at most 900 km', unit: 'km',
+        p: { a: 200, c: 350, b: 900 }, lim: { a: [0, 1500], c: [0, 1500], b: [0, 1500] },
+        why: 'The purchaser knows the usual supplier (350 km) and the nearest and farthest possible ones. A skewed triangle captures this in three numbers.' },
+      { name: 'Lifetime of a dishwasher', note: '8 to 15 years, most likely 12', unit: 'years',
+        p: { a: 8, c: 12, b: 15 }, lim: { a: [1, 25], c: [1, 25], b: [1, 25] },
+        why: 'Manufacturer and consumer surveys give a typical lifetime and a plausible range.' },
+      { name: 'Cups per dishwasher cycle', note: 'cup study assumed 20; real loads 10–24', unit: 'cups',
+        p: { a: 10, c: 20, b: 24 }, lim: { a: [1, 40], c: [1, 40], b: [1, 40] },
+        why: 'In last week\'s cup study all washing burdens were divided by 20 cups per cycle. In practice the load varies – a triangle around 20 is a simple way to express that.' }
+    ]
+  },
+  uniform: {
+    label: 'Uniform', tag: 'only a range known',
+    desc: 'Every value between a minimum and a maximum is equally likely. Use it when you only know the limits. It has no single most likely value.',
+    formula: 'Parameters: minimum (a) and maximum (b). Mean = (a + b) / 2, SD = (b − a) / √12.',
+    params: ['a', 'b'],
+    pdf: (x, p) => (x >= p.a && x <= p.b ? 1 / (p.b - p.a) : 0),
+    q: (u, p) => p.a + u * (p.b - p.a),
+    sample: (r, p) => p.a + r() * (p.b - p.a),
+    stats: p => ({ mean: (p.a + p.b) / 2, median: (p.a + p.b) / 2, mode: null, sd: (p.b - p.a) / Math.sqrt(12) }),
+    range: p => { const w = p.b - p.a; return [p.a - 0.15 * w, p.b + 0.15 * w]; },
+    examples: [
+      { group: 'everyday', name: 'Waiting time for the bus', note: 'bus every 10 min, you arrive at a random moment', unit: 'min',
+        p: { a: 0, b: 10 }, lim: { a: [0, 30], b: [0, 30] },
+        why: 'If you do not check the timetable, every waiting time between 0 and 10 minutes is equally likely. The average wait is 5 minutes.' },
+      { group: 'everyday', name: 'Delivery in a two-hour window', note: 'parcel arrives between 14:00 and 16:00', unit: 'min after 14:00',
+        p: { a: 0, b: 120 }, lim: { a: [0, 240], b: [0, 240] },
+        why: 'The courier only promises the window – no minute inside it is more likely than another.' },
+      { name: 'Recycled content of steel', note: 'supplier states “20–40 %”', unit: '%',
+        p: { a: 20, b: 40 }, lim: { a: [0, 100], b: [0, 100] },
+        why: 'The supplier gives a range but no typical value – the uniform distribution makes no assumption beyond the limits.' },
+      { name: 'Renewable share of purchased electricity', note: 'contract mix between 30 and 60 %', unit: '%',
+        p: { a: 30, b: 60 }, lim: { a: [0, 100], b: [0, 100] },
+        why: 'The share changes from year to year within contract limits; no value in the range is known to be more likely.' },
+      { name: 'Product loss in distribution', note: 'literature: 1–5 % of products lost', unit: '%',
+        p: { a: 1, b: 5 }, lim: { a: [0, 20], b: [0, 20] },
+        why: 'Different literature sources give different values inside a range. Compare with a triangle: the uniform gives the extremes as much weight as the middle.' }
+    ]
+  }
+};
+const PNAMES = { gm: 'Geometric mean (median)', gsd2: 'GSD² (spread factor)', mu: 'Mean μ', sd: 'Standard deviation σ', a: 'Minimum a', c: 'Most likely (mode) c', b: 'Maximum b' };
+const ORDER = ['lognormal', 'normal', 'triangular', 'uniform'];
+
+/* ---------- state ---------- */
+let type = 'lognormal', exIdx = 0, P = {}, N = 1000, seed = 7, samples = [];
+const $ = id => document.getElementById(id);
+const ex = () => DISTS[type].examples[exIdx];
+function fmt(v) {
+  if (v === null || v === undefined || !isFinite(v)) return '–';
+  const a = Math.abs(v), d = a >= 1000 ? 0 : a >= 100 ? 1 : a >= 10 ? 2 : a >= 1 ? 2 : a >= 0.1 ? 3 : 4;
+  return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+/* ---------- tabs with tiny shape icons ---------- */
+ORDER.forEach(k => {
+  const d = DISTS[k];
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'tab'; b.setAttribute('role', 'tab'); b.dataset.type = k;
+  const pts = [];
+  const p0 = d.examples[0].p, [lo, hi] = k === 'normal' ? [p0.mu - 3.5 * p0.sd, p0.mu + 3.5 * p0.sd] : d.range(k === 'lognormal' ? { gm: 1, gsd2: 4 } : p0);
+  const pp = k === 'lognormal' ? { gm: 1, gsd2: 4 } : p0;
+  let ymax = 0; const ys = [];
+  for (let i = 0; i <= 60; i++) { const x = lo + (hi - lo) * i / 60; const y = d.pdf(x, pp); ys.push([x, y]); ymax = Math.max(ymax, y); }
+  ys.forEach(([x, y], i) => pts.push(`${(i / 60 * 70).toFixed(1)},${(26 - y / ymax * 22).toFixed(1)}`));
+  b.innerHTML = `<svg width="70" height="28" aria-hidden="true"><polyline points="${pts.join(' ')}" fill="none" stroke="#58c4dd" stroke-width="2"/><line x1="0" y1="26.5" x2="70" y2="26.5" stroke="#607b88"/></svg><b>${d.label}</b><span>${d.tag}</span>`;
+  b.addEventListener('click', () => setType(k));
+  $('tabs').appendChild(b);
+});
+
+function setType(k) {
+  type = k; exIdx = 0;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.type === k));
+  const d = DISTS[k];
+  $('title').textContent = `${d.label} distribution`;
+  $('desc').textContent = d.desc;
+  $('formula').innerHTML = `<span class="formula">${d.formula}</span>`;
+  $('examples').innerHTML = '';
+  let lastGroup = null;
+  d.examples.forEach((e, i) => {
+    const g = e.group || 'lca';
+    if (g !== lastGroup) {
+      const h = document.createElement('p');
+      h.className = 'lbl'; h.style.margin = i ? '6px 0 0' : '0';
+      h.textContent = g === 'everyday' ? 'Everyday examples' : 'LCA examples';
+      $('examples').appendChild(h);
+      lastGroup = g;
+    }
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'ex';
+    b.innerHTML = `<b>${e.name}</b><span>${e.note}</span>`;
+    b.addEventListener('click', () => setExample(i));
+    $('examples').appendChild(b);
+  });
+  setExample(0);
+}
+
+function setExample(i) {
+  exIdx = i;
+  document.querySelectorAll('.ex').forEach((b, j) => b.setAttribute('aria-pressed', j === i));
+  P = { ...ex().p };
+  $('why').textContent = ex().why;
+  $('params').innerHTML = '';
+  DISTS[type].params.forEach(k => {
+    const [lo, hi] = ex().lim[k];
+    const step = (hi - lo) / 400;
+    const row = document.createElement('div');
+    row.className = 'prm';
+    row.innerHTML = `<div class="top"><label for="p_${k}">${PNAMES[k]}</label><b id="v_${k}"></b></div>
+      <input type="range" id="p_${k}" min="${lo}" max="${hi}" step="${step}" value="${P[k]}">`;
+    row.querySelector('input').addEventListener('input', e => { P[k] = +e.target.value; constrain(k); resample(); });
+    $('params').appendChild(row);
+  });
+  resample();
+}
+
+/* keep a ≤ c ≤ b and a < b */
+function constrain(changed) {
+  if (type === 'triangular') {
+    if (changed === 'a') { P.c = Math.max(P.c, P.a); P.b = Math.max(P.b, P.c + 1e-6); }
+    if (changed === 'b') { P.c = Math.min(P.c, P.b); P.a = Math.min(P.a, P.c - 1e-6); }
+    if (changed === 'c') { P.a = Math.min(P.a, P.c); P.b = Math.max(P.b, P.c); }
+    if (P.b - P.a < 1e-6) P.b = P.a + 1e-6;
+  }
+  if (type === 'uniform') {
+    if (changed === 'a' && P.a >= P.b) P.b = P.a + (ex().lim.b[1] - ex().lim.b[0]) / 400;
+    if (changed === 'b' && P.b <= P.a) P.a = P.b - (ex().lim.a[1] - ex().lim.a[0]) / 400;
+  }
+  DISTS[type].params.forEach(k => { $('p_' + k).value = P[k]; });
+}
+
+function resample() {
+  const r = rng(seed), d = DISTS[type];
+  samples = Array.from({ length: N }, () => d.sample(r, P));
+  draw();
+}
+
+/* ---------- chart ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const svg = $('chart');
+const CW = 760, CH = 400, M = { l: 20, r: 20, t: 34, b: 48 }, PW = CW - M.l - M.r, PH = CH - M.t - M.b;
+let view = null;
+function el(tag, a, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in a) e.setAttribute(k, a[k]);
+  parent.appendChild(e);
+  return e;
+}
+function niceStep(range, target = 7) {
+  const raw = range / target, e = Math.pow(10, Math.floor(Math.log10(raw)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * e >= raw) return m * e;
+  return 10 * e;
+}
+
+function draw() {
+  const d = DISTS[type], e = ex();
+  DISTS[type].params.forEach(k => { $('v_' + k).textContent = `${fmt(P[k])}${k === 'gsd2' ? '' : ' ' + e.unit}`; });
+  let [lo, hi] = d.range(P);
+  const X = x => M.l + (x - lo) / (hi - lo) * PW;
+  /* histogram as density */
+  const bins = N >= 10000 ? 60 : N >= 1000 ? 40 : 20;
+  const bounded = type === 'uniform' || type === 'triangular';
+  const bLo = bounded ? P.a : lo, bHi = bounded ? P.b : hi;       // bars start and end exactly at the limits
+  const bw = (bHi - bLo) / bins, counts = new Array(bins).fill(0);
+  let outside = 0;
+  samples.forEach(s => { const i = Math.min(bins - 1, Math.floor((s - bLo) / bw)); if (i >= 0 && s <= bHi) counts[i]++; else outside++; });
+  const dens = counts.map(c => c / (N * bw));
+  const curve = [];
+  for (let i = 0; i <= 400; i++) { const x = lo + (hi - lo) * i / 400; curve.push([x, d.pdf(x, P)]); }
+  if (type === 'uniform') curve.push([P.a, 1 / (P.b - P.a)], [P.b, 1 / (P.b - P.a)]);
+  const peak = Math.max(...curve.map(c => isFinite(c[1]) ? c[1] : 0));
+  const ymax = Math.max(peak, ...dens) * 1.12 || 1;
+  const Y = v => M.t + PH - Math.min(v, ymax) / ymax * PH;
+  view = { lo, hi, X, Y, bw, counts, bLo };
+
+  svg.innerHTML = '';
+  /* 95 % interval band */
+  const q1 = d.q(0.025, P), q2 = d.q(0.975, P);
+  el('rect', { x: X(q1), y: M.t, width: Math.max(0, X(q2) - X(q1)), height: PH, fill: '#58c4dd', 'fill-opacity': 0.12 });
+  el('text', { x: (X(q1) + X(q2)) / 2, y: M.t + 14, 'text-anchor': 'middle', 'font-size': 12, fill: '#58c4dd' }).textContent = `95 %: ${fmt(q1)} – ${fmt(q2)}`;
+  /* negative region warning */
+  if (lo < 0 && type === 'normal' && !e.negOk) {
+    el('rect', { x: X(lo), y: M.t, width: X(0) - X(lo), height: PH, fill: '#ff8a7a', 'fill-opacity': 0.08 });
+    if (X(0) - X(lo) > 70) el('text', { x: X(lo) + 8, y: M.t + 40, 'font-size': 12.5, 'font-weight': 600, fill: '#ff8a7a' }).textContent = 'negative values';
+  }
+  /* histogram */
+  counts.forEach((c, i) => {
+    if (!c) return;
+    const x0 = X(bLo + i * bw);
+    el('rect', { x: x0 + 0.5, y: Y(dens[i]), width: Math.max(0.5, X(bLo + (i + 1) * bw) - x0 - 1), height: M.t + PH - Y(dens[i]), fill: '#3d5b68' });
+  });
+  /* axis */
+  el('line', { x1: M.l, x2: M.l + PW, y1: M.t + PH, y2: M.t + PH, stroke: '#607b88', 'stroke-width': 1.5 });
+  const st = niceStep(hi - lo);
+  for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-12; v += st) {
+    el('line', { x1: X(v), x2: X(v), y1: M.t + PH, y2: M.t + PH + 5, stroke: '#607b88' });
+    const mant = +(st / Math.pow(10, Math.floor(Math.log10(st) + 1e-9))).toFixed(3);
+    const dec = Math.max(0, -Math.floor(Math.log10(st) + 1e-9) + (mant === 2.5 ? 1 : 0));
+    el('text', { x: X(v), y: M.t + PH + 20, 'text-anchor': 'middle', 'font-size': 12.5, fill: '#adc0c9' })
+      .textContent = (+v.toPrecision(12)).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+  el('text', { x: M.l + PW / 2, y: CH - 6, 'text-anchor': 'middle', 'font-size': 13.5, fill: '#adc0c9' }).textContent = `${e.name} (${e.unit})`;
+  if (lo < 0 && hi > 0 && !e.negOk) el('line', { x1: X(0), x2: X(0), y1: M.t, y2: M.t + PH, stroke: '#ff8a7a', 'stroke-width': 1.5 });
+  /* pdf */
+  let dpath = '';
+  if (type === 'uniform') {
+    const h = 1 / (P.b - P.a);
+    dpath = `M${X(lo)} ${Y(0)} L${X(P.a)} ${Y(0)} L${X(P.a)} ${Y(h)} L${X(P.b)} ${Y(h)} L${X(P.b)} ${Y(0)} L${X(hi)} ${Y(0)}`;
+  } else if (type === 'triangular') {
+    dpath = `M${X(lo)} ${Y(0)} L${X(P.a)} ${Y(0)} L${X(P.c)} ${Y(2 / (P.b - P.a))} L${X(P.b)} ${Y(0)} L${X(hi)} ${Y(0)}`;
+  } else dpath = curve.map((c, i) => `${i ? 'L' : 'M'}${X(c[0]).toFixed(1)} ${Y(c[1]).toFixed(1)}`).join(' ');
+  el('path', { d: dpath, fill: 'none', stroke: '#f1eee6', 'stroke-width': 3, 'stroke-linejoin': 'round' });
+
+  /* mean / median / mode markers with direct labels */
+  const s = d.stats(P);
+  const marks = [['mean', s.mean, '#f4d35e', 'none'], ['median', s.median, '#58c4dd', '6 4'], ['mode', s.mode, '#ff9a6b', '2 4']]
+    .filter(m => m[1] !== null && m[1] >= lo && m[1] <= hi);
+  const placed = [];
+  marks.forEach(([n, v, c, dash]) => {
+    el('line', { x1: X(v), x2: X(v), y1: M.t + 20, y2: M.t + PH, stroke: c, 'stroke-width': 2.5, 'stroke-dasharray': dash });
+    let ly = M.t + 34;
+    while (placed.some(p => Math.abs(p.x - X(v)) < 70 && Math.abs(p.y - ly) < 16)) ly += 16;
+    placed.push({ x: X(v), y: ly });
+    el('text', { x: X(v) + 5, y: ly, 'font-size': 12.5, 'font-weight': 700, fill: c, stroke: '#172a33', 'stroke-width': 4, 'paint-order': 'stroke' }).textContent = n;
+  });
+  if (outside) el('text', { x: M.l + PW, y: M.t - 12, 'text-anchor': 'end', 'font-size': 12, fill: '#adc0c9' })
+    .textContent = `${outside} sample${outside > 1 ? 's' : ''} beyond the chart${type === 'lognormal' ? ' (long tail)' : ''}`;
+
+  stats();
+}
+
+/* hover: value and probability density / bin count */
+const tip = $('tip');
+function onMove(e) {
+  if (!view) return;
+  const r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * CW;
+  if (x < M.l || x > M.l + PW) { tip.style.display = 'none'; return; }
+  const v = view.lo + (x - M.l) / PW * (view.hi - view.lo);
+  const i = Math.floor((v - view.bLo) / view.bw);
+  const d = DISTS[type];
+  let cdf = 0; { const a = DISTS[type]; let lo = 0, hi = 1; for (let k = 0; k < 40; k++) { const m = (lo + hi) / 2; if (a.q(m, P) < v) lo = m; else hi = m; } cdf = lo; }
+  tip.innerHTML = `value <b>${fmt(v)}</b> ${ex().unit}<br>P(X ≤ value) ≈ <b>${(cdf * 100).toFixed(1)} %</b><br>samples in this bar: <b>${view.counts[i] || 0}</b>`;
+  tip.style.display = 'block';
+  const wrap = svg.parentElement.getBoundingClientRect();
+  let left = e.clientX - wrap.left + 14;
+  if (left + tip.offsetWidth > wrap.width) left = e.clientX - wrap.left - tip.offsetWidth - 14;
+  tip.style.left = Math.max(0, left) + 'px';
+  tip.style.top = Math.max(0, e.clientY - wrap.top - tip.offsetHeight - 10) + 'px';
+}
+svg.addEventListener('pointermove', onMove);
+svg.addEventListener('pointerdown', onMove);
+svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+
+/* ---------- statistics table ---------- */
+function stats() {
+  const d = DISTS[type], s = d.stats(P), u = ex().unit;
+  const sorted = samples.slice().sort((a, b) => a - b);
+  const qs = p => sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(p * (sorted.length - 1))))];
+  const mean = samples.reduce((a, b) => a + b, 0) / N;
+  const sd = Math.sqrt(samples.reduce((a, b) => a + (b - mean) ** 2, 0) / (N - 1));
+  const neg = samples.filter(v => v < 0).length / N;
+  const exactNeg = type === 'normal' ? Phi(-P.mu / P.sd) : 0;
+  const rows = [
+    ['Mean', s.mean, mean],
+    ['Median', s.median, qs(0.5)],
+    ['Mode (most likely)', s.mode, null],
+    ['Standard deviation', s.sd, sd],
+    ['2.5 % percentile', d.q(0.025, P), qs(0.025)],
+    ['97.5 % percentile', d.q(0.975, P), qs(0.975)]
+  ];
+  let h = `<thead><tr><th></th><th>Exact</th><th>${N.toLocaleString('en-US')} samples</th></tr></thead><tbody>`;
+  rows.forEach(([n, a, b]) => {
+    h += `<tr><td>${n}</td><td>${a === null ? (type === 'uniform' && n.startsWith('Mode') ? 'none – all equal' : '–') : fmt(a) + ' ' + u}</td><td>${b === null ? '–' : fmt(b)}</td></tr>`;
+  });
+  if (type === 'normal' && !ex().negOk) h += `<tr><td>Negative values</td><td class="${exactNeg > 0.001 ? 'warn' : ''}">${(exactNeg * 100).toFixed(exactNeg < 0.001 ? 4 : 1)} %</td><td class="${neg > 0 ? 'warn' : ''}">${(neg * 100).toFixed(1)} %</td></tr>`;
+  if (type === 'lognormal') h += `<tr><td>Mean ÷ median</td><td>${(s.mean / s.median).toFixed(3)}</td><td>${(mean / qs(0.5)).toFixed(3)}</td></tr>`;
+  $('stats').innerHTML = h + '</tbody>';
+  if (type === 'normal' && !ex().negOk && exactNeg > 0.001)
+    $('why').innerHTML = `${ex().why} <span class="warn">Right now ${(exactNeg * 100).toFixed(1)} % of the values would be negative.</span>`;
+  else $('why').textContent = ex().why;
+}
+
+/* ---------- controls ---------- */
+document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
+  N = +b.dataset.n;
+  document.querySelectorAll('[data-n]').forEach(x => x.setAttribute('aria-pressed', x === b));
+  resample();
+}));
+$('redraw').addEventListener('click', () => { seed = (seed * 48271 + 11) % 2147483647; resample(); });
+
+setType('lognormal');
+</script>
+</div>
+</body>
+</html>
